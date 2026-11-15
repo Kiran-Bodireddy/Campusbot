@@ -1,0 +1,94 @@
+# SRMIST Campus Knowledge Tool Server - Security & Access Governance Policy
+# Enforces Role-Based Access Control (RBAC), row limits, and field masking.
+
+version: "1.0"
+governance_mode: "least_privilege"
+
+roles:
+  student:
+    description: "Enrolled SRMIST student. Read-only access to academic curriculum, schedules, and public faculty cabins."
+    row_limit: 25
+    allowed_tools:
+      - lookup_course
+      - get_prerequisite_tree
+      - verify_prerequisites
+      - find_faculty_for_course
+      - lookup_faculty_profile
+      - find_room_schedule
+      - find_available_rooms
+      - search_courses_semantic
+      - check_admission_eligibility
+      - get_campus_statistics
+      - get_semester_curriculum
+    forbidden_tools:
+      - run_governed_query
+      - get_faculty_contact
+      - detect_prereq_cycles
+    hidden_fields:
+      - phone
+      - mobile
+      - personal_phone
+      - contact_number
+
+  faculty:
+    description: "Academic faculty and teaching staff. Access to academic tools, room availability, and faculty communications."
+    row_limit: 100
+    allowed_tools:
+      - lookup_course
+      - get_prerequisite_tree
+      - verify_prerequisites
+      - find_faculty_for_course
+      - lookup_faculty_profile
+      - find_room_schedule
+      - find_available_rooms
+      - search_courses_semantic
+      - check_admission_eligibility
+      - get_campus_statistics
+      - get_semester_curriculum
+      - run_governed_query
+      - get_faculty_contact
+    forbidden_tools:
+      - detect_prereq_cycles
+    hidden_fields:
+      - phone
+      - mobile
+      - personal_phone
+
+  admin:
+    description: "Campus knowledge graph administrator. Full governed access to all tools, templates, and unmasked records."
+    row_limit: 500
+    allowed_tools:
+      - lookup_course
+      - get_prerequisite_tree
+      - verify_prerequisites
+      - find_faculty_for_course
+      - lookup_faculty_profile
+      - find_room_schedule
+      - find_available_rooms
+      - search_courses_semantic
+      - check_admission_eligibility
+      - get_campus_statistics
+      - get_semester_curriculum
+      - run_governed_query
+      - get_faculty_contact
+      - detect_prereq_cycles
+    forbidden_tools: []
+    hidden_fields: []
+
+ast_guardrails:
+  max_rows_hard_cap: 500
+  query_timeout_seconds: 3.0
+  forbidden_clauses:
+    - CREATE
+    - MERGE
+    - DELETE
+    - DETACH
+    - SET
+    - DROP
+    - ALTER
+    - GRANT
+    - REVOKE
+    - LOAD CSV
+    - CALL apoc.system
+    - CALL dbms
+

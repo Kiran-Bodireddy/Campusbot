@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Sc – Chemistry With Specialization in Analytical and Industrial Chemistry",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.Sc",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Chemistry",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years*",
+  "sanctioned_intake": "15",
+  "annual_fees_raw": "75,000",
+  "annual_fees_inr": 75000,
+  "eligibility_criteria": "A pass in 10 + 2 (Higher Secondary) with a minimum aggregate of 50%Mandatory subjects :1. Physics2. Chemistry3. Mathematics or Biology",
+  "about_program": "Undergraduate B.Sc Chemistry programme offered by SRM Institute of Science and Technology with specialisation in Analytical and Industrial Chemistry.",
+  "career_opportunities": "Analytical Chemistry, Industrial Chemistry, Laboratory Operations, Quality Control",
+  "program_url": "https://www.srmist.edu.in/program/b-sc-chemistry-with-specialization-in-analytical-and-industrial-chemistry/",
+  "last_updated": "2026-10-16T10:11:59+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "15",
+      "fees": "75,000",
+      "duration": "3 Years*"
+    }
+  ],
+  "program_id": 387
+}

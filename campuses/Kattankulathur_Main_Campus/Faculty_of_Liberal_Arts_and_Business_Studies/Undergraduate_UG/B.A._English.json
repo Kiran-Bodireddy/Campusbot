@@ -1,0 +1,26 @@
+{
+  "program_name": "B.A. English",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.A",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of English",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "75,000",
+  "annual_fees_inr": 75000,
+  "eligibility_criteria": "A pass in 10 + 2 (Higher Secondary) any group with a minimum aggregate of 50%.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-a-english-2/",
+  "last_updated": "2026-10-16T07:35:43+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "75,000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 350
+}

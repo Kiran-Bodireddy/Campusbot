@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Tech Mathematics and Computing",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Computing Technologies",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "4 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "425000",
+  "annual_fees_inr": 425000,
+  "eligibility_criteria": "",
+  "about_program": "The B.Tech. in Mathematics and Computing at SRM Institute of Science and Technology (SRMIST) aims to produce leaders who will be at the forefront of research, development, and innovation in futuristic disciplines and next-generation technologies that require deep use of mathematics, computer science, and data science. This multidisciplinary program equips students with essential analytical, computational, and problem-solving skills, enabling them to tackle complex real-world challenges. The curriculum covers core subjects such as Calculus, Linear Algebra, Discrete Mathematics, Probability and Statistics, Data Structures, Algorithms, and Computer Architecture. Additionally, students explore advanced topics like Machine Learning, Cryptography, Cyber-Physical Systems, and Virtual Computing, allowing them to specialize in cutting-edge technologies. The program emphasizes hands-on learning through laboratory sessions, research projects, and industry collaborations, ensuring graduates are well-prepared for the evolving tech landscape. Graduates of this program have diverse career opportunities in fields such as Software Development, Data Science, Artificial Intelligence, Machine Learning, Financial Engineering, Cryptography, Cybersecurity, and Computational Research. They can work as Data Scientists, AI Engineers, Quantitative Analysts, Software Developers, Research Scientists, Cybersecurity Analysts, and Algorithm Designers in industries like IT, FinTech, Healthcare, Defense, and Scientific Research. The strong mathematical foundation also enables students to pursue higher studies or research in computer science, applied mathematics, and computational sciences, opening avenues in academia and specialized technical roles.",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-tech-mathematics-and-computing/",
+  "last_updated": "2026-01-27T07:40:40+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "425000",
+      "duration": "4 Years"
+    }
+  ],
+  "program_id": 309
+}

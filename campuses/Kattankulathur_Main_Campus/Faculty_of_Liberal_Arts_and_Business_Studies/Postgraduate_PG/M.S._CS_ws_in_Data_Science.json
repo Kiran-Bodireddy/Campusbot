@@ -1,0 +1,26 @@
+{
+  "program_name": "M.S. – CS w/s in Data Science",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Computer Science",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "2,50,000",
+  "annual_fees_inr": 250000,
+  "eligibility_criteria": "A pass in any UG Science degree (B.Sc/B.S/BCA) or Engineering degree (B.E/B.Tech) with a minimum aggregate of 50%.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-s-cs-w-s-in-data-science/",
+  "last_updated": "2025-08-19T12:18:21+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "2,50,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 137
+}

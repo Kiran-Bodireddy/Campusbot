@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Genetic Engineering",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Genetic Engineering",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "INR 1,60,000",
+  "annual_fees_inr": 160000,
+  "eligibility_criteria": "Eligibility for M.Tech. Programs (Duration: 2 Years) Specialization Eligibility (A basic degree or equivalent in the following with a minimum aggregate of 50%) Genetic Engineering B.E / B.Tech. in Genetic Engineering / Biotechnology / Industrial or Medical or General or Food Biotechnology / Biochemical Engineering / Bioinformatics / Bioprocess Engineering (or) B.Pharm (or) B.V.Sc. (or) B.F.Sc. (or) B.Sc. (Agri) / B.Sc. (Forestry) (or) MBBS (or) M.Sc. in any branch of Life Sciences (or) its equivalent.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-genetic-engineering/",
+  "last_updated": "2024-11-12T10:21:49+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "INR 1,60,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 115
+}

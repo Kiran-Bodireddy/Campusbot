@@ -1,0 +1,26 @@
+{
+  "program_name": "M.D. Radio Diagnosis",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM Medical Research Centre",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "4",
+  "annual_fees_raw": "INR 50,00,000",
+  "annual_fees_inr": 5000000,
+  "eligibility_criteria": "Pass in MBBS or its Equivalent Degree recognized by NMC (Candidates completing the CRRI / CRMI on or before 31st March of the Year) NEET PG score as prescribed by NMC.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-d-radio-diagnosis/",
+  "last_updated": "2025-12-05T09:54:53+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "4",
+      "fees": "INR 50,00,000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 192
+}

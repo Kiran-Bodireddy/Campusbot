@@ -1,0 +1,26 @@
+{
+  "program_name": "M.B.A. Health Care and Hospital Management",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "MBA",
+  "faculty": "Faculty of Management",
+  "department": "Department of Management",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "INR 4,95,000",
+  "annual_fees_inr": 495000,
+  "eligibility_criteria": "1. A Bachelor’s degree with minimum aggregate of 50%.2. Admission will be done through SRM Joint Entrance Examination for Management (SRMJEEM) followed by a Personal Interview. Students with eligible entrance scores in CAT/XAT/MAT/GMAT/NMAT/CMAT/TANCET will be granted direct consideration for the personal interview.3. Preference would be given to candidates with work experience.",
+  "about_program": "MBA specialisation programme offered by SRM Institute of Science and Technology in Health Care and Hospital Management.",
+  "career_opportunities": "Hospital Administration, Healthcare Management, Operations Management, Quality & Compliance, Healthcare Services",
+  "program_url": "https://www.srmist.edu.in/program/m-b-a-health-care-and-hospital-management/",
+  "last_updated": "2026-10-17T11:22:36+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "INR 4,95,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 163
+}

@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Des. Public Space Design",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.DES",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "School of Architecture and Interior Design",
+  "campuses_available": "Kattankulathur(KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "12",
+  "annual_fees_raw": "INR 1,75,000",
+  "annual_fees_inr": 175000,
+  "eligibility_criteria": "50% aggregate in Bachelor of Design or Bachelor of Architecture degree course or any other equivalent qualification having a minimum duration of 4 years recognized by SRMIST/Competent Authority. Criteria 1: CEED Score + (Personal Interview) at SRMIST Criteria 2: Personal Interview at SRMIST",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-despublic-space-design/",
+  "last_updated": "2024-11-12T07:44:43+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur(KTR)",
+      "intake": "12",
+      "fees": "INR 1,75,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 83
+}

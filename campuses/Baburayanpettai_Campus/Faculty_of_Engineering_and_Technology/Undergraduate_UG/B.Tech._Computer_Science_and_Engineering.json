@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Tech. Computer Science and Engineering",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.TECH",
+  "faculty": "Faculty of Engineering & Technology, Baburayanpettai, Acharapakkam",
+  "department": "Department of Computer Science & EngineeringVendhar Nagar, Baburayanpettai, Acharapakkam Campus",
+  "campuses_available": "Baburayanpettai",
+  "duration": "4 Years",
+  "sanctioned_intake": "180",
+  "annual_fees_raw": "(Tuition + Hostel): ₹3,75,000",
+  "annual_fees_inr": 375000,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-tech-computer-science-and-engineering-3/",
+  "last_updated": "2026-04-15T09:28:06+00:00",
+  "offerings": [
+    {
+      "campus": "Baburayanpettai",
+      "intake": "180",
+      "fees": "(Tuition + Hostel): ₹3,75,000",
+      "duration": "4 Years"
+    }
+  ],
+  "program_id": 348
+}

@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Sc. Nursing",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.Sc Nursing",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM College of Nursing",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "4  Years",
+  "sanctioned_intake": "100",
+  "annual_fees_raw": "INR 2,65,000",
+  "annual_fees_inr": 265000,
+  "eligibility_criteria": "1. Candidates must have passed the 12th Standard (10+2) examination with Science subjects, securing a minimum of 60% aggregate in Physics, Chemistry, and Biology (PCB). A pass in English is also required.2. The minimum age for admission is 17 years and the maximum age is 35 years, as of 31st December of the year of admission.",
+  "about_program": "A 4-year undergraduate nursing programme at SRM Institute of Science and Technology focused on clinical foundations, patient care skills and professional nursing practice.",
+  "career_opportunities": "Nursing Practice, Clinical Care, Hospital & Community Health",
+  "program_url": "https://www.srmist.edu.in/program/b-sc-nursing/",
+  "last_updated": "2026-10-23T10:55:49+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "100",
+      "fees": "INR 2,65,000",
+      "duration": "4  Years"
+    }
+  ],
+  "program_id": 410
+}

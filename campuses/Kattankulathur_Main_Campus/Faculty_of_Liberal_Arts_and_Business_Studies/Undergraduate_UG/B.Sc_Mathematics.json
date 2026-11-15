@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Sc Mathematics",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.SC",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Mathematics",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "20",
+  "annual_fees_raw": "75,000",
+  "annual_fees_inr": 75000,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-sc-mathematics/",
+  "last_updated": "2026-10-16T10:22:14+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "20",
+      "fees": "75,000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 383
+}

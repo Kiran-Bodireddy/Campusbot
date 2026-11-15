@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Sc. Computer Science",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.Sc",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Computer Science",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "120",
+  "annual_fees_raw": "1,30,000",
+  "annual_fees_inr": 130000,
+  "eligibility_criteria": "A pass in 10 + 2 (Higher Secondary) with a minimum aggregate of 50% (or)A pass in Diploma in Engineering (10+3 or 10+2+2 Pattern) from a recognized government or competent authority with a minimum aggregate of 50%. Mandatory subjects :Atleast one of Mathematics / Business Mathematics / Statistics / Allied Mathematics.",
+  "about_program": "A 3-year undergraduate computer science programme at SRM Institute of Science and Technology covering core computing concepts and practical skill development.",
+  "career_opportunities": "Software Development, IT Services, Data & Analytics, Systems & Networks",
+  "program_url": "https://www.srmist.edu.in/program/best-b-sc-computer-science-colleges-chennai/",
+  "last_updated": "2026-10-16T09:39:54+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "120",
+      "fees": "1,30,000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 390
+}

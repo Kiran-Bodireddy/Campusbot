@@ -1,0 +1,26 @@
+{
+  "program_name": "LL.M. Criminal Law and Criminal Justice",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "LL.M",
+  "faculty": "SRM School of Law",
+  "department": "Department of Law",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "1 year",
+  "sanctioned_intake": "40",
+  "annual_fees_raw": "150000",
+  "annual_fees_inr": 150000,
+  "eligibility_criteria": "Any UG Law Degree with 60% aggregate.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/llm-criminal-law-and-criminal-justice/",
+  "last_updated": "2026-07-27T10:23:57+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "40",
+      "fees": "150000",
+      "duration": "1 year"
+    }
+  ],
+  "program_id": 263
+}

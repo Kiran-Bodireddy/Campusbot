@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Scraped HTML caches & temporary files
+.cache/
+.pytest_cache/
+scratch/
+*.log
+
+# Sensitive credentials & environment variables
+.env
+
+# Virtual environments
+venv/
+.venv/
+env/

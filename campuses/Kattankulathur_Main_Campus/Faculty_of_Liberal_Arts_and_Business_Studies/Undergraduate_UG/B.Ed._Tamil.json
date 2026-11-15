@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Ed. Tamil",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.ED",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "School of Education",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "50",
+  "annual_fees_raw": "75,000",
+  "annual_fees_inr": 75000,
+  "eligibility_criteria": "Any degree (As per NCTE Norms)",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-ed-tamil/",
+  "last_updated": "2026-10-16T10:33:28+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "50",
+      "fees": "75,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 374
+}

@@ -1,0 +1,26 @@
+{
+  "program_name": "Diploma Yoga",
+  "degree_level": "Diploma / Certificate",
+  "credential": "",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Yoga",
+  "campuses_available": "Baburayanpettai",
+  "duration": "1 Year",
+  "sanctioned_intake": "20",
+  "annual_fees_raw": "₹30,000",
+  "annual_fees_inr": 30000,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/diploma-yoga/",
+  "last_updated": "2026-04-11T12:27:50+00:00",
+  "offerings": [
+    {
+      "campus": "Baburayanpettai",
+      "intake": "20",
+      "fees": "₹30,000",
+      "duration": "1 Year"
+    }
+  ],
+  "program_id": 2
+}

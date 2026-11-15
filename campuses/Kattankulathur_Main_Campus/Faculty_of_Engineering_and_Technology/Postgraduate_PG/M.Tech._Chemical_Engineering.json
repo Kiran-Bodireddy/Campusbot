@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Chemical Engineering",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Chemical Engineering",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "12",
+  "annual_fees_raw": "INR 1,60,000",
+  "annual_fees_inr": 160000,
+  "eligibility_criteria": "Eligibility for M.Tech. Programs (Duration: 2 Years) Specialization Eligibility (A basic degree or equivalent in the following with a minimum aggregate of 50%) Chemical Engineering Chemical Engineering, Electrochemical Engineering, Petrochemical Engineering, Petroleum Engineering, Petroleum Refining Engineering, Chemical Technology, Pharmaceutical Technology, Food and Process Engineering, Biochemical Engineering, Bioprocess Engineering, Biotechnology, Biotechnology and Biochemical Engineering (or) its equivalent",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-chemical-engineering/",
+  "last_updated": "2026-10-12T11:03:15+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "12",
+      "fees": "INR 1,60,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 102
+}

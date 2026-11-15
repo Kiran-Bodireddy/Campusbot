@@ -1,0 +1,26 @@
+{
+  "program_name": "PG Diploma in Journalism and Mass Communication",
+  "degree_level": "Diploma / Certificate",
+  "credential": "",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department Of Journalism And Mass Communication",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "20",
+  "annual_fees_raw": "1,00,000",
+  "annual_fees_inr": 100000,
+  "eligibility_criteria": "A pass in any UG degree with a minimum aggregate of 50%.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/pg-diploma-in-journalism-and-mass-communication/",
+  "last_updated": "2025-11-21T06:18:40+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "20",
+      "fees": "1,00,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 6
+}

@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Artificial Intelligence & Data Science",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Computational Intelligence",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "120",
+  "annual_fees_raw": "5,00,000 (for the entire programme)",
+  "annual_fees_inr": 500000,
+  "eligibility_criteria": "Engineering Background: BE/B.Tech. any Stream with 50% marks. AMIE is accepted. MBA/M. Com/MA are not eligible. Evening College & Distance education degrees are not accepted. All the degrees obtained must be through Full-Time mode. Degrees from UGC approved universities only will be accepted.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-in-artificial-intelligence-and-data-science/",
+  "last_updated": "2026-05-26T09:27:45+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "120",
+      "fees": "5,00,000 (for the entire programme)",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 94
+}

@@ -1,0 +1,153 @@
+{
+  "health_check": {
+    "status": "healthy",
+    "neo4j_connected": false,
+    "mode": "High-Speed In-Memory Graph",
+    "indexed_courses": 668,
+    "indexed_faculty": 2501,
+    "indexed_rooms": 264
+  },
+  "audit_verification": {
+    "status": "VALID",
+    "chain_intact": true,
+    "verified_entries_count": 1313,
+    "detail": "Hash chain intact. Zero tampering detected."
+  },
+  "agent_queries": [
+    {
+      "test": "Semester 3 Subjects for B.Tech CSE",
+      "query": "What are the 3rd semester subjects for CSE?",
+      "passed": true,
+      "tool_selected": "get_semester_curriculum",
+      "status": "SUCCESS",
+      "keywords_found": [
+        "21CSC201J",
+        "21CSC202J",
+        "Data Structures",
+        "Operating Systems",
+        "23 Credits"
+      ],
+      "keywords_expected": [
+        "21CSC201J",
+        "21CSC202J",
+        "Data Structures",
+        "Operating Systems",
+        "23 Credits"
+      ],
+      "answer_preview": "**B.Tech in Computer Science and Engineering - Semester 3 Implementation Plan** (Academic Year 2):\n- **Total Subjects**: **8 courses** (1 Basic Sciences, 2 Engineering Sciences, 3 Professional Core, 2 Mandatory Non-Credit)\n- **Semester Credits**: **23 Credits**\n\n**Curriculum Cour..."
+    },
+    {
+      "test": "Semester 4 Courses for Aerospace Engineering",
+      "query": "What courses do I take in Semester 4 of Aerospace Engineering?",
+      "passed": true,
+      "tool_selected": "get_semester_curriculum",
+      "status": "SUCCESS",
+      "keywords_found": [
+        "Aerospace",
+        "Semester 4",
+        "21ASC",
+        "Credits"
+      ],
+      "keywords_expected": [
+        "Aerospace",
+        "Semester 4",
+        "21ASC",
+        "Credits"
+      ],
+      "answer_preview": "**B.Tech in Aerospace Engineering - Semester 4 Implementation Plan** (Academic Year 2):\n- **Total Subjects**: **9 courses** (1 Basic Sciences, 6 Professional Core, 1 Engineering Sciences, 1 Mandatory Non-Credit)\n- **Semester Credits**: **21 Credits**\n\n**Curriculum Course Matrix:*..."
+    },
+    {
+      "test": "Full 8-Semester Curriculum Plan for Mechanical",
+      "query": "What is the full curriculum plan for Mechanical Engineering?",
+      "passed": true,
+      "tool_selected": "get_semester_curriculum",
+      "status": "SUCCESS",
+      "keywords_found": [
+        "Mechanical",
+        "8-Semester",
+        "Semester 1",
+        "Semester 8"
+      ],
+      "keywords_expected": [
+        "Mechanical",
+        "8-Semester",
+        "Semester 1",
+        "Semester 8"
+      ],
+      "answer_preview": "**B.Tech in Mechanical Engineering - 8-Semester Unified Curriculum Structure** (Regulations 2021):\n- **Total Course Modules**: **67 courses**\n- **Graduation Requirement**: **169 Total Credits**\n\n- **Semester 1** (**18 Credits**, 8 courses): 21LEH101T, 21MAB101T, 21PYB101J, 21MES1..."
+    },
+    {
+      "test": "Prerequisite Eligibility Check",
+      "query": "Can a student who completed 21CSC206T take 21CSO451T?",
+      "passed": true,
+      "tool_selected": "verify_prerequisites",
+      "status": "SUCCESS",
+      "keywords_found": [
+        "ELIGIBLE",
+        "satisfied"
+      ],
+      "keywords_expected": [
+        "ELIGIBLE",
+        "satisfied"
+      ],
+      "answer_preview": "**Eligible**: Student has satisfied all required prerequisites for [Course: 21CSO451T] (Completed: 21CSC206T)."
+    },
+    {
+      "test": "Official Course Lookup",
+      "query": "Lookup course 21CSC201J",
+      "passed": true,
+      "tool_selected": "lookup_course",
+      "status": "SUCCESS",
+      "keywords_found": [
+        "21CSC201J",
+        "Data Structures And Algorithms",
+        "School of Computing"
+      ],
+      "keywords_expected": [
+        "21CSC201J",
+        "Data Structures And Algorithms",
+        "School of Computing"
+      ],
+      "answer_preview": "**[Course: 21CSC201J] Data Structures And Algorithms** is an accredited **UG** level subject carrying **4 credits** (L-T-P-C: 3-0-2-4), offered by the **School of Computing** under Faculty of Engineering & Technology. Recommended for **Semester 3 (Year 2 Core / Mandatory)**.\n\n**C..."
+    },
+    {
+      "test": "Admission Eligibility & Fees",
+      "query": "What is the admission eligibility and fee for B.Tech Computer Science with 65% in PCM?",
+      "passed": true,
+      "tool_selected": "check_admission_eligibility",
+      "status": "SUCCESS",
+      "keywords_found": [
+        "ELIGIBLE",
+        "60.0%",
+        "SRMJEEE",
+        "PCM"
+      ],
+      "keywords_expected": [
+        "ELIGIBLE",
+        "60.0%",
+        "SRMJEEE",
+        "PCM"
+      ],
+      "answer_preview": "Official SRMIST Admission Regulations for 'B.Tech':\n\n- [Program: B.Tech. Automobile Engineering with Specialization in Automotive Electronics] (Postgraduate (PG), Faculty of Engineering & Technology)\n  - Min Education: 10+2 (Higher Secondary) - Regular (Physics & Mathematics (com..."
+    },
+    {
+      "test": "Campus Aggregation Statistics",
+      "query": "How many degree programs and courses does SRM offer?",
+      "passed": true,
+      "tool_selected": "get_campus_statistics",
+      "status": "SUCCESS",
+      "keywords_found": [
+        "428 accredited",
+        "668 course modules",
+        "2,501"
+      ],
+      "keywords_expected": [
+        "428 accredited",
+        "668 course modules",
+        "2,501"
+      ],
+      "answer_preview": "**SRM Institute of Science and Technology (SRMIST)** offers **428 accredited academic degree programs** and **668 course modules** across 6 major faculties at its campuses:\n\n- **Undergraduate (UG)**: **125 programs** including B.Tech (CSE, AI, Biotech, ECE, Mechanical, Civil), MB..."
+    }
+  ],
+  "pytest_summary": null
+}

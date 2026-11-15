@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Com. International Accounting & Finance",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.COM",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Commerce",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3  Years",
+  "sanctioned_intake": "80",
+  "annual_fees_raw": "1,75,000",
+  "annual_fees_inr": 175000,
+  "eligibility_criteria": "A pass in 10 + 2 (Higher Secondary) any group with a minimum aggregate of 50%.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-com-hons-international-accounting-finance/",
+  "last_updated": "2026-10-16T09:27:29+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "80",
+      "fees": "1,75,000",
+      "duration": "3  Years"
+    }
+  ],
+  "program_id": 364
+}

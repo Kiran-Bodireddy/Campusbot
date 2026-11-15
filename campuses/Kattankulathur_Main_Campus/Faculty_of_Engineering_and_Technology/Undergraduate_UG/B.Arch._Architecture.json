@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Arch. Architecture",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.ARCH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "School of Architecture and Interior Design",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "5 Years",
+  "sanctioned_intake": "80",
+  "annual_fees_raw": "INR 2,75,000",
+  "annual_fees_inr": 275000,
+  "eligibility_criteria": "No candidate shall be admitted to an architecture course unless she/ he has passed an examination at the end of the 10+2 scheme of examination with at least 60% aggregate marks in Physics, Chemistry & Mathematics and also at least 60% marks in aggregate of the 10+2 level examination or passed 10+3 Diploma Examination with Mathematics as compulsory subject with at least 60% marks in aggregate. A pass in the National Aptitude Test in Architecture (NATA) conducted by the Council of Architecture, IITJEE Mains – Paper II is also considered, based on the passing criteria (as per the COA notification Ref.No.CA/28/NATA 2017 dated 15th June 2017). Note:No separate entrance examination will be conducted by SRM Institute of Science and Technology (formerly known as SRM University). However, the candidates have to apply in the prescribed application form for admission to B.Arch. program.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-arch-bachelor-of-architecture/",
+  "last_updated": "2026-01-27T07:26:51+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "80",
+      "fees": "INR 2,75,000",
+      "duration": "5 Years"
+    }
+  ],
+  "program_id": 306
+}

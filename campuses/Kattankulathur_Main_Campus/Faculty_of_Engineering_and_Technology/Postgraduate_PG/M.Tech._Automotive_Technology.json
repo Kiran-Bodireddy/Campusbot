@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Automotive Technology",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Automobile Engineering",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "18",
+  "annual_fees_raw": "Rs. 1,74,,400/- for First Year & Rs. 1,96,525/- for Second year",
+  "annual_fees_inr": 174400,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-in-automotive-technology/",
+  "last_updated": "2026-10-17T05:07:42+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "18",
+      "fees": "Rs. 1,74,,400/- for First Year & Rs. 1,96,525/- for Second year",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 97
+}

@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Sc. (Hons.) Agriculture",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.SC",
+  "faculty": "College of Agriculture Sciences",
+  "department": "Department of Agricultural Sciences",
+  "campuses_available": "Baburayanpettai",
+  "duration": "4 Years",
+  "sanctioned_intake": "180",
+  "annual_fees_raw": "INR 1,80,000",
+  "annual_fees_inr": 180000,
+  "eligibility_criteria": "",
+  "about_program": "Academic Curricula 2019 Academic Curriculam and Syllabus 2025",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-sc-hons-agriculture/",
+  "last_updated": "2026-06-22T07:46:18+00:00",
+  "offerings": [
+    {
+      "campus": "Baburayanpettai",
+      "intake": "180",
+      "fees": "INR 1,80,000",
+      "duration": "4 Years"
+    }
+  ],
+  "program_id": 304
+}

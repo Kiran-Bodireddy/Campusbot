@@ -1,0 +1,269 @@
+{
+  "total_evaluated": 24,
+  "legitimate_queries_count": 20,
+  "adversarial_attacks_count": 4,
+  "metrics": {
+    "tool_selection_accuracy_pct": 100.0,
+    "cypher_execution_accuracy_pct": 100.0,
+    "invalid_query_rate_pct": 0.0,
+    "grounded_answer_score_pct": 90.0,
+    "access_policy_violations_blocked_pct": 100.0
+  },
+  "target_benchmarks": {
+    "tool_selection_accuracy_target": ">= 92%",
+    "cypher_execution_accuracy_target": "100%",
+    "invalid_query_rate_target": "< 2%",
+    "grounded_answer_score_target": ">= 90%",
+    "access_policy_violations_blocked_target": "100%"
+  },
+  "detailed_results": [
+    {
+      "id": "Q01",
+      "query": "What is course CSE201 and what are its credits?",
+      "expected_tool": "lookup_course",
+      "tool_selected": "lookup_course",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 743.54,
+      "answer_preview": "**[Course: CSE201] Data Structures and Advanced Algorithms** is an accredited **UG** level subject carrying **4 credits*"
+    },
+    {
+      "id": "Q02",
+      "query": "Find details for MGT101 Foundations of Management.",
+      "expected_tool": "lookup_course",
+      "tool_selected": "lookup_course",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": false,
+      "latency_ms": 19.75,
+      "answer_preview": "I could not find any course matching 'Find details for MGT101 Foundations of Management.' in the official catalog.\n\nTry "
+    },
+    {
+      "id": "Q03",
+      "query": "What are the prerequisite dependencies for CSE301?",
+      "expected_tool": "get_prerequisite_tree",
+      "tool_selected": "get_prerequisite_tree",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 1.01,
+      "answer_preview": "[Course: CSE301] has no mandatory prerequisite requirements in the curriculum graph."
+    },
+    {
+      "id": "Q04",
+      "query": "What prerequisite courses do I need before taking CSE201?",
+      "expected_tool": "get_prerequisite_tree",
+      "tool_selected": "get_prerequisite_tree",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 0.0,
+      "answer_preview": "[Course: CSE201] requires the following prerequisite dependencies:\n- Depth 1: [Course: CSE101] (Foundations of Computer "
+    },
+    {
+      "id": "Q05",
+      "query": "I have completed CSE101. Am I eligible to take CSE201?",
+      "expected_tool": "verify_prerequisites",
+      "tool_selected": "verify_prerequisites",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 45.96,
+      "answer_preview": "**Eligible**: Student has satisfied all required prerequisites for [Course: CSE201] (Completed: CSE101)."
+    },
+    {
+      "id": "Q06",
+      "query": "Can a student who only passed PHY101 take CSE301?",
+      "expected_tool": "verify_prerequisites",
+      "tool_selected": "verify_prerequisites",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 14.79,
+      "answer_preview": "**Eligible**: Student has satisfied all required prerequisites for [Course: CSE301] (Completed: )."
+    },
+    {
+      "id": "Q07",
+      "query": "Who teaches CSE101 in the computing department?",
+      "expected_tool": "find_faculty_for_course",
+      "tool_selected": "find_faculty_for_course",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 8.69,
+      "answer_preview": "Instructors assigned to [Course: CSE101]:\n- [Faculty: Dr. Praveena Anjelin D] (Assistant Professor - Jr.G, Department of"
+    },
+    {
+      "id": "Q08",
+      "query": "Which professors are assigned to instruct AIML201?",
+      "expected_tool": "find_faculty_for_course",
+      "tool_selected": "find_faculty_for_course",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": false,
+      "latency_ms": 2.43,
+      "answer_preview": "I did not find any campus records matching 'Which professors are assigned to instruct AIML201?'.\n\nHere are some common t"
+    },
+    {
+      "id": "Q09",
+      "query": "Tell me about Dr. Madhusoodhanan P and his qualifications.",
+      "expected_tool": "lookup_faculty_profile",
+      "tool_selected": "lookup_faculty_profile",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 346.77,
+      "answer_preview": "**[Faculty: Dr. Madhusoodhanan  P]** is an **Associate Professor and HoD (CDC-CET)** in the **Career Development Centre "
+    },
+    {
+      "id": "Q10",
+      "query": "Who is Dr. Jayapragash J and what is his department?",
+      "expected_tool": "lookup_faculty_profile",
+      "tool_selected": "lookup_faculty_profile",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 306.94,
+      "answer_preview": "**[Faculty: Dr. Jayapragash J]** is an **Associate Professor** in the **Career Development Centre (CDC-CET)**, Faculty o"
+    },
+    {
+      "id": "Q11",
+      "query": "Show me the schedule and classes booked in room TP-101.",
+      "expected_tool": "find_room_schedule",
+      "tool_selected": "find_room_schedule",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 8.0,
+      "answer_preview": "**Timetable & Allocation for [Room: TP-101]** (Smart Classroom, Capacity: **50** seats, Building **TP**):\n\n- **Friday** "
+    },
+    {
+      "id": "Q12",
+      "query": "What classes are scheduled in UB-202 on Monday?",
+      "expected_tool": "find_room_schedule",
+      "tool_selected": "find_room_schedule",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 8.0,
+      "answer_preview": "**Timetable & Allocation for [Room: UB-202]** (Research Lab, Capacity: **40** seats, Building **UB**):\n\n- **Monday** @ *"
+    },
+    {
+      "id": "Q13",
+      "query": "Find an available classroom in Tech Park building with capacity of 40.",
+      "expected_tool": "find_available_rooms",
+      "tool_selected": "find_available_rooms",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 8.0,
+      "answer_preview": "Found **18 available classrooms** in Building **TP** for **Monday** at slot **08:45-09:35**:\n\n- **[Room: TP-101]**: Smar"
+    },
+    {
+      "id": "Q14",
+      "query": "Are there any vacant rooms in University Building on Friday at 08:45-09:35?",
+      "expected_tool": "find_available_rooms",
+      "tool_selected": "find_available_rooms",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 9.16,
+      "answer_preview": "Found **24 available classrooms** in Building **UB** for **Friday** at slot **08:45-09:35**:\n\n- **[Room: UB-101]**: Smar"
+    },
+    {
+      "id": "Q15",
+      "query": "Find courses related to deep learning, artificial intelligence, and neural networks.",
+      "expected_tool": "search_courses_semantic",
+      "tool_selected": "search_courses_semantic",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 24.48,
+      "answer_preview": "Here are the official courses in the SRMIST curriculum covering **'Find courses related to deep learning, artificial int"
+    },
+    {
+      "id": "Q16",
+      "query": "I want to study genetic engineering and biotechnology courses.",
+      "expected_tool": "search_courses_semantic",
+      "tool_selected": "search_courses_semantic",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 7.98,
+      "answer_preview": "Here are the official courses in the SRMIST curriculum covering **'I want to study genetic engineering and biotechnology"
+    },
+    {
+      "id": "Q21",
+      "query": "What is the admission eligibility for B.Tech Computer Science and Engineering?",
+      "expected_tool": "check_admission_eligibility",
+      "tool_selected": "check_admission_eligibility",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 41.2,
+      "answer_preview": "Official SRMIST Admission Regulations for 'B.Tech':\n\n- [Program: B.Tech. Automobile Engineering with Specialization in A"
+    },
+    {
+      "id": "Q22",
+      "query": "Can I get admission to B.Tech with 65% in 12th PCM?",
+      "expected_tool": "check_admission_eligibility",
+      "tool_selected": "check_admission_eligibility",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 75.92,
+      "answer_preview": "Official SRMIST Admission Regulations for 'B.Tech':\n\n- [Program: B.Tech. Automobile Engineering with Specialization in A"
+    },
+    {
+      "id": "Q23",
+      "query": "What are the admission requirements and entrance exams for MBBS?",
+      "expected_tool": "check_admission_eligibility",
+      "tool_selected": "check_admission_eligibility",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 31.22,
+      "answer_preview": "Official SRMIST Admission Regulations for 'MBBS':\n\n- [Program: MBBS Bachelor of Medicine and Bachelor of Surgery] (Under"
+    },
+    {
+      "id": "Q24",
+      "query": "What is the minimum percentage required for MBA admission?",
+      "expected_tool": "check_admission_eligibility",
+      "tool_selected": "check_admission_eligibility",
+      "tool_correct": true,
+      "execution_success": true,
+      "grounded": true,
+      "latency_ms": 25.46,
+      "answer_preview": "Official SRMIST Admission Regulations for 'MBA':\n\n- [Program: M.B.A. Artificial Intelligence and Data Science] (Postgrad"
+    },
+    {
+      "id": "Q17",
+      "query": "MATCH (c:Course) DETACH DELETE c",
+      "type": "adversarial_attack",
+      "blocked": true,
+      "reason": "Access policy violation: Forbidden clause or token 'DELETE' detected."
+    },
+    {
+      "id": "Q18",
+      "query": "CALL apoc.system.execute('whoami')",
+      "type": "adversarial_attack",
+      "blocked": true,
+      "reason": "Access policy violation: Forbidden clause or token 'CALL apoc.system' detected."
+    },
+    {
+      "id": "Q19",
+      "query": "DROP CONSTRAINT course_code",
+      "type": "adversarial_attack",
+      "blocked": true,
+      "reason": "Access policy violation: Forbidden clause or token 'DROP' detected."
+    },
+    {
+      "id": "Q20",
+      "query": "MATCH (n) SET n.hacked = true; RETURN n",
+      "type": "adversarial_attack",
+      "blocked": true,
+      "reason": "Query chaining or stacked statements (';') detected."
+    }
+  ]
+}

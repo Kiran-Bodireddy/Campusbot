@@ -1,0 +1,26 @@
+{
+  "program_name": "PGDCE Post Graduate Diploma in Clinical Embryology",
+  "degree_level": "Diploma / Certificate",
+  "credential": "PGDCE",
+  "faculty": "Medicine & Health Sciences",
+  "department": "Allied Health Sciences",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "1 Year",
+  "sanctioned_intake": "2",
+  "annual_fees_raw": "3,00,000",
+  "annual_fees_inr": 300000,
+  "eligibility_criteria": "1. MBBS degree recognized by the MCI/ NMC/ Life Sciences Post Graduation (M.Sc) Candidates.2. Candidates who have studied in foreign countries (outside India) and passed in clinical courses, the equivalent certificate issued by MCI/NMC.3. Completed the age of 25 years.4. Minimum aggregate of 50% marks from a recognized University in India",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/post-graduate-diploma-clinical-embryology/",
+  "last_updated": "2026-10-26T06:53:37+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "2",
+      "fees": "3,00,000",
+      "duration": "1 Year"
+    }
+  ],
+  "program_id": 9
+}

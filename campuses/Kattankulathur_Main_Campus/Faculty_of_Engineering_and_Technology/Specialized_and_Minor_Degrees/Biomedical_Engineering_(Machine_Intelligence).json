@@ -1,0 +1,26 @@
+{
+  "program_name": "Biomedical Engineering (Machine Intelligence)",
+  "degree_level": "Specialized / Other",
+  "credential": "",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Biomedical Engineering",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "4 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "INR 2,75,000",
+  "annual_fees_inr": 275000,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/biomedical-engineering-with-specialization-in-machine-intelligence/",
+  "last_updated": "2026-01-28T11:25:35+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "INR 2,75,000",
+      "duration": "4 Years"
+    }
+  ],
+  "program_id": 267
+}

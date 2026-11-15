@@ -1,0 +1,26 @@
+{
+  "program_name": "B.A.,LL.B. Bachelor of Arts and Legum Baccalaureus (Honours)",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.A., LL.B (Hons.)",
+  "faculty": "SRM School of Law",
+  "department": "Department of Law",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "5 Years",
+  "sanctioned_intake": "120",
+  "annual_fees_raw": "INR 3,00,000",
+  "annual_fees_inr": 300000,
+  "eligibility_criteria": "10, + 2 pass in regular/normal mode. Minimum 60% aggregate or equivalent letter grade/GPA in +2 board examination. Appeared in 2026 CLAT/SRMJEEL for 5 year integrated programs.",
+  "about_program": "A 5-year integrated B.A., LL.B (Hons.) programme at SRM Institute of Science and Technology combining arts foundations with comprehensive legal education.",
+  "career_opportunities": "Legal Practice, Corporate Law, Public Policy, Compliance",
+  "program_url": "https://www.srmist.edu.in/program/bachelor-of-arts-and-legum-baccalaureus-honours/",
+  "last_updated": "2026-04-11T11:57:08+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "120",
+      "fees": "INR 3,00,000",
+      "duration": "5 Years"
+    }
+  ],
+  "program_id": 425
+}

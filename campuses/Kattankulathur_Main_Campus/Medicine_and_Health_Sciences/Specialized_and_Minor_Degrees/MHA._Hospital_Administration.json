@@ -1,0 +1,26 @@
+{
+  "program_name": "MHA. Hospital Administration",
+  "degree_level": "Specialized / Other",
+  "credential": "",
+  "faculty": "Medicine & Health Sciences",
+  "department": "Allied Health Sciences",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "45",
+  "annual_fees_raw": "1,75,000",
+  "annual_fees_inr": 175000,
+  "eligibility_criteria": "1. Completed the age of 20 years at the time of admission or would complete the age on or before 31st December on the year of admission to the program.2. Any degree from a recognized University from India/ abroad under 10+2+3 pattern or equivalent.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/mha-hospital-administration/",
+  "last_updated": "2026-10-23T10:11:37+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "45",
+      "fees": "1,75,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 300
+}

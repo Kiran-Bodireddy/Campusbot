@@ -1,0 +1,26 @@
+{
+  "program_name": "Fellowship – Emergency Medicine",
+  "degree_level": "Fellowship",
+  "credential": "",
+  "faculty": "Medicine & Health Sciences",
+  "department": "Allied Health Sciences",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "7",
+  "annual_fees_raw": "3,00,000",
+  "annual_fees_inr": 300000,
+  "eligibility_criteria": "Candidates should have passed MBBS; the candidate shall complete the age of 23 years, minimum aggregate of 50% from a recognized University in India/ Abroad but registerd in MCI/NMC.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/fellowship-emergency-medicine/",
+  "last_updated": "2026-02-09T10:19:38+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "7",
+      "fees": "3,00,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 64
+}

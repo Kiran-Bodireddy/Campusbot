@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Construction Engineering & Management",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Civil Engineering",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "48",
+  "annual_fees_raw": "INR 1,60,000",
+  "annual_fees_inr": 160000,
+  "eligibility_criteria": "Eligibility for M.Tech. Programs (Duration: 2 Years) Specialization Eligibility (A basic degree or equivalent in the following with a minimum aggregate of 50%) Construction Engineering and Management B.E / B.Tech. in Civil / Civil Engineering with Computer Applications / Civil Infrastructure Engg. / Architectural Engg. (or) B.Arch. (or) it’s equivalent.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-construction-engineering-management/",
+  "last_updated": "2026-01-09T12:20:22+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "48",
+      "fees": "INR 1,60,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 108
+}

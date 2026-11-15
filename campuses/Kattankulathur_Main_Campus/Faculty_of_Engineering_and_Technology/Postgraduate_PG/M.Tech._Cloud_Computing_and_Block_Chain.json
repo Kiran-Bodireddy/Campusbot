@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Cloud Computing and Block Chain",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Networking And Communications",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "5,00,000 (for the entire programme)",
+  "annual_fees_inr": 500000,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-cloud-computing-and-block-chain-empowered-by-great-learning/",
+  "last_updated": "2026-05-27T09:54:18+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "5,00,000 (for the entire programme)",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 104
+}

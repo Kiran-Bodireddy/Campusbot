@@ -1,0 +1,26 @@
+{
+  "program_name": "LL.M. Cyber Law and Security",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "LL.M",
+  "faculty": "SRM School of Law",
+  "department": "Department of Law",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "40",
+  "annual_fees_raw": "120000",
+  "annual_fees_inr": 120000,
+  "eligibility_criteria": "Any UG Law Degree with 60% aggregate.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/llm-cyber-law-and-security/",
+  "last_updated": "2026-07-27T10:25:12+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "40",
+      "fees": "120000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 264
+}

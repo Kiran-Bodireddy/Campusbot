@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Tech. Mechanical Engineering (Automation and Robotics)",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Mechanical Engineering",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "4",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "INR 2,75,000",
+  "annual_fees_inr": 275000,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-tech-mechanical-engineering-with-specialization-in-automation-and-robotics/",
+  "last_updated": "2026-01-28T10:37:16+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "INR 2,75,000",
+      "duration": "4"
+    }
+  ],
+  "program_id": 342
+}

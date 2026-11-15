@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Sc Physics With Specialization in Quantum Computing",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.Sc",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Physics",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years*",
+  "sanctioned_intake": "15",
+  "annual_fees_raw": "75,000",
+  "annual_fees_inr": 75000,
+  "eligibility_criteria": "A pass in 10 + 2 (Higher Secondary) with a minimum aggregate of 50%Mandatory subjects :1. Physics2. Chemistry3. Mathematics/Computer Scinece/Biology/ Botany & Zoology",
+  "about_program": "Undergraduate B.Sc Physics programme offered by SRM Institute of Science and Technology with specialisation in Quantum Computing.",
+  "career_opportunities": "Physics, Quantum Computing Foundations, Research Support, Scientific Computing",
+  "program_url": "https://www.srmist.edu.in/program/bsc-physics-with-specialization-in-quantum-computing/",
+  "last_updated": "2026-10-16T10:08:16+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "15",
+      "fees": "75,000",
+      "duration": "3 Years*"
+    }
+  ],
+  "program_id": 386
+}

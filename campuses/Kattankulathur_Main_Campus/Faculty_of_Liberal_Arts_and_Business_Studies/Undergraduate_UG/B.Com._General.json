@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Com. General",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.Com",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Commerce",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "120",
+  "annual_fees_raw": "1,30,000",
+  "annual_fees_inr": 130000,
+  "eligibility_criteria": "A pass in 10 + 2 (Higher Secondary) any group with a minimum aggregate of 50%.",
+  "about_program": "A 3-year undergraduate commerce programme at SRM Institute of Science and Technology focused on accounting, business fundamentals and financial literacy.",
+  "career_opportunities": "Accounting, Finance, Banking, Business Operations, Audit & Compliance",
+  "program_url": "https://www.srmist.edu.in/program/best-b-com-commerce-colleges-tamil-nadu/",
+  "last_updated": "2026-10-16T09:05:32+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "120",
+      "fees": "1,30,000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 362
+}

@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Robotics",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Mechanical Engineering",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Year",
+  "sanctioned_intake": "12",
+  "annual_fees_raw": "INR 1,60,000",
+  "annual_fees_inr": 160000,
+  "eligibility_criteria": "Eligibility for M.Tech Programs (Duration: 2 Years) Specialization Eligibility (A basic degree or equivalent in the following with a minimum aggregate of 50%) Robotics B.E / B.Tech. in Mechanical Engg. / Production Engg. / Industrial Engg. / Automobile Engg. / Aerospace / Aeronautical Engg. / Mechatronics Engg. / ECE / EEE / ICE / CSE (or) AMIE (Mech) / AMAeSI(Aero) / IMechE (or) any equivalent degree in the above Disciplines",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-robotics/",
+  "last_updated": "2026-03-09T11:08:49+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "12",
+      "fees": "INR 1,60,000",
+      "duration": "2 Year"
+    }
+  ],
+  "program_id": 124
+}

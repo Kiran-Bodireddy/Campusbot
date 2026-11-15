@@ -1,0 +1,26 @@
+{
+  "program_name": "DM. Medical Gastroenterology",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "",
+  "faculty": "Medicine & Health Sciences",
+  "department": "Allied Health Sciences",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "4",
+  "annual_fees_raw": "12,00,000",
+  "annual_fees_inr": 1200000,
+  "eligibility_criteria": "MD/ DNB ( General Medicine)",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/dm-medical-gastroenterology/",
+  "last_updated": "2024-11-12T07:40:44+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "4",
+      "fees": "12,00,000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 171
+}

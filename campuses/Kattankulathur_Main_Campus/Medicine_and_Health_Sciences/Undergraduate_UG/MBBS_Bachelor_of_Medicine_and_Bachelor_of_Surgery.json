@@ -1,0 +1,27 @@
+{
+  "program_name": "MBBS Bachelor of Medicine and Bachelor of Surgery",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "MBBS",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM Medical Research Centre",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "4.5 Years + 1 Year Internship",
+  "sanctioned_intake": "250  (Including 3 NRI)",
+  "annual_fees_raw": "Kindly refer to NEET MBBS Admissions 2026-2027 Information Bulletin",
+  "annual_fees_inr": null,
+  "eligibility_criteria": "1.Canditates must complete the age of 17 years on or before 31th December of the yearof admission.2.HSC /+ 2 or equivalent qualification with English, Physics, Chemistry, and Biology(Botany & Zoology) with minumum marks as per NMC Norms.3.Eligible NEET (UG) score as presceribed by NMC.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/mbbs-bachelor-of-medicine-and-bachelor-of-surgery/",
+  "last_updated": "2026-08-07T06:48:32+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "250  (Including 3 NRI)",
+      "fees": "Kindly refer to NEET MBBS Admissions 2026-2027 Information Bulletin",
+      "duration": "4.5 Years + 1 Year Internship",
+      "fees_numeric": null
+    }
+  ],
+  "program_id": 423
+}

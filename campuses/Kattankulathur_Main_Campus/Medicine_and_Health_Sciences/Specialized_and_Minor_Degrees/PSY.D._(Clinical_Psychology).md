@@ -1,0 +1,33 @@
+# PSY.D. (Clinical Psychology)
+
+- **Degree Level**: Specialized / Other
+- **Awarded Credential**: N/A
+- **Faculty / College**: Medicine & Health Sciences
+- **Department**: Allied Health Sciences
+- **Campus**: Kattankulathur (KTR)
+- **Duration**: 4 years / 2 years (Lateral Entry)
+- **Sanctioned Intake**: 4
+- **Annual Tuition Fees**: INR 500,000
+
+---
+
+## Eligibility & Admission Criteria
+Direct Entry:a) M.A./M.Sc. degree in Psychology from a University recognized by the UGC witha minimum of 65% marks in aggregate. For SC/ST/OBC category, a minimum of60% marks in aggregate is essential. b) Should have completed Master’s Degree no more than five years prior to application. c) Should have completed a Research Dissertation at the Master’s level. d) Two letters of recommendation from permanent Faculty Members from whereMasters Degree has been completed should accompany the application. Of the two,at least one Faculty Member shall be with Ph.D. Lateral Entry: a) M.Phil Clinical Psychology degree from a RCI recognized centers with minimum 55%marks in aggregate.b) Should have completed university exam of Part I and II in the first attempt.c) Should have RCI registration under Clinical Psychologist category or the same mustbe in the process.d) Two letters of recommendations from permanent Faculty Members from where M.Phildegree has been completed should accompany the application. Of the two, at least oneFaculty Member shall be with Ph.D.” Placement Opportunities Psy.D. Graduates are eligible to gain employment as consultants in Private practice,professional members in large and small academic organizations, Leader Managers inHuman service organizations, Faculty in Higher Education and principal investigator inResearch Projects. Higher Studies Opportunities Postdoctoral Fellowship Selection Through A selection committee that includes Head of the Department of Clinical Psychology shallmake admission on the basis of an entrance examination consisting of an objective-typeexam (to test the knowledge base in related branches of psychology), a written test(to test the writing skills essential to communicate among other Clinicians/Professionals), Group discussion (to test the expressive skills), Practical (to test the proficiency inadministering and interpreting the basic psychological tests and conducting aproblem-focused interview with a client) and an interview (to understand motivationand commitment to serve in the professions). The entrance examination shall be heldseparately for direct and latral entry applicants.
+
+---
+
+## Program Overview & Curriculum Scope
+Comprehensive academic curriculum offered at SRM Institute of Science and Technology.
+
+---
+
+## Campus Offerings Breakdown
+
+| Campus | Duration | Intake | Annual Fee |
+| :--- | :--- | :--- | :--- |
+| Kattankulathur (KTR) | 4 years / 2 years (Lateral Entry) | 4 | 5,00,000 |
+
+---
+
+## Official Links
+- [View on SRMIST Official Website](https://www.srmist.edu.in/program/psy-d-clinical-psychology/)

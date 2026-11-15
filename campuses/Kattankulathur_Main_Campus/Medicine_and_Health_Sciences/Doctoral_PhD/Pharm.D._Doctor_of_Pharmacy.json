@@ -1,0 +1,26 @@
+{
+  "program_name": "Pharm.D. Doctor of Pharmacy",
+  "degree_level": "Doctoral / Ph.D.",
+  "credential": "Pharm.D",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM College of Pharmacy",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "6 Years (Including Internship)",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "5,00,000 lakhs per year (Including Internship)",
+  "annual_fees_inr": 500000,
+  "eligibility_criteria": "1. Candidate shall have passed 10+2 examination conducted by the respective state/central government authorities recognised as equivalent to 10+2 examination by the Association of Indian Universities (AIU) with English as one of the subjects and Physics, Chemistry, Mathematics (P.C.M) and or Biology (P.C.B /P.C.M.B.) as optional subjects individually.2. Minimum of 50% aggregate of marks in PCM/PCB.3. Candidates who have passed the D.Pharm course from a PCI-approved institute with 60% aggregate marks.4. Age: Completion of 17 years on or before 31st December of the year of Admission.",
+  "about_program": "A professional doctoral programme at SRM Institute of Science and Technology focused on pharmacy practice and clinical exposure through academic study and internship components.",
+  "career_opportunities": "Clinical Pharmacy, Hospital Pharmacy, Pharmacy Practice, Pharmacovigilance",
+  "program_url": "https://www.srmist.edu.in/program/pharmd-doctor-of-pharmacy/",
+  "last_updated": "2026-10-23T11:25:59+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "5,00,000 lakhs per year (Including Internship)",
+      "duration": "6 Years (Including Internship)"
+    }
+  ],
+  "program_id": 62
+}

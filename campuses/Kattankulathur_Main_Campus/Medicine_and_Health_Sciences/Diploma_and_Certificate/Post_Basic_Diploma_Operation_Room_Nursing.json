@@ -1,0 +1,26 @@
+{
+  "program_name": "Post Basic Diploma Operation Room Nursing",
+  "degree_level": "Diploma / Certificate",
+  "credential": "",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM College of Nursing",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "1 Year",
+  "sanctioned_intake": "5",
+  "annual_fees_raw": "INR 35,000",
+  "annual_fees_inr": 35000,
+  "eligibility_criteria": "1. Candidates must have completed B.Sc. Nursing (Regular) Degree, Post Basic B.Sc. Nursing (Regular) Degree, or General Nursing and Midwifery (GNM) course with a minimum of 50% marks, recognized by the Indian Nursing Council, and registered with the State Nursing Council. 2. Minimum one year of work experience after B.Sc Nursing (or) Minimum one year of work experience as a staff nurse",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/post-basic-diploma-operation-room-nursing/",
+  "last_updated": "2026-10-23T11:12:14+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "5",
+      "fees": "INR 35,000",
+      "duration": "1 Year"
+    }
+  ],
+  "program_id": 12
+}

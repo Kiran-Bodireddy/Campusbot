@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Big Data Analytics",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Data Science And Business Systems",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "10",
+  "annual_fees_raw": "160000",
+  "annual_fees_inr": 160000,
+  "eligibility_criteria": "Engineering Background: BE/BTech any Stream with 50% marks. AMIE is accepted. MBA/M. Com/MA are not eligible Evening College & Distance education degrees are not accepted. All the degrees obtained must be through Full-Time mode. Degrees from UGC approved universities only will be accepted.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-big-data-analytics/",
+  "last_updated": "2026-01-27T08:43:01+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "10",
+      "fees": "160000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 99
+}

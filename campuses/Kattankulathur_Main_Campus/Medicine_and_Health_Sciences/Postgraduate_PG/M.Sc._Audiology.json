@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Sc. Audiology",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.SC",
+  "faculty": "Medicine & Health Sciences",
+  "department": "Allied Health Sciences",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "12",
+  "annual_fees_raw": "2,50,000",
+  "annual_fees_inr": 250000,
+  "eligibility_criteria": "1. Candidates with a B.ASLP/ B.Sc (Speech and Hearing) degree of any recognized2. University by the Rehabilitation Council of India with a minimum of 55% aggregate marks obtained in all the years/ semesters of the Qualifying Examination.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-sc-audiology/",
+  "last_updated": "2026-10-23T09:50:41+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "12",
+      "fees": "2,50,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 228
+}

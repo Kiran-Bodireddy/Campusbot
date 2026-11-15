@@ -1,0 +1,26 @@
+{
+  "program_name": "Master of Optometry",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "Master's",
+  "faculty": "Medicine & Health Sciences",
+  "department": "Allied Health Sciences",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "12",
+  "annual_fees_raw": "1,50,000",
+  "annual_fees_inr": 150000,
+  "eligibility_criteria": "1. Candidates must have passed B.Optom on regular mode from recognised University. 2. Admission on the basis of entrance exams by respective University. 3. Post Graduate entrance criteria requires to be compulsory registered member of National Commission for Allied and Healthcare Professions (NCAHP). 4. Medical fitness certificate is mandatory to submit and is to be endorsed by Governmnent medical officer. 5. Foreign students’ admission process in Under Graduate (UG)/ Post Graduation (PG)/ PhD: a. Foreign national students intending to study UG/PG program in India, shall have to take equivalence certificate of eligibility certificate from respective state Allied and Healthcare Council. b. For Under Graduate/ Post Graduation/ PhD admission of foreign national students, merit list will be based on University Entrance Exam. c. If eligibility criteria of admission is NEET appeared then the foreign national student is require to appear in NEET d. Verification of Valid Visa and valid Visa duration of foreign national students, to be verified by respetive institution & university before enrolling students for program. 6. The admission criteria shall be updated by the Commission from time to time.",
+  "about_program": "Master's programme offered by SRM Institute of Science and Technology in Optometry.",
+  "career_opportunities": "Optometry, Vision Care, Clinical Practice, Eye Care Services",
+  "program_url": "https://www.srmist.edu.in/program/m-optm-optometry/",
+  "last_updated": "2026-10-23T09:33:28+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "12",
+      "fees": "1,50,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 259
+}

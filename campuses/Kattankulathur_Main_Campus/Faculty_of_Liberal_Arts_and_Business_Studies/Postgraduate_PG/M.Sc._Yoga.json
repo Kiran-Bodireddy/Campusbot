@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Sc. Yoga",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.SC",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Yoga",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "20",
+  "annual_fees_raw": "75,000",
+  "annual_fees_inr": 75000,
+  "eligibility_criteria": "A pass in any UG degree.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-sc-yoga/",
+  "last_updated": "2024-12-10T11:11:06+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "20",
+      "fees": "75,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 155
+}

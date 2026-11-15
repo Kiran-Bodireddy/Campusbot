@@ -1,0 +1,26 @@
+{
+  "program_name": "Pharm.D – Doctor of Pharmacy (Post Baccalaureate)",
+  "degree_level": "Doctoral / Ph.D.",
+  "credential": "PHARM.D",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM College of Pharmacy",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years (Including Internship)",
+  "sanctioned_intake": "10",
+  "annual_fees_raw": "2,50,000 Lakhs per year (Including Internship)",
+  "annual_fees_inr": 250000,
+  "eligibility_criteria": "Candidates shall have passed a Bachelor’s degree in Pharmacy from a PCI approved institution. Minimum of 50% aggregate of marks in Bachelor’s Degree. Students should submit Pharmacist Registration Certificate obtained from the respective State Pharmacy Council at the time admission. Age: Minimum age limit is 21 years on or before 31st December of year of Admission.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/pharm-d/",
+  "last_updated": "2026-05-11T12:43:47+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "10",
+      "fees": "2,50,000 Lakhs per year (Including Internship)",
+      "duration": "3 Years (Including Internship)"
+    }
+  ],
+  "program_id": 61
+}

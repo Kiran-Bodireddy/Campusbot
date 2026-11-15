@@ -1,0 +1,26 @@
+{
+  "program_name": "Bachelor of Occupational Therapy",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM College of Occupational Therapy",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "5 Years (Including Internship)",
+  "sanctioned_intake": "100",
+  "annual_fees_raw": "3,24,000 (Fee applicable per annum for 5 years)",
+  "annual_fees_inr": 324000,
+  "eligibility_criteria": "1. Candidate must have passed Senior Secondary (10+2) or equivalent with Physics, Chemistry & Biology (or Botany & Zoology) with 50 % aggregate with English pass. However, in respect of the candidates belonging to Scheduled Castes, Scheduled Tribes, or Other Backward Classes (NCL), the minimum marks obtained in Physics, Chemistry,and Biology are taken together in the qualifying examination shall be 40 % marks instead of 50% marks for Unreserved and General -EWS Candidates. In respect of PwBD/PwD candidates, the minimum marks in the qualifying examination in Physics, Chemistry, and Biology (or Botany & Zoology ) taken together shall be 40 % instead of 50%. English pass required for all categories. 2.The candidate must have appeared in the National Eligibility Entrance Test (NEET) conducted by National Testing Agency (NTA) for the academic year of the admission. However, there shall be no minimum qualifying marks or cut-off percentile requirement for application for the admission. 3. Admission on the basis of NEET Merit /Marks (with no cut-off marks or cut-off percentile for application) of the academic year of the admission",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/bachelor-of-occupational-therapy/",
+  "last_updated": "2026-10-23T11:23:31+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "100",
+      "fees": "3,24,000 (Fee applicable per annum for 5 years)",
+      "duration": "5 Years (Including Internship)"
+    }
+  ],
+  "program_id": 419
+}

@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Sc. Medical Microbiology",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.SC",
+  "faculty": "Medicine & Health Sciences",
+  "department": "Allied Health Sciences",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "10",
+  "annual_fees_raw": "2,00,000",
+  "annual_fees_inr": 200000,
+  "eligibility_criteria": "1. Completed the age of 21 years on or before 31st December of the year of admission to the program.2. Undergraduate degree from a recognized University with minimum 50% marks or CGPA of 5.0.3. In case of students from foreign Universities, they should have qualifications recognized as equivalent to an Undergraduate degree.4. Academic Qualification: B.Sc., (Zoology, Microbiology, Chemistry, Medical Laboratory Technology, Biotechnology, Life Sciences) / BDS.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-sc-medical-microbiology/",
+  "last_updated": "2026-02-20T10:07:42+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "10",
+      "fees": "2,00,000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 238
+}

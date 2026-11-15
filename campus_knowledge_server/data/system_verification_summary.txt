@@ -1,0 +1,82 @@
+======================================================================
+CAMPUS KNOWLEDGE SERVER & UNIFIED CURRICULUM VERIFICATION AUDIT
+======================================================================
+Server Health: healthy | Mode: High-Speed In-Memory Graph
+Indexed Courses in Graph: 668
+Indexed Faculty in Graph: 2501
+Indexed Rooms in Graph:   264
+Audit Log Hash Chain:    VALID (Hash chain intact. Zero tampering detected.)
+
+--- LIVE AGENT INTENT & QUERY VERIFICATIONS ---
+
+[PASS] Test 1: Semester 3 Subjects for B.Tech CSE
+  Query:         "What are the 3rd semester subjects for CSE?"
+  Tool Executed: get_semester_curriculum (Status: SUCCESS)
+  Keywords Matched: 5/5
+  Answer Snippet:
+  **B.Tech in Computer Science and Engineering - Semester 3 Implementation Plan** (Academic Year 2):
+  - **Total Subjects**: **8 courses** (1 Basic Sciences, 2 Engineering Sciences, 3 Professional Core, 2 Mandatory Non-Credit)
+  - **Semester Credits**: **23 Credits**
+  
+  **Curriculum Cour...
+
+[PASS] Test 2: Semester 4 Courses for Aerospace Engineering
+  Query:         "What courses do I take in Semester 4 of Aerospace Engineering?"
+  Tool Executed: get_semester_curriculum (Status: SUCCESS)
+  Keywords Matched: 4/4
+  Answer Snippet:
+  **B.Tech in Aerospace Engineering - Semester 4 Implementation Plan** (Academic Year 2):
+  - **Total Subjects**: **9 courses** (1 Basic Sciences, 6 Professional Core, 1 Engineering Sciences, 1 Mandatory Non-Credit)
+  - **Semester Credits**: **21 Credits**
+  
+  **Curriculum Course Matrix:*...
+
+[PASS] Test 3: Full 8-Semester Curriculum Plan for Mechanical
+  Query:         "What is the full curriculum plan for Mechanical Engineering?"
+  Tool Executed: get_semester_curriculum (Status: SUCCESS)
+  Keywords Matched: 4/4
+  Answer Snippet:
+  **B.Tech in Mechanical Engineering - 8-Semester Unified Curriculum Structure** (Regulations 2021):
+  - **Total Course Modules**: **67 courses**
+  - **Graduation Requirement**: **169 Total Credits**
+  
+  - **Semester 1** (**18 Credits**, 8 courses): 21LEH101T, 21MAB101T, 21PYB101J, 21MES1...
+
+[PASS] Test 4: Prerequisite Eligibility Check
+  Query:         "Can a student who completed 21CSC206T take 21CSO451T?"
+  Tool Executed: verify_prerequisites (Status: SUCCESS)
+  Keywords Matched: 2/2
+  Answer Snippet:
+  **Eligible**: Student has satisfied all required prerequisites for [Course: 21CSO451T] (Completed: 21CSC206T).
+
+[PASS] Test 5: Official Course Lookup
+  Query:         "Lookup course 21CSC201J"
+  Tool Executed: lookup_course (Status: SUCCESS)
+  Keywords Matched: 3/3
+  Answer Snippet:
+  **[Course: 21CSC201J] Data Structures And Algorithms** is an accredited **UG** level subject carrying **4 credits** (L-T-P-C: 3-0-2-4), offered by the **School of Computing** under Faculty of Engineering & Technology. Recommended for **Semester 3 (Year 2 Core / Mandatory)**.
+  
+  **C...
+
+[PASS] Test 6: Admission Eligibility & Fees
+  Query:         "What is the admission eligibility and fee for B.Tech Computer Science with 65% in PCM?"
+  Tool Executed: check_admission_eligibility (Status: SUCCESS)
+  Keywords Matched: 4/4
+  Answer Snippet:
+  Official SRMIST Admission Regulations for 'B.Tech':
+  
+  - [Program: B.Tech. Automobile Engineering with Specialization in Automotive Electronics] (Postgraduate (PG), Faculty of Engineering & Technology)
+    - Min Education: 10+2 (Higher Secondary) - Regular (Physics & Mathematics (com...
+
+[PASS] Test 7: Campus Aggregation Statistics
+  Query:         "How many degree programs and courses does SRM offer?"
+  Tool Executed: get_campus_statistics (Status: SUCCESS)
+  Keywords Matched: 3/3
+  Answer Snippet:
+  **SRM Institute of Science and Technology (SRMIST)** offers **428 accredited academic degree programs** and **668 course modules** across 6 major faculties at its campuses:
+  
+  - **Undergraduate (UG)**: **125 programs** including B.Tech (CSE, AI, Biotech, ECE, Mechanical, Civil), MB...
+
+======================================================================
+FINAL AUDIT RESULT: ALL VERIFICATIONS PASSED
+======================================================================

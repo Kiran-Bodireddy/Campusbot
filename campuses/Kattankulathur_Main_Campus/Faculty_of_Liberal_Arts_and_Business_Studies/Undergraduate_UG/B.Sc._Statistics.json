@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Sc. Statistics",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.SC",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Mathematics and Statistics",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "20",
+  "annual_fees_raw": "80,000",
+  "annual_fees_inr": 80000,
+  "eligibility_criteria": "A pass in 10 + 2 (Higher Secondary) with a minimum aggregate of 50%Mandatory subjects :1. Atleast one of Mathematics/ Statistics",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-sc-statistics/",
+  "last_updated": "2026-10-26T10:05:21+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "20",
+      "fees": "80,000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 397
+}

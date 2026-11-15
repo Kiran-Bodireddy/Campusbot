@@ -1,0 +1,26 @@
+{
+  "program_name": "BBA. Data Science",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "BBA",
+  "faculty": "Faculty of Management",
+  "department": "Department of Management",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "60",
+  "annual_fees_raw": "INR 200000",
+  "annual_fees_inr": 200000,
+  "eligibility_criteria": "A Pass in Higher Secondary Examination with Minimum eligibility of aggregate of 50% in +2 (Preference will be given to students without any break in study).",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-b-a-honours-business-administration/",
+  "last_updated": "2026-10-17T11:05:37+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "60",
+      "fees": "INR 200000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 402
+}

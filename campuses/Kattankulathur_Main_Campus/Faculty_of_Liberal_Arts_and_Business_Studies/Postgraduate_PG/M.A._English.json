@@ -1,0 +1,26 @@
+{
+  "program_name": "M.A. English",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.A",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of English",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2  Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "75,000",
+  "annual_fees_inr": 75000,
+  "eligibility_criteria": "A pass in B.A (English) with a minimum aggregate of 50% in UG.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/best-m-a-english-colleges-in-chennai/",
+  "last_updated": "2025-11-04T08:59:44+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "75,000",
+      "duration": "2  Years"
+    }
+  ],
+  "program_id": 131
+}

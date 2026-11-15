@@ -1,0 +1,26 @@
+{
+  "program_name": "MPH – Master of Public Health",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "Master's",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM School of Public Health",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "40",
+  "annual_fees_raw": "INR 2,60,000",
+  "annual_fees_inr": 260000,
+  "eligibility_criteria": "1.The Master of Public Health (MPH) program is open to graduates from all streams with a minimum of 50% marks. 2.Medical doctors who are not inclined for clinical practice may find public health an exciting and rewarding career. Accordingly, candidates with degrees such as MBBS, Foreign Medical Graduates (FMG), BDS, BAMS, BHMS, BSMS, BUMS, BNYS, BSc- Nursing, Pharmacy or BSc-Nutrition are encouraged to apply.",
+  "about_program": "Master of Public Health programme offered by SRM Institute of Science and Technology.",
+  "career_opportunities": "Public Health, Health Systems, Epidemiology Support, Community Health",
+  "program_url": "https://www.srmist.edu.in/program/master-of-public-health-mph/",
+  "last_updated": "2026-10-23T11:47:06+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "40",
+      "fees": "INR 2,60,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 253
+}

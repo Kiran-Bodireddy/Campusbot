@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Cloud Computing",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Networking And Communications",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "36",
+  "annual_fees_raw": "INR 1,60,000",
+  "annual_fees_inr": 160000,
+  "eligibility_criteria": "Eligibility for M.Tech Programs (Duration: 2 Years) Specialization Eligibility Cloud Computing Eligibility for this M.Tech Program is a basic degree or equivalent in B.E / B.Tech in CSE / IT / SWE / ECE / EEE / EI (or) MCA (or) M.Sc (CSE / IT) (or) its equivalent with a minimum aggregate of 50%",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-cloud-computing/",
+  "last_updated": "2026-04-20T06:58:52+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "36",
+      "fees": "INR 1,60,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 103
+}

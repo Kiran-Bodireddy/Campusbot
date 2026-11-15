@@ -1,0 +1,26 @@
+{
+  "program_name": "DGNM – Diploma in General Nursing and Midwifery",
+  "degree_level": "Diploma / Certificate",
+  "credential": "",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM College of Nursing",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "20",
+  "annual_fees_raw": "60,000",
+  "annual_fees_inr": 60000,
+  "eligibility_criteria": "1. Candidates must have 10+2 from any recognised board. However, Science is preferable.2. Percentage of Marks: Candidate must have obtained a minimum of 45% aggregate in the qualifying examination.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/diploma-in-nursing-dgnm/",
+  "last_updated": "2026-10-23T11:14:12+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "20",
+      "fees": "60,000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 8
+}

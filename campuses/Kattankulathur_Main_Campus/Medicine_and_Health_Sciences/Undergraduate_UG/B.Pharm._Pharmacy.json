@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Pharm. Pharmacy",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.Pharm",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM College of Pharmacy",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "4 Years",
+  "sanctioned_intake": "100",
+  "annual_fees_raw": "INR 2,25,000",
+  "annual_fees_inr": 225000,
+  "eligibility_criteria": "1. Candidate shall have passed 10+2 examination conducted by the respective state/central government authorities recognised as equivalent to 10+2 examination by the Association of Indian Universities (AIU) with English as one of the subjects and Physics, Chemistry, Mathematics (P.C.M) and or Biology (P.C.B /P.C.M.B.) as optional subjects individually.2. Minimum of 50% aggregate of marks in PCM/PCB.3. Candidates who have passed the D.Pharm course from a PCI-approved institute with 60% aggregate marks.4. Age: Completion of 17 years on or before 31st December of the year of Admission.",
+  "about_program": "A 4-year undergraduate pharmacy programme at SRM Institute of Science and Technology focused on pharmaceutical sciences, formulations and applied learning.",
+  "career_opportunities": "Pharmaceutical Sciences, Quality Assurance, Clinical Support, Drug Development",
+  "program_url": "https://www.srmist.edu.in/program/b-pharm-pharmacy/",
+  "last_updated": "2026-10-23T11:18:50+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "100",
+      "fees": "INR 2,25,000",
+      "duration": "4 Years"
+    }
+  ],
+  "program_id": 405
+}

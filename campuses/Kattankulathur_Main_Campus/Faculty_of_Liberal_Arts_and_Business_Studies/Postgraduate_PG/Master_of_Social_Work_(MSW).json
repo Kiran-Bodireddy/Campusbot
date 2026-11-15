@@ -1,0 +1,26 @@
+{
+  "program_name": "Master of Social Work (MSW)",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Social Work",
+  "campuses_available": "Kattankulathur(KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "40",
+  "annual_fees_raw": "1,00,000",
+  "annual_fees_inr": 100000,
+  "eligibility_criteria": "A pass in any UG degree with a minimum aggregate of 50%.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/master-of-social-work-msw/",
+  "last_updated": "2026-10-16T12:05:37+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur(KTR)",
+      "intake": "40",
+      "fees": "1,00,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 157
+}

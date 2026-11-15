@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Aerospace Engineering",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Aerospace Engineering",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "18",
+  "annual_fees_raw": "160000",
+  "annual_fees_inr": 160000,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-aerospace-engineering-full-time/",
+  "last_updated": "2024-11-12T10:13:19+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "18",
+      "fees": "160000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 92
+}

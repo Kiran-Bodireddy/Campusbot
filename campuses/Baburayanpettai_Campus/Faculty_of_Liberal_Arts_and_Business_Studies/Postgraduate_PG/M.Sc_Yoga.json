@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Sc Yoga",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.SC",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Yoga",
+  "campuses_available": "Baburayanpettai",
+  "duration": "2 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "₹75,000",
+  "annual_fees_inr": 75000,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-sc-yoga-2/",
+  "last_updated": "2026-04-11T12:27:29+00:00",
+  "offerings": [
+    {
+      "campus": "Baburayanpettai",
+      "intake": "30",
+      "fees": "₹75,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 139
+}

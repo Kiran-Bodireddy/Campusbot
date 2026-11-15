@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Sc Counselling Psychology",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.SC",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Psychology",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "60",
+  "annual_fees_raw": "1,35,000",
+  "annual_fees_inr": 135000,
+  "eligibility_criteria": "A pass in B.Sc / B.A Psychology with a minimum aggregate of 50%.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-sc-counselling-psychology/",
+  "last_updated": "2026-10-16T12:11:58+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "60",
+      "fees": "1,35,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 138
+}

@@ -1,0 +1,26 @@
+{
+  "program_name": "BBA. Business Administration",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "BBA",
+  "faculty": "Faculty of Management",
+  "department": "Department of Management",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "300",
+  "annual_fees_raw": "INR 200000",
+  "annual_fees_inr": 200000,
+  "eligibility_criteria": "A Pass in Higher Secondary Examination with Minimum eligibility of aggregate of 50% in +2 (Preference will be given to students without any break in study).",
+  "about_program": "A 3-year undergraduate BBA programme at SRM Institute of Science and Technology covering foundational business, management and industry-oriented skills.",
+  "career_opportunities": "Business Administration, Sales & Marketing, Finance, Human Resources, Entrepreneurship",
+  "program_url": "https://www.srmist.edu.in/program/b-b-a-business-administration/",
+  "last_updated": "2026-10-17T05:01:29+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "300",
+      "fees": "INR 200000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 401
+}

@@ -1,0 +1,26 @@
+{
+  "program_name": "B.B.A.,LL.B. Bachelor of Business Administration and Legum Baccalareus (Honours)",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.B.A., LL.B (Hons.)",
+  "faculty": "SRM School of Law",
+  "department": "Department of Law",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "5 Years",
+  "sanctioned_intake": "120",
+  "annual_fees_raw": "3,00,000",
+  "annual_fees_inr": 300000,
+  "eligibility_criteria": "10, + 2 pass in regular/normal mode. Minimum 60% aggregate or equivalent letter grade/GPA in +2 board examination. Appeared in 2026 CLAT/SRMJEEL for 5 year integrated programs.",
+  "about_program": "A 5-year integrated B.B.A., LL.B (Hons.) programme at SRM Institute of Science and Technology combining business administration fundamentals with legal education.",
+  "career_opportunities": "Corporate Law, Business & Legal Advisory, Compliance, Contract Management",
+  "program_url": "https://www.srmist.edu.in/program/b-b-a-ll-b-bachelor-of-business-administrarion-and-legum-baccalareus-honours/",
+  "last_updated": "2026-09-25T11:34:14+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "120",
+      "fees": "3,00,000",
+      "duration": "5 Years"
+    }
+  ],
+  "program_id": 426
+}

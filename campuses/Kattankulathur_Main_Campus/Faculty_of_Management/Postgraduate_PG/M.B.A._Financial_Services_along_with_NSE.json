@@ -1,0 +1,26 @@
+{
+  "program_name": "M.B.A. Financial Services along with NSE",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "MBA",
+  "faculty": "Faculty of Management",
+  "department": "Department of Management",
+  "campuses_available": "Kattankulathur(KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "INR 620000",
+  "annual_fees_inr": 620000,
+  "eligibility_criteria": "1. A Bachelor’s degree with minimum aggregate of 50%.2. Admission will be done through SRM Joint Entrance Examination for Management (SRMJEEM) followed by a Personal Interview. Students with eligible entrance scores in CAT/XAT/MAT/GMAT/NMAT/CMAT/TANCET will be granted direct consideration for the personal interview.3. Preference would be given to candidates with work experience.",
+  "about_program": "MBA programme offered by SRM Institute of Science and Technology with specialisation in financial services.",
+  "career_opportunities": "Financial Services, Corporate Finance, Banking, Risk Management, Wealth Management",
+  "program_url": "https://www.srmist.edu.in/program/mba-financial-services/",
+  "last_updated": "2026-10-17T11:30:32+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur(KTR)",
+      "intake": "30",
+      "fees": "INR 620000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 162
+}

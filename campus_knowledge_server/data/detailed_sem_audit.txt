@@ -1,0 +1,526 @@
+================================================================================
+DETAILED SEMESTER-BY-SEMESTER CURRICULUM AUDIT ACROSS MAJOR BRANCHES
+================================================================================
+
+================================================================================
+PROGRAMME: B.TECH IN COMPUTER SCIENCE AND ENGINEERING (Page 80)
+================================================================================
+
+  [SEMESTER 1] - 17 Courses | 43 Credits:
+    * 21LEH102T: Chinese | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21LEH103T: French | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH104T: German | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH105T: Japanese | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH106T: Korean | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH107T: Spanish | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21GNH101J: Philosophy Of Engineering | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21MAB101T: Calculus And Linear Algebra | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CYB101J: Chemistry | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21BTB102T: Introduction To Computational Biology | Basic Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21CSS101J: Programming For Problem Solving | Engineering Sciences | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21MES101L: Basic Civil And Mechanical Workshop | Engineering Sciences | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21PDM101L: Professional Skills And Practices | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM101L: Physical And Mental Health Using Yoga | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM102L: Nss | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM103L: Ncc | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM104L: Nso | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  [SEMESTER 2] - 9 Courses | 21 Credits:
+    * 21LEH101T: Communicative English | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MAB102T: Advanced Calculus And Complex Analysis | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21PYB102J: Semiconductor Physics And Computational Methods | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21MES102L: Engineering Graphics And Design | Engineering Sciences | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21EES101T: Electrical And Electronics Engineering | Engineering Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CSC101T: Object Oriented Design And Programming | Professional Core | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21CYM101T: Environmental Science* | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM102L: General Aptitude* | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM101T: Constitution Of India | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 3] - 8 Courses | 23 Credits:
+    * 21MAB201T: Transforms And Boundary Value Problems | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21DCS201P: Design Thinking And Methodology | Engineering Sciences | L-T-P-C: 1-0-4-3 | 3 Credits
+    * 21CSS201T: Computer Organization And Architecture | Engineering Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CSC201J: Data Structures And Algorithms | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21CSC202J: Operating Systems | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21CSC203P: Advanced Programming Practice | Professional Core | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21LEM201T: Professional Ethics | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM201L: Verbal Reasoning | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+
+  [SEMESTER 4] - 7 Courses | 20 Credits:
+    * 21MAB204T: Probability And Queueing Theory | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CSC204J: Design And Analysis Of Algorithms | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21CSC205P: Database Management Systems | Professional Core | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CSC206T: Artificial Intelligence | Professional Core | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21PDH201T: Social Engineering | Humanities and Social Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21PDM202L: Critical And Creative Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM202T: Universal Human Values– Understanding | Mandatory Non-Credit | L-T-P-C: 2-1-0-3 | 3 Credits
+
+  [SEMESTER 5] - 7 Courses | 15 Credits:
+    * 21MAB302T: Discrete Mathematics | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CSC301T: Formal Language And Automata | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21CSC302J: Computer Networks | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21CSC305P: Machine Learning | Professional Core | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21GNP301L: Community Connect | Project / Practice | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21PDM301L: Analytical And Logical Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM301T: Indian Art Form | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 6] - 7 Courses | 14 Credits:
+    * 21CSS303T: Data Science | Engineering Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21CSC303J: Software Engineering And Project Management | Professional Core | L-T-P-C: 2-0-2-3 | 3 Credits
+    * 21CSC304J: Compiler Design | Professional Core | L-T-P-C: 2-0-2-3 | 3 Credits
+    * 21CSP302L: Project | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21CSP303T: Mooc | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21PDM302L: Employability Skills And Practices | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM302T: Indian Traditional Knowledge | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 7] - 1 Courses | 3 Credits:
+    * 21GNH401T: Behavioral Psychology | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+
+  [SEMESTER 8] - 3 Courses | 21 Credits:
+    * 21CSP401L: Major Project | Project / Practice | L-T-P-C: 0-0-30-15 | 15 Credits
+    * 21CSP402L: Major Project | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21CSP403L: Internship# | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  >> TOTAL FOR B.Tech in Computer Science and Engineering: 59 Course Allocations, 160 Cumulative Credits
+
+================================================================================
+PROGRAMME: B.TECH IN ARTIFICIAL INTELLIGENCE (Page 14)
+================================================================================
+
+  [SEMESTER 1] - 9 Courses | 21 Credits:
+    * 21LEH101T: Communicative English | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MAB101T: Calculus And Linear Algebra | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21PYB102J: Semiconductor Physics And Computational | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21MES102L: Engineering Graphics And Design | Engineering Sciences | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21EES101T: Electrical And Electronics Engineering | Engineering Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CSS101J: Programming For Problem Solving | Engineering Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21CYM101T: Environmental Science* | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM101L: Professional Skills And Practices | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM101T: Constitution Of India | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 2] - 17 Courses | 42 Credits:
+    * 21LEH102T: Chinese | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21LEH103T: French | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH104T: German | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH105T: Japanese | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH106T: Korean | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH107T: Spanish | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21GNH101J: Philosophy Of Engineering | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21MAB102T: Advanced Calculus And Complex Analysis | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CYB101J: Chemistry | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21BTB102T: Introduction To Computational Biology | Basic Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21AIS101J: Foundation Of Data Analysis | Engineering Sciences | L-T-P-C: 2-0-2-3 | 3 Credits
+    * 21MES101L: Basic Civil And Mechanical Workshop | Engineering Sciences | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21PDM102L: General Aptitude* | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM101L: Physical And Mental Health Using Yoga | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM102L: Nss | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM103L: Ncc | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM104L: Nso | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  [SEMESTER 3] - 8 Courses | 22 Credits:
+    * 21MAB201T: Transforms And Boundary Value Problems | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21DCS201P: Design Thinking And Methodology | Engineering Sciences | L-T-P-C: 1-0-4-3 | 3 Credits
+    * 21CSS201T: Computer Organization And Architecture | Engineering Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CSC201J: Data Structures And Algorithms | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21CSC101T: Object Oriented Design And Programming | Professional Core | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21CSC203P: Advanced Programming Practice | Professional Core | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21LEM201T: Professional Ethics | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM201L: Verbal Reasoning | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+
+  [SEMESTER 4] - 8 Courses | 23 Credits:
+    * 21MAB304T: Probability And Applied Statistics | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CSC204J: Design And Analysis Of Algorithms | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21AIS201J: Foundation Of Artificial Intelligence | Engineering Sciences | L-T-P-C: 2-0-2-3 | 3 Credits
+    * 21AIC202J: Neural Networks And Machine Learning | Professional Core | L-T-P-C: 2-0-2-3 | 3 Credits
+    * 21CSC202J: Operating Systems | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21PDH201T: Social Engineering | Humanities and Social Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21PDM202L: Critical And Creative Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM202T: Universal Human Values – Understanding | Mandatory Non-Credit | L-T-P-C: 2-1-0-3 | 3 Credits
+
+  [SEMESTER 5] - 7 Courses | 16 Credits:
+    * 21MAB302T: Discrete Mathematics | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CSC301T: Formal Language And Automata | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21CSC205P: Database Management Systems | Professional Core | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21AIC301J: Deep Learning Techniques | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21GNP301L: Community Connect | Project / Practice | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21PDM301L: Analytical And Logical Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM301T: Indian Art Form | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 6] - 7 Courses | 14 Credits:
+    * 21AIC303T: Computer Networks And Communications | Professional Core | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21CSC303J: Software Engineering And Project Management | Professional Core | L-T-P-C: 2-0-2-3 | 3 Credits
+    * 21AIC302J: Reinforcement Learning Techniques | Professional Core | L-T-P-C: 2-0-2-3 | 3 Credits
+    * 21AIP302L: Project | Project / Practice | L-T-P-C: 0-0-6-3 | 3 Credits
+    * 21AIP303T: Mooc | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21PDM302L: Employability Skills And Practices | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM302T: Indian Traditional Knowledge | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 7] - 3 Courses | 9 Credits:
+    * 21GNH401T: Behavioral Psychology | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21AIC401T: Inferential Statistics And Predictive Analytics | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21AIC402T: Design Of Artificial Intelligence Products | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  [SEMESTER 8] - 3 Courses | 9 Credits:
+    * 21AIP401L: Major Project | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21AIP402L: Major Project | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21AIP403L: Internship | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  >> TOTAL FOR B.Tech in Artificial Intelligence: 62 Course Allocations, 156 Cumulative Credits
+
+================================================================================
+PROGRAMME: B.TECH IN ELECTRONICS AND COMMUNICATION ENGINEERING (Page 135)
+================================================================================
+
+  [SEMESTER 1] - 8 Courses | 18 Credits:
+    * 21LEH101T: Communicative English | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MAB101T: Calculus And Linear Algebra | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21PYB101J: Physics: Electromagnetic Theory, Quantum Mechanics, Waves And Optics | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21MES102L: Engineering Graphics And Design | Engineering Sciences | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21EES101T: Electrical And Electronics Engineering | Engineering Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CYM101T: Environmental Science | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM101L: Professional Skills And Practices | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM101T: Constitution Of India | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 2] - 18 Courses | 46 Credits:
+    * 21LEH102T: Chinese | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21LEH103T: French | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH104T: German | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH105T: Japanese | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH106T: Korean | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH107T: Spanish | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21GNH101J: Philosophy Of Engineering | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21MAB102T: Advanced Calculus And Complex Analysis | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CYB101J: Chemistry | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21ECC101J: Electronic System And Pcb Design | Professional Core | L-T-P-C: 2-0-2-3 | 3 Credits
+    * 21CSS101J: Programming For Problem Solving | Engineering Sciences | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21BTB103T: Biology | Basic Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21MES101L: Basic Civil And Mechanical Workshop | Engineering Sciences | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21PDM102L: General Aptitude | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM101L: Physical And Mental Health Using Yoga | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM102L: Nss | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM103L: Ncc | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM104L: Nso | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  [SEMESTER 3] - 10 Courses | 24 Credits:
+    * 21MAB201T: Transforms And Boundary Value Problems | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21PDH201T: Social Engineering | Humanities and Social Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21CSS201T: Computer Organization And Architecture | Engineering Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21ECC201T: Solid State Devices | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ECC203T: Digital Logic Design | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ECC205T: Electromagnetic Theory And Interference | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ECC211L: Devices And Digital Ic Lab | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21LEM201T: Professional Ethics | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM201L: Verbal Reasoning | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM202T: Universal Human Values– Understanding | Mandatory Non-Credit | L-T-P-C: 2-1-0-3 | 3 Credits
+
+  [SEMESTER 4] - 7 Courses | 18 Credits:
+    * 21MAB203T: Probability And Stochastic Process | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21ECC202T: Analog And Linear Electronic Circuits | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ECC204T: Signal Processing | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ECC222L: Analog And Linear Electronic Circuits Lab | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21CSC206T: Artificial Intelligence | Professional Core | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21DCS201P: Design Thinking And Methodology | Engineering Sciences | L-T-P-C: 1-0-4-3 | 3 Credits
+    * 21PDM202L: Critical And Creative Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+
+  [SEMESTER 5] - 7 Courses | 14 Credits:
+    * 21MAB302T: Discrete Mathematics | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21ECC301P: Microprocessor, Microcontroller And Interfacing | Professional Core | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21ECC303T: Vlsi Design And Technology | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ECC311L: Vlsi Design Lab | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21GNP301L: Community Connect | Project / Practice | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21PDM301L: Analytical And Logical Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM301T: Indian Art Form | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 6] - 8 Courses | 16 Credits:
+    * 21CSS303T: Data Science | Engineering Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21ECC302T: Analog And Digital Communication | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ECC304T: Microwave And Optical Communication | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ECC322L: Communication Lab | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21ECP302L: Project | Project / Practice | L-T-P-C: 0-0-6-3 | 3 Credits
+    * 21ECP303T: Mooc | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21PDM302L: Employability Skills And Practices | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM302T: Indian Traditional Knowledge | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 7] - 3 Courses | 9 Credits:
+    * 21GNH401T: Behavioral Psychology | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21ECC401T: Wireless Communication And Antenna | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ECC402P: Computer Communication And Network | Professional Core | L-T-P-C: 2-1-0-3 | 3 Credits
+
+  [SEMESTER 8] - 3 Courses | 21 Credits:
+    * 21ECP401L: Major Project | Project / Practice | L-T-P-C: 0-0-30-15 | 15 Credits
+    * 21ECP402L: Major Project | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ECP403L: Internship# | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  >> TOTAL FOR B.Tech in Electronics and Communication Engineering: 64 Course Allocations, 166 Cumulative Credits
+
+================================================================================
+PROGRAMME: B.TECH IN MECHANICAL ENGINEERING (Page 175)
+================================================================================
+
+  [SEMESTER 1] - 8 Courses | 18 Credits:
+    * 21LEH101T: Communicative English | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MAB101T: Calculus And Linear Algebra | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21PYB101J: Physics: Electromagnetic Theory, Quantum Mechanics, Waves And Optics | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21MES102L: Engineering Graphics And Design | Engineering Sciences | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21EES101T: Electrical And Electronics Engineering | Engineering Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CYM101T: Environmental Science | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM101L: Professional Skills And Practices | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM101T: Constitution Of India | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 2] - 18 Courses | 47 Credits:
+    * 21LEH102T: Chinese | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21LEH103T: French | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH104T: German | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH105T: Japanese | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH106T: Korean | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH107T: Spanish | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21GNH101J: Philosophy Of Engineering | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21MAB102T: Advanced Calculus And Complex Analysis | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CYB101J: Chemistry | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21MES101T: Engineering Mechanics | Engineering Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21CSS101J: Programming For Problem Solving | Engineering Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21BTB103T: Biology | Basic Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MES101L: Basic Civil And Mechanical Workshop | Engineering Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21PDM102L: General Aptitude | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM101L: Physical And Mental Health Using Yoga | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM102L: Nss | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM103L: Ncc | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM104L: Nso | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  [SEMESTER 3] - 11 Courses | 24 Credits:
+    * 21MAB201T: Transforms And Boundary Value Problems | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21MEC201T: Engineering Thermodynamics | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MEC202T: Mechanics Of Solids | Professional Core | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21MEC203T: Engineering Materials And Metallurgy | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MEC204T: Manufacturing Processes And Metrology | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MEC201L: Manufacturing Processes And Metrology | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21MEC202L: Material Testing Laboratory | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21PDH201T: Social Engineering | Humanities and Social Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21LEM201T: Professional Ethics | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM201L: Verbal Reasoning | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM202T: Universal Human Values– Understanding | Mandatory Non-Credit | L-T-P-C: 2-1-0-3 | 3 Credits
+
+  [SEMESTER 4] - 9 Courses | 20 Credits:
+    * 21MAB202T: Numerical Methods | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CSC206T: Artificial Intelligence | Professional Core | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21MEC205T: Fluid Mechanics And Machinery | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MEC206T: Kinematics And Dynamics Of Machines | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MEC203L: Machine Dynamics Laboratory | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21MEC204L: Fluid Dynamics Laboratory | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21MEC205L: Mechanical Modeling And Assembly | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21DCS201P: Design Thinking And Methodology | Engineering Sciences | L-T-P-C: 1-0-4-3 | 3 Credits
+    * 21PDM202L: Critical And Creative Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+
+  [SEMESTER 5] - 9 Courses | 17 Credits:
+    * 21MAB301T: Probability And Statistics | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21MEC301T: Thermal Systems Engineering | Professional Core | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21MEC301P: Design Of Mechanical Systems | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MEC302T: Sensors And Control Systems | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MEC301L: Thermal Power Systems Laboratory | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21MEC302L: Automation And Control Systems Laboratory | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21PDM301L: Analytical And Logical Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM301T: Indian Art Form | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21GNP301L: Community Connect | Project / Practice | L-T-P-C: 0-0-2-1 | 1 Credits
+
+  [SEMESTER 6] - 8 Courses | 19 Credits:
+    * 21CSS303T: Data Science | Engineering Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21MEC301J: Heat And Mass Transfer | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21MEC302J: Finite Element Methods | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21MEC303T: Industry 4.0 | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MEP302L: Project | Project / Practice | L-T-P-C: 0-0-6-3 | 3 Credits
+    * 21MEP303T: Mooc | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21PDM302L: Employability Skills And Practices | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM302T: Indian Traditional Knowledge | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 7] - 1 Courses | 3 Credits:
+    * 21GNH401T: Behavioral Psychology | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+
+  [SEMESTER 8] - 3 Courses | 21 Credits:
+    * 21MEP401L: Major Project | Project / Practice | L-T-P-C: 0-0-30-15 | 15 Credits
+    * 21MEP402L: Major Project | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MEP403L: Internship# | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  >> TOTAL FOR B.Tech in Mechanical Engineering: 67 Course Allocations, 169 Cumulative Credits
+
+================================================================================
+PROGRAMME: B.TECH IN BIOTECHNOLOGY (Page 42)
+================================================================================
+
+  [SEMESTER 1] - 8 Courses | 18 Credits:
+    * 21LEH101T: Communicative English | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MAB101T: Calculus And Linear Algebra | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21PYB101J: Physics: Electromagnetic Theory, Quantum Mechanics, Waves And Optics | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21MES102L: Engineering Graphics And Design | Engineering Sciences | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21EES101T: Electrical And Electronics Engineering | Engineering Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CYM101T: Environmental Science* | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM101L: Professional Skills And Practices | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM101T: Constitution Of India | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 2] - 18 Courses | 46 Credits:
+    * 21LEH102T: Chinese | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21LEH103T: French | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH104T: German | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH105T: Japanese | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH106T: Korean | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH107T: Spanish | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21GNH101J: Philosophy Of Engineering | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21MAB102T: Advanced Calculus And Complex Analysis | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CYB101J: Chemistry | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21BTB105T: Cell Biology | Basic Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21CSS101J: Programming For Problem Solving | Engineering Sciences | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21BTC101T: Biochemistry | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21MES101L: Basic Civil And Mechanical Workshop | Engineering Sciences | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21PDM102L: General Aptitude* | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM101L: Physical And Mental Health Using Yoga | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM102L: Nss | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM103L: Ncc | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM104L: Nso | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  [SEMESTER 3] - 11 Courses | 23 Credits:
+    * 21CHS251T: Basic Chemical Engineering | Engineering Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21PDH201T: Social Engineering | Humanities and Social Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21BTC202L: Biochemistry Laboratory | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21BTC202T: Microbiology | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21BTC103J: Cell And Microbiology Laboratory | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21BTC204T: Bioprocess Principles | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21BTC205L: Bioprocess Principles Laboratory | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21BTC206T: Genetics And Cytogenetics | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEM201T: Professional Ethics | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM201L: Verbal Reasoning | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM202T: Universal Human Values – Understanding | Mandatory Non-Credit | L-T-P-C: 2-1-0-3 | 3 Credits
+
+  [SEMESTER 4] - 8 Courses | 20 Credits:
+    * 21CHS252J: Chemical Engineering Principles | Engineering Sciences | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21CSC206T: Artificial Intelligence | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21BTC207T: Molecular Biology | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21BTC208L: Molecular Biology Laboratory | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21BTC209T: Bioprocess Engineering | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21BTC210L: Bioprocess Engineering Laboratory | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21DCS201P: Design Thinking And Methodology | Engineering Sciences | L-T-P-C: 1-0-4-3 | 3 Credits
+    * 21PDM202L: Critical And Creative Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+
+  [SEMESTER 5] - 7 Courses | 16 Credits:
+    * 21MAB303T: Bio-Statistics For Biotechnologists | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21BTC301J: Gene Manipulation And Genomics | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21BTC302J: Immunology | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21BTC303T: Protein Engineering | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNP301L: Community Connect | Project / Practice | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21PDM301L: Analytical And Logical Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM301T: Indian Art Form | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 6] - 8 Courses | 16 Credits:
+    * 21CSS303T: Data Science | Engineering Sciences | L-T-P-C: 1-1-0-2 | 2 Credits
+    * 21BTC304T: Animal Biotechnology | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21BTC305L: Animal Biotechnology Laboratory | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21BTC306T: Plant Biotechnology | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21BTP302L: Project | Project / Practice | L-T-P-C: 0-0-6-3 | 3 Credits
+    * 21BTP303T: Moocs | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEM302T: Indian Traditional Knowledge | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM302L: Employability Skills And Practices | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+
+  [SEMESTER 7] - 4 Courses | 9 Credits:
+    * 21BTC401L: Plant Biotechnology Laboratory | Professional Core | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21BTC301J: Bio Separation Technology | Professional Core | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21GNH401T: Behavioral Psychology | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21BTM191T: Bioethics And Ipr | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 8] - 3 Courses | 9 Credits:
+    * 21BTP401L: Major Project | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21BTP402L: Major Project | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21BTP403L: Internship# 0 0 10 | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  >> TOTAL FOR B.Tech in Biotechnology: 67 Course Allocations, 157 Cumulative Credits
+
+================================================================================
+PROGRAMME: B.TECH IN AEROSPACE ENGINEERING (Page 9)
+================================================================================
+
+  [SEMESTER 1] - 8 Courses | 24 Credits:
+    * 21LEH101T: Communicative English | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21MAB101T: Calculus And Linear Algebra | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21PYB101J: Physics: Electromagnetic Theory, Quantum | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21MES102L: Engineering Graphics And Design | Engineering Sciences | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21EES101T: Electrical And Electronics Engineering | Engineering Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CYM101T: Environmental Science | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM101L: Professional Skills And Practices | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEM101T: Constitution Of India | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  [SEMESTER 2] - 18 Courses | 46 Credits:
+    * 21LEH102T: Chinese | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21LEH103T: French | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH104T: German | Humanities and Social Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21LEH105T: Japanese | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH106T: Korean | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21LEH107T: Spanish | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21GNH101J: Philosophy Of Engineering | Humanities and Social Sciences | L-T-P-C: 1-0-2-2 | 2 Credits
+    * 21MAB102T: Advanced Calculus And Complex Analysis | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CYB101J: Chemistry | Basic Sciences | L-T-P-C: 3-1-2-5 | 5 Credits
+    * 21BTB103T: Biology | Basic Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21ASS101T: Applied Engineering Mechanics | Engineering Sciences | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21CSS101J: Programming For Problem Solving | Engineering Sciences | L-T-P-C: 3-0-2-4 | 4 Credits
+    * 21MES101L: Basic Civil And Mechanical Workshop | Engineering Sciences | L-T-P-C: 0-0-4-2 | 2 Credits
+    * 21PDM102L: General Aptitude | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM101L: Physical And Mental Health Using Yoga | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21GNM102L: Nss | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM103L: Ncc | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21GNM104L: Nso | Mandatory Non-Credit | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  [SEMESTER 3] - 12 Courses | 24 Credits:
+    * 21MAB201T: Transforms And Boundary Value Problems | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21ASC201J: Elements Of Aerospace Engineering | Professional Core | L-T-P-C: 2-0-2-3 | 3 Credits
+    * 21ASC203T: Applied Fluid Mechanics | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASC205T: Aero Engineering Thermodynamics | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASC207T: Aircraft Materials And Production | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21PDH201T: Social Engineering | Humanities and Social Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21ASC221L: Fluid Mechanics Lab | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21ASC223L: Manufacturing Process Lab | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21ASC225L: Aircraft Component Drawing Lab | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21LEM201T: Professional Ethics | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+    * 21PDM201L: Verbal Reasoning | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM202T: Universal Human Values – Understanding | Mandatory Non-Credit | L-T-P-C: 2-1-0-3 | 3 Credits
+
+  [SEMESTER 4] - 9 Courses | 21 Credits:
+    * 21MAB202T: Numerical Methods | Basic Sciences | L-T-P-C: 3-1-0-4 | 4 Credits
+    * 21CSC206T: Artificial Intelligence | Professional Core | L-T-P-C: 2-1-0-3 | 3 Credits
+    * 21ASC202T: Applied Solid Mechanics | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASC204T: Incompressible Aerodynamics | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASC206T: Air Breathing Propulsion | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21DCS201P: Design Thinking And Methodology | Engineering Sciences | L-T-P-C: 1-0-4-3 | 3 Credits
+    * 21ASC222L: Applied Solid Mechanics Lab | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21ASC224L: Incompressible Aerodynamics Lab | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21PDM202L: Critical And Creative Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+
+  [SEMESTER 5] - 10 Courses | 16 Credits:
+    * 21ASC301T: Aircraft Structures | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASC303T: Compressible Aerodynamics | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASC305T: Rocket Propulsion | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASC307T: Aircraft Performance | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASC321L: Aircraft Structures Lab | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21ASC323L: Compressible Aerodynamics Lab | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21ASC325L: Aerospace Propulsion Lab | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21GNP301L: Community Connect | Project / Practice | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21PDM301L: Analytical And Logical Thinking Skills | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM301T: Indian Art Form | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 6] - 11 Courses | 20 Credits:
+    * 21CSS303T: Data Science | Engineering Sciences | L-T-P-C: 2-0-0-2 | 2 Credits
+    * 21ASC302T: Aircraft Systems And Instruments | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASC304T: Space Mechanics | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASC306T: Aircraft Stability And Control | Professional Core | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASP303T: Mooc | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASP302L: Project | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASC322L: Aircraft Design Project | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21ASC324L: Aerospace Computational Analysis Lab | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21ASC326L: Aircraft Maintenance Repair Lab | Professional Core | L-T-P-C: 0-0-2-1 | 1 Credits
+    * 21PDM302L: Employability Skills And Practices | Mandatory Non-Credit | L-T-P-C: 0-0-2-0 | 0 Credits
+    * 21LEM302T: Indian Traditional Knowledge | Mandatory Non-Credit | L-T-P-C: 1-0-0-0 | 0 Credits
+
+  [SEMESTER 7] - 1 Courses | 3 Credits:
+    * 21GNH401T: Behavioral Psychology | Humanities and Social Sciences | L-T-P-C: 2-1-0-3 | 3 Credits
+
+  [SEMESTER 8] - 3 Courses | 9 Credits:
+    * 21ASP401L: Major Project | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASP402L: Major Project | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+    * 21ASP403L: Internship# | Project / Practice | L-T-P-C: 3-0-0-3 | 3 Credits
+
+  >> TOTAL FOR B.Tech in Aerospace Engineering: 72 Course Allocations, 163 Cumulative Credits

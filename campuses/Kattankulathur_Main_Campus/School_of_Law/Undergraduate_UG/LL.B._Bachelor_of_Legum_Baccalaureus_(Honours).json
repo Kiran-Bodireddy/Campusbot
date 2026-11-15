@@ -1,0 +1,26 @@
+{
+  "program_name": "LL.B. Bachelor of Legum Baccalaureus (Honours)",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "LL.B (Hons.)",
+  "faculty": "SRM School of Law",
+  "department": "Department of Law",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "120",
+  "annual_fees_raw": "3,00,000",
+  "annual_fees_inr": 300000,
+  "eligibility_criteria": "Any Degree with a minimum of 60% aggregate or equivalent letter grade/GPA. Appeared in 2026 SRMJEEL appeared for 3 year LLB program.",
+  "about_program": "A 3-year LL.B (Hons.) programme at SRM Institute of Science and Technology covering core legal domains and professional law foundations.",
+  "career_opportunities": "Legal Practice, Corporate Law, Litigation Support, Compliance",
+  "program_url": "https://www.srmist.edu.in/program/bachelor-of-legum-baccalaureus-honours/",
+  "last_updated": "2026-04-11T11:54:39+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "120",
+      "fees": "3,00,000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 428
+}

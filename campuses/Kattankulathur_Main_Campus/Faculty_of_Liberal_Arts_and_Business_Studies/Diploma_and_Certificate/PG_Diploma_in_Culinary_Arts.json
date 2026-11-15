@@ -1,0 +1,26 @@
+{
+  "program_name": "PG Diploma in Culinary Arts",
+  "degree_level": "Diploma / Certificate",
+  "credential": "",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Institute of Hotel and Catering Management",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "1 Year",
+  "sanctioned_intake": "25",
+  "annual_fees_raw": "* RS. 1,20,000/- ( GENERAL ) * RS. 1,00,000/-( SRMIHM STUDENTS )",
+  "annual_fees_inr": 120000,
+  "eligibility_criteria": "Passed Graduation from a recognized board in any stream, with a minimum of 45% marks in aggregate.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/pg-diploma-culinary-arts/",
+  "last_updated": "2024-04-03T12:52:17+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "25",
+      "fees": "* RS. 1,20,000/- ( GENERAL ) * RS. 1,00,000/-( SRMIHM STUDENTS )",
+      "duration": "1 Year"
+    }
+  ],
+  "program_id": 5
+}

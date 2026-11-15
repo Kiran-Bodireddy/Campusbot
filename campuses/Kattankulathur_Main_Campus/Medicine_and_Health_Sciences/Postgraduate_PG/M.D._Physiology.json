@@ -1,0 +1,26 @@
+{
+  "program_name": "M.D. Physiology",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "",
+  "faculty": "Medicine & Health Sciences",
+  "department": "Allied Health Sciences",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "4",
+  "annual_fees_raw": "No Fees",
+  "annual_fees_inr": null,
+  "eligibility_criteria": "Pass in MBBS or its Equivalent Degree recognized by NMC (Candidates completing the CRRI / CRMI on or before 31st March of the Year) NEET PG score as prescribed by NMC.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-d-physiology/",
+  "last_updated": "2024-08-13T09:39:14+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "4",
+      "fees": "No Fees",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 190
+}

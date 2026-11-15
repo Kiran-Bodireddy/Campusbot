@@ -1,0 +1,26 @@
+{
+  "program_name": "Bachelor of Dental Surgery",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "",
+  "faculty": "Medicine & Health Sciences",
+  "department": "Departments A-Z",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "4 Years + 1 year internship",
+  "sanctioned_intake": "100",
+  "annual_fees_raw": "INR 390,000",
+  "annual_fees_inr": 390000,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/bachelor-of-dental-surgery/",
+  "last_updated": "2022-07-23T14:09:06+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "100",
+      "fees": "INR 390,000",
+      "duration": "4 Years + 1 year internship"
+    }
+  ],
+  "program_id": 413
+}

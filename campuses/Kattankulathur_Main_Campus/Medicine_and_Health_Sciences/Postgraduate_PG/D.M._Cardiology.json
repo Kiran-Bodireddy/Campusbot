@@ -1,0 +1,26 @@
+{
+  "program_name": "D.M. Cardiology",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "",
+  "faculty": "Medicine & Health Sciences",
+  "department": "Allied Health Sciences",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "3 Years",
+  "sanctioned_intake": "3",
+  "annual_fees_raw": "8,00,000",
+  "annual_fees_inr": 800000,
+  "eligibility_criteria": "MD / DNB – (Medicine)/MD / DNB – (Paediatrics)",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/d-m-cardiology/",
+  "last_updated": "2026-02-09T13:22:55+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "3",
+      "fees": "8,00,000",
+      "duration": "3 Years"
+    }
+  ],
+  "program_id": 167
+}

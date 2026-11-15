@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Bio Technology",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Biotechnology",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "INR 1,60,000",
+  "annual_fees_inr": 160000,
+  "eligibility_criteria": "Eligibility for M.Tech Programs (Duration: 2 Years) Specialization Eligibility (A basic degree or equivalent in the following with a minimum aggregate of 60%) Biotechnology B.E/B.Tech in Biotechnology/Biochemical Engineering/Chemical Engineering/Genetic Engineering/Bioinformatics/ Biomedical Engineering/Biomedical and Instrumentation Engineering/Bioprocess Engineering/Food Process Engineering/Integrated M.Sc Medical Microbiology/ Integrated M.Sc Biomedical Sciences/B.Pharm/B.Sc Agriculture/or M.Sc. (in any branch of Life Sciences/Biotechnology) (or) its equivalent.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-bio-technology/",
+  "last_updated": "2026-01-09T12:18:17+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "INR 1,60,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 100
+}

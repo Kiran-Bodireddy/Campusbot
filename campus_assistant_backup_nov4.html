@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="bright">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Knowledge Base - SRMIST</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       LANDO NORRIS INSPIRED MINIMALIST DESIGN SYSTEM
+       - High-contrast, editorial typography
+       - Smooth, gradual dynamic color transitions (1.8s cubic-bezier)
+       - Context-aware mood palette based on question topic
+       ========================================================================== */
+
+    :root {
+      --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-mood: 1.8s var(--ease-smooth);
+      --transition-quick: 0.25s ease;
+    }
+
+    /* --------------------------------------------------------------------------
+       BRIGHT THEME (Lando Norris Off-White Paper / Cream Studio Aesthetic)
+       -------------------------------------------------------------------------- */
+    [data-theme="bright"] {
+      --bg-base: #f5f5ee;
+      --card-bg: rgba(255, 255, 255, 0.88);
+      --card-border: rgba(210, 215, 200, 0.85);
+      --card-shadow: 0 10px 32px -6px rgba(17, 17, 18, 0.05);
+
+      --text-heading: #111112;
+      --text-main: #242721;
+      --text-muted: #62665a;
+      --text-dim: #949989;
+
+      --header-bg: rgba(245, 245, 238, 0.88);
+      --header-border: rgba(215, 218, 205, 0.7);
+
+      --search-bg: rgba(255, 255, 255, 0.95);
+      --search-border: rgba(200, 205, 192, 0.9);
+      --search-btn-bg: #111112;
+      --search-btn-text: #f5f5ee;
+
+      --chip-bg: rgba(255, 255, 255, 0.75);
+      --chip-border: rgba(210, 215, 200, 0.8);
+      --chip-text: #2f332a;
+      --chip-hover-bg: #ffffff;
+      --chip-hover-border: #111112;
+
+      --raw-box-bg: #ebeee0;
+      --raw-box-border: #d4d8c6;
+      --raw-box-text: #22251e;
+    }
+
+    /* --------------------------------------------------------------------------
+       DARK THEME (Lando Norris Deep Carbon & Matte Stealth Racing Canvas)
+       -------------------------------------------------------------------------- */
+    [data-theme="dark"] {
+      --bg-base: #0e0f0c;
+      --card-bg: rgba(22, 24, 19, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-shadow: 0 14px 40px rgba(0, 0, 0, 0.75);
+
+      --text-heading: #f4f4ed;
+      --text-main: #e2e4d8;
+      --text-muted: #9fa393;
+      --text-dim: #676a5c;
+
+      --header-bg: rgba(14, 15, 12, 0.88);
+      --header-border: rgba(255, 255, 255, 0.06);
+
+      --search-bg: rgba(24, 26, 21, 0.9);
+      --search-border: rgba(255, 255, 255, 0.12);
+      --search-btn-bg: #f4f4ed;
+      --search-btn-text: #0e0f0c;
+
+      --chip-bg: rgba(24, 26, 21, 0.75);
+      --chip-border: rgba(255, 255, 255, 0.08);
+      --chip-text: #a8aca0;
+      --chip-hover-bg: #22261d;
+      --chip-hover-border: #f4f4ed;
+
+      --raw-box-bg: #050604;
+      --raw-box-border: #1b1e17;
+      --raw-box-text: #a8aca0;
+    }
+
+    /* --------------------------------------------------------------------------
+       CONTEXTUAL DYNAMIC MOOD PALETTES (Gradual, Liquid 1.8s Transition)
+       -------------------------------------------------------------------------- */
+    /* 1. Default Neutral Mood */
+    body[data-mood="default"] {
+      --mood-accent: #6366f1;
+      --mood-glow-1: rgba(99, 102, 241, 0.18);
+      --mood-glow-2: rgba(199, 210, 254, 0.35);
+      --mood-badge-bg: rgba(99, 102, 241, 0.1);
+      --mood-badge-color: #4f46e5;
+      --mood-tag-color: #4f46e5;
+    }
+    [data-theme="dark"] body[data-mood="default"] {
+      --mood-accent: #818cf8;
+      --mood-glow-1: rgba(99, 102, 241, 0.15);
+      --mood-glow-2: rgba(129, 140, 248, 0.10);
+      --mood-badge-bg: rgba(99, 102, 241, 0.15);
+      --mood-badge-color: #a5b4fc;
+      --mood-tag-color: #a5b4fc;
+    }
+
+    /* 2. Faculty & Professors Mood (Electric Cyan & Ice Azure) */
+    body[data-mood="faculty"] {
+      --mood-accent: #0284c7;
+      --mood-glow-1: rgba(6, 182, 212, 0.35);
+      --mood-glow-2: rgba(56, 189, 248, 0.40);
+      --mood-badge-bg: rgba(6, 182, 212, 0.12);
+      --mood-badge-color: #0284c7;
+      --mood-tag-color: #0284c7;
+    }
+    [data-theme="dark"] body[data-mood="faculty"] {
+      --mood-accent: #00f0ff;
+      --mood-glow-1: rgba(0, 240, 255, 0.22);
+      --mood-glow-2: rgba(14, 165, 233, 0.16);
+      --mood-badge-bg: rgba(0, 240, 255, 0.15);
+      --mood-badge-color: #38bdf8;
+      --mood-tag-color: #38bdf8;
+    }
+
+    /* 3. Admissions & Cutoffs Mood (McLaren Papaya Orange & Warm Amber) */
+    body[data-mood="admission"] {
+      --mood-accent: #d95800;
+      --mood-glow-1: rgba(255, 107, 0, 0.32);
+      --mood-glow-2: rgba(251, 191, 36, 0.40);
+      --mood-badge-bg: rgba(255, 107, 0, 0.12);
+      --mood-badge-color: #c2410c;
+      --mood-tag-color: #c2410c;
+    }
+    [data-theme="dark"] body[data-mood="admission"] {
+      --mood-accent: #ff6b00;
+      --mood-glow-1: rgba(255, 107, 0, 0.22);
+      --mood-glow-2: rgba(245, 158, 11, 0.16);
+      --mood-badge-bg: rgba(255, 107, 0, 0.16);
+      --mood-badge-color: #fb923c;
+      --mood-tag-color: #fb923c;
+    }
+
+    /* 4. Courses & Curriculum Mood (Lando Norris Signature Electric Lime) */
+    body[data-mood="course"] {
+      --mood-accent: #65a30d;
+      --mood-glow-1: rgba(210, 255, 0, 0.38);
+      --mood-glow-2: rgba(163, 230, 53, 0.42);
+      --mood-badge-bg: rgba(132, 204, 22, 0.14);
+      --mood-badge-color: #4d7c0f;
+      --mood-tag-color: #4d7c0f;
+    }
+    [data-theme="dark"] body[data-mood="course"] {
+      --mood-accent: #d2ff00; /* LN4 fluorescent lime */
+      --mood-glow-1: rgba(210, 255, 0, 0.22);
+      --mood-glow-2: rgba(163, 230, 53, 0.15);
+      --mood-badge-bg: rgba(210, 255, 0, 0.15);
+      --mood-badge-color: #d2ff00;
+      --mood-tag-color: #bef264;
+    }
+
+    /* 5. Classrooms & Venues Mood (Cyber Orchid & Electric Violet) */
+    body[data-mood="room"] {
+      --mood-accent: #7c3aed;
+      --mood-glow-1: rgba(168, 85, 247, 0.32);
+      --mood-glow-2: rgba(217, 70, 239, 0.32);
+      --mood-badge-bg: rgba(168, 85, 247, 0.12);
+      --mood-badge-color: #7c3aed;
+      --mood-tag-color: #7c3aed;
+    }
+    [data-theme="dark"] body[data-mood="room"] {
+      --mood-accent: #c084fc;
+      --mood-glow-1: rgba(168, 85, 247, 0.20);
+      --mood-glow-2: rgba(236, 72, 153, 0.14);
+      --mood-badge-bg: rgba(168, 85, 247, 0.16);
+      --mood-badge-color: #d8b4fe;
+      --mood-tag-color: #d8b4fe;
+    }
+
+    /* ==========================================================================
+       GLOBAL RESETS & TRANSITIONS
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      line-height: 1.6;
+      position: relative;
+      /* Smooth, non-sudden transition across themes and question moods */
+      transition: background-color var(--transition-mood), color 0.6s ease;
+    }
+
+    /* Ambient Liquid Mesh Glow (Smooth 1.8s interpolation) */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .ambient-gradient {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 12% 38%, var(--mood-glow-1) 0%, transparent 60%),
+        radial-gradient(circle at 88% 25%, var(--mood-glow-2) 0%, transparent 65%);
+      filter: blur(55px);
+      opacity: 0.95;
+      transition: all var(--transition-mood);
+    }
+
+    /* Subtle Hairline Vector Geometry */
+    .ambient-vector {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.65;
+      transition: opacity var(--transition-mood);
+    }
+
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ==========================================================================
+       FLOATING MINIMALIST CONTROLS (Header-Free Clean Experience)
+       ========================================================================== */
+    .theme-toggle-btn {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-border);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 60;
+      transition: all var(--transition-quick);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .theme-toggle-btn:hover {
+      border-color: var(--text-heading);
+      color: var(--text-heading);
+      transform: rotate(15deg);
+    }
+
+    .search-home-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin-right: 0.5rem;
+      padding: 0.25rem;
+      border-radius: 50%;
+      transition: color var(--transition-quick), transform var(--transition-quick);
+    }
+
+    .search-home-btn:hover {
+      color: var(--text-heading);
+      transform: scale(1.1);
+    }
+
+    /* ==========================================================================
+       MAIN CONTENT CONTAINER
+       ========================================================================== */
+    main {
+      flex: 1;
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 7.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Hero / Empty State */
+    .hero {
+      text-align: center;
+      margin: auto 0;
+      padding: 2rem 1rem 3rem 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .hero.hidden {
+      display: none;
+    }
+
+    .hero h1 {
+      font-size: 2.75rem;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      margin-bottom: 0.65rem;
+      color: var(--text-heading);
+      line-height: 1.15;
+    }
+
+    .hero p {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 480px;
+      margin: 0 auto 2.25rem auto;
+      font-weight: 400;
+    }
+
+    /* ==========================================================================
+       PILL SEARCH BAR (Minimalist, Elevated, Fluid Border)
+       ========================================================================== */
+    .hero-search-wrap {
+      max-width: 660px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .search-bar-form {
+      display: flex;
+      align-items: center;
+      background: var(--search-bg);
+      border: 1px solid var(--search-border);
+      border-radius: 9999px;
+      padding: 0.45rem 0.5rem 0.45rem 1.25rem;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      transition: border-color var(--transition-mood), box-shadow var(--transition-mood), background-color 0.5s ease;
+    }
+
+    .search-bar-form:focus-within {
+      border-color: var(--mood-accent);
+      box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--mood-accent);
+    }
+
+    .search-icon-left {
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.75rem;
+      flex-shrink: 0;
+      transition: color var(--transition-mood);
+    }
+
+    .search-bar-form:focus-within .search-icon-left {
+      color: var(--mood-accent);
+    }
+
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-heading);
+      font-size: 1rem;
+      font-family: inherit;
+      font-weight: 400;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .search-submit-btn {
+      background: var(--search-btn-bg);
+      border: none;
+      color: var(--search-btn-text);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-quick);
+      flex-shrink: 0;
+    }
+
+    .search-submit-btn:hover {
+      transform: scale(1.05);
+      background: var(--mood-accent);
+      color: #ffffff;
+    }
+
+    .search-submit-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Sticky Bottom Search Bar (Activated during chat) */
+    .search-wrapper-bottom {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 0;
+      right: 0;
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      z-index: 40;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(14px);
+      transition: all 0.3s ease;
+    }
+
+    .search-wrapper-bottom.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    /* ==========================================================================
+       SUGGESTION CHIPS
+       ========================================================================== */
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      justify-content: center;
+      margin-top: 1.75rem;
+    }
+
+    .suggestion-chip {
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-border);
+      color: var(--chip-text);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.45rem 1rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all var(--transition-quick);
+      backdrop-filter: blur(8px);
+      font-family: inherit;
+    }
+
+    .suggestion-chip:hover {
+      background: var(--chip-hover-bg);
+      border-color: var(--mood-accent);
+      color: var(--text-heading);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    /* ==========================================================================
+       CONVERSATION STREAM & ASSISTANT CARDS
+       ========================================================================== */
+    .stream {
+      display: flex;
+      flex-direction: column;
+      gap: 2.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .query-item {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .user-query {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-heading);
+      letter-spacing: -0.015em;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .assistant-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 1.65rem;
+      color: var(--text-main);
+      font-size: 0.98rem;
+      line-height: 1.75;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: border-color var(--transition-mood), box-shadow var(--transition-mood);
+    }
+
+    .assistant-card strong {
+      color: var(--text-heading);
+      font-weight: 600;
+    }
+
+    .assistant-card ul, .assistant-card ol {
+      margin: 0.85rem 0 0.85rem 1.5rem;
+    }
+
+    .assistant-card li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* Entity Tags */
+    .entity-tag {
+      display: inline-block;
+      font-weight: 600;
+      color: var(--mood-tag-color);
+      background: var(--mood-badge-bg);
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      transition: all var(--transition-mood);
+    }
+
+    /* Metadata Footer */
+    .meta-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.25rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--card-border);
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim);
+    }
+
+    .tool-badge {
+      color: var(--mood-badge-color);
+      background: var(--mood-badge-bg);
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      border: 1px solid var(--mood-badge-bg);
+      font-weight: 500;
+      transition: all var(--transition-mood);
+    }
+
+    .latency-badge {
+      color: #10b981;
+      font-weight: 500;
+    }
+
+    /* Loading Pulse */
+    .loading-shimmer {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      padding: 0.75rem 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      background: var(--mood-accent);
+      border-radius: 50%;
+      animation: pulse 1s infinite alternate;
+      transition: background-color var(--transition-mood);
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      from { opacity: 0.3; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1.25); }
+    }
+
+    /* Raw JSON Accordion */
+    .details-toggle {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 0;
+      text-decoration: underline;
+    }
+
+    .details-toggle:hover {
+      color: var(--text-muted);
+    }
+
+    .raw-box {
+      display: none;
+      margin-top: 0.75rem;
+      background: var(--raw-box-bg);
+      border: 1px solid var(--raw-box-border);
+      border-radius: 10px;
+      padding: 0.85rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--raw-box-text);
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+
+    .raw-box.open {
+      display: block;
+    }
+
+    /* Discreet Bottom-Right Knowledge Engine Switcher */
+    .engine-toggle-btn {
+      position: fixed;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-border);
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 60;
+      transition: all var(--transition-quick);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .engine-toggle-btn:hover {
+      border-color: var(--text-heading);
+      color: var(--text-heading);
+      transform: translateY(-2px);
+    }
+
+    .engine-dot {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #06b6d4;
+      box-shadow: 0 0 6px #06b6d4;
+      transition: all 0.25s ease;
+    }
+
+    .engine-dot.backup {
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+    }
+
+    .engine-toast {
+      position: fixed;
+      bottom: 4.25rem;
+      right: 1.25rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-heading);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: all 0.25s ease;
+      z-index: 60;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--card-shadow);
+    }
+
+    .engine-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 0.9rem 1.25rem;
+      }
+      .hero h1 {
+        font-size: 2rem;
+      }
+      main {
+        padding: 2rem 1rem 6rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body data-mood="default">
+
+  <!-- Ambient Fluid Gradient (Morphs colors smoothly across questions) -->
+  <div class="ambient-bg">
+    <div class="ambient-gradient"></div>
+    <svg class="ambient-vector" viewBox="0 0 1440 900" fill="none" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="1180" cy="180" r="280" stroke="currentColor" stroke-width="1.0" stroke-dasharray="4 4" opacity="0.12"/>
+      <circle cx="1180" cy="180" r="420" stroke="currentColor" stroke-width="0.8" opacity="0.08"/>
+      <path d="M700 900C900 720 1150 780 1440 600" stroke="currentColor" stroke-width="1.0" opacity="0.1"/>
+    </svg>
+  </div>
+
+  <div class="app-wrapper">
+    <!-- Floating Theme Toggle (Light / Dark) -->
+    <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Switch Light/Dark Theme">
+      <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+    </button>
+
+    <!-- Main Content Area -->
+    <main>
+      <!-- Hero Center -->
+      <div class="hero" id="heroSection">
+        <h1>Ask anything about campus...</h1>
+        <p>Explore resources, policies and more</p>
+
+        <div class="hero-search-wrap">
+          <form class="search-bar-form" onsubmit="handleSearch(event, 'heroInput')">
+            <div class="search-icon-left">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              class="search-input" 
+              id="heroInput" 
+              placeholder="Search for policies, courses, events..." 
+              autocomplete="off"
+              autofocus
+            />
+            <button type="submit" class="search-submit-btn" title="Search">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </form>
+        </div>
+
+        <!-- Topic Suggestion Chips -->
+        <div class="suggestions">
+          <button type="button" class="suggestion-chip" onmouseenter="previewMood('course')" onmouseleave="restoreMood()" onclick="askQuestion('What are the 3rd semester subjects for CSE?')">B.Tech CSE Semester 3</button>
+          <button type="button" class="suggestion-chip" onmouseenter="previewMood('course')" onmouseleave="restoreMood()" onclick="askQuestion('What courses do I take in Semester 4 of AI?')">AI Semester 4 Courses</button>
+          <button type="button" class="suggestion-chip" onmouseenter="previewMood('admission')" onmouseleave="restoreMood()" onclick="askQuestion('eligibility for btech')">Eligibility for B.Tech</button>
+          <button type="button" class="suggestion-chip" onmouseenter="previewMood('faculty')" onmouseleave="restoreMood()" onclick="askQuestion('can u tell me about Anita M')">Dr. Anita M</button>
+          <button type="button" class="suggestion-chip" onmouseenter="previewMood('course')" onmouseleave="restoreMood()" onclick="askQuestion('What is 21CSC206T and who teaches it?')">21CSC206T (AI Course)</button>
+          <button type="button" class="suggestion-chip" onmouseenter="previewMood('room')" onmouseleave="restoreMood()" onclick="askQuestion('Find available rooms in Tech Park')">Vacant rooms in Tech Park</button>
+        </div>
+      </div>
+
+      <!-- Live Stream of Conversation Cards -->
+      <div class="stream" id="stream"></div>
+    </main>
+
+    <!-- Sticky Bottom Search Bar (Activated during conversation) -->
+    <div class="search-wrapper-bottom" id="bottomSearchBar">
+      <form class="search-bar-form" onsubmit="handleSearch(event, 'bottomInput')">
+        <button type="button" class="search-home-btn" onclick="resetToHome(event)" title="Return to Home / Clear">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <div class="search-icon-left">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <input 
+          type="text" 
+          class="search-input" 
+          id="bottomInput" 
+          placeholder="Search for policies, courses, events..." 
+          autocomplete="off"
+        />
+        <button type="submit" class="search-submit-btn" id="bottomSubmitBtn" title="Send question">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Discreet Bottom-Right Knowledge Engine Switcher -->
+    <button class="engine-toggle-btn" id="engineToggleBtn" onclick="toggleEngineMode()" title="Knowledge Engine Mode">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+      </svg>
+      <span class="engine-dot" id="engineDot"></span>
+    </button>
+    <div class="engine-toast" id="engineToast"></div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.protocol.startsWith("http") ? window.location.origin : "http://localhost:8000";
+    let currentEngineMode = "neo4j";
+    let activeMood = "default";
+
+    // =========================================================================
+    // DYNAMIC CONTEXTUAL MOOD SYSTEM (Smooth, gradual 1.8s transitions)
+    // =========================================================================
+    const MOOD_MAP = {
+      default: { label: "Ready", name: "default" },
+      faculty: { label: "Faculty & Staff", name: "faculty" },
+      admission: { label: "Admissions & Fees", name: "admission" },
+      course: { label: "Curriculum & Courses", name: "course" },
+      room: { label: "Classrooms & Venues", name: "room" }
+    };
+
+    function setMood(moodKey) {
+      if (!MOOD_MAP[moodKey]) moodKey = "default";
+      activeMood = moodKey;
+      document.body.setAttribute("data-mood", moodKey);
+      const labelEl = document.getElementById("moodLabel");
+      if (labelEl) labelEl.innerText = MOOD_MAP[moodKey].label;
+    }
+
+    function previewMood(moodKey) {
+      document.body.setAttribute("data-mood", moodKey);
+      const labelEl = document.getElementById("moodLabel");
+      if (labelEl) labelEl.innerText = MOOD_MAP[moodKey].label;
+    }
+
+    function restoreMood() {
+      document.body.setAttribute("data-mood", activeMood);
+      const labelEl = document.getElementById("moodLabel");
+      if (labelEl) labelEl.innerText = MOOD_MAP[activeMood].label;
+    }
+
+    // Predictive instant intent detection to start smooth transition immediately
+    function predictMood(query) {
+      const q = query.toLowerCase();
+      if (q.includes("dr.") || q.includes("prof") || q.includes("anita") || q.includes("priya") || q.includes("cabin") || q.includes("faculty") || q.includes("dean") || q.includes("hod")) {
+        return "faculty";
+      }
+      if (q.includes("b.tech") || q.includes("eligib") || q.includes("cutoff") || q.includes("fee") || q.includes("admission") || q.includes("m.tech") || q.includes("mba") || q.includes("mbbs")) {
+        return "admission";
+      }
+      if (q.includes("cse") || q.includes("course") || q.includes("couse") || q.includes("syllabus") || q.includes("prereq") || q.includes("subject") || q.includes("credits") || q.includes("how many") || q.includes("number of") || q.includes("statistics") || q.includes("total")) {
+        return "course";
+      }
+      if (q.includes("room") || q.includes("tp-") || q.includes("ub-") || /\b(?:tp|ub|bel|meb|esb|fmb|slb|mcb)\d{3}\b/i.test(q) || q.includes("tech park") || q.includes("vacant") || q.includes("schedule") || q.includes("building")) {
+        return "room";
+      }
+      return "default";
+    }
+
+    // Server Tool to Mood mapping for verified ground truth
+    function toolToMood(toolName) {
+      switch (toolName) {
+        case "lookup_faculty_profile":
+        case "find_faculty_for_course":
+          return "faculty";
+        case "check_admission_eligibility":
+          return "admission";
+        case "lookup_course":
+        case "get_prerequisite_tree":
+        case "verify_prerequisites":
+        case "search_courses_semantic":
+        case "get_campus_statistics":
+        case "get_semester_curriculum":
+          return "course";
+        case "find_room_schedule":
+        case "find_available_rooms":
+          return "room";
+        default:
+          return "default";
+      }
+    }
+
+    // =========================================================================
+    // THEME MANAGEMENT (Bright Theme default, Dark Theme support)
+    // =========================================================================
+    function initTheme() {
+      const currentAttr = document.documentElement.getAttribute("data-theme");
+      const savedTheme = localStorage.getItem("srm_theme") || currentAttr || "bright";
+      setTheme(savedTheme);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute("data-theme") || "bright";
+      const next = current === "bright" ? "dark" : "bright";
+      setTheme(next);
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("srm_theme", theme);
+      const icon = document.getElementById("themeIcon");
+      if (theme === "dark") {
+        icon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+      } else {
+        icon.innerHTML = `
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        `;
+      }
+    }
+
+    // =========================================================================
+    // KNOWLEDGE ENGINE TOGGLE (Neo4j Community vs In-Memory Cache)
+    // =========================================================================
+    function toggleEngineMode() {
+      currentEngineMode = (currentEngineMode === "neo4j") ? "backup" : "neo4j";
+      const dot = document.getElementById("engineDot");
+      const toast = document.getElementById("engineToast");
+
+      if (currentEngineMode === "neo4j") {
+        dot.classList.remove("backup");
+        toast.innerHTML = `<span style="color:#06b6d4">●</span> Neo4j Community (Vector Index)`;
+      } else {
+        dot.classList.add("backup");
+        toast.innerHTML = `<span style="color:#10b981">●</span> Governed In-Memory Cache`;
+      }
+
+      toast.classList.add("show");
+      setTimeout(() => { toast.classList.remove("show"); }, 2000);
+    }
+
+    // =========================================================================
+    // SEARCH & INTERACTION FLOW
+    // =========================================================================
+    function resetToHome(e) {
+      if (e) e.preventDefault();
+      document.getElementById("heroSection").classList.remove("hidden");
+      document.getElementById("bottomSearchBar").classList.remove("visible");
+      document.getElementById("stream").innerHTML = "";
+      setMood("default");
+      const heroInput = document.getElementById("heroInput");
+      if (heroInput) {
+        heroInput.value = "";
+        heroInput.focus();
+      }
+    }
+
+    function formatText(raw) {
+      if (!raw) return "";
+      return raw
+        .replace(/\[Course:\s*([^\]]+)\]/g, '<span class="entity-tag">[Course: $1]</span>')
+        .replace(/\[Faculty:\s*([^\]]+)\]/g, '<span class="entity-tag">[Faculty: $1]</span>')
+        .replace(/\[Room:\s*([^\]]+)\]/g, '<span class="entity-tag">[Room: $1]</span>')
+        .replace(/\[Program:\s*([^\]]+)\]/g, '<span class="entity-tag">[Program: $1]</span>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function askQuestion(q) {
+      const heroInput = document.getElementById("heroInput");
+      const bottomInput = document.getElementById("bottomInput");
+      if (heroInput) heroInput.value = q;
+      if (bottomInput) bottomInput.value = q;
+      handleSearch(null, "heroInput", q);
+    }
+
+    async function handleSearch(e, sourceInputId, overrideText) {
+      if (e) e.preventDefault();
+      const input = document.getElementById(sourceInputId);
+      const query = (overrideText || (input ? input.value : "")).trim();
+      if (!query) return;
+
+      if (input) input.value = "";
+      const otherId = (sourceInputId === "heroInput") ? "bottomInput" : "heroInput";
+      const otherInput = document.getElementById(otherId);
+      if (otherInput) otherInput.value = "";
+
+      // Smoothly start shifting mood right away based on query
+      const predicted = predictMood(query);
+      setMood(predicted);
+
+      document.getElementById("heroSection").classList.add("hidden");
+      document.getElementById("bottomSearchBar").classList.add("visible");
+
+      const stream = document.getElementById("stream");
+      const queryId = "q_" + Date.now();
+
+      // Render User Query Card
+      const queryItem = document.createElement("div");
+      queryItem.className = "query-item";
+      queryItem.id = queryId;
+      queryItem.innerHTML = `
+        <div class="user-query">${escapeHtml(query)}</div>
+        <div class="assistant-card" id="card_${queryId}">
+          <div class="loading-shimmer">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span>Querying campus knowledge graph...</span>
+          </div>
+        </div>
+      `;
+      stream.appendChild(queryItem);
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+      const bottomSubmitBtn = document.getElementById("bottomSubmitBtn");
+      if (bottomSubmitBtn) bottomSubmitBtn.disabled = true;
+
+      const t0 = performance.now();
+      try {
+        const response = await fetch(`${API_BASE}/agent/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            query: query,
+            use_qwen: false,
+            role: "student",
+            engine_mode: currentEngineMode
+          })
+        });
+
+        const latency = Math.round(performance.now() - t0);
+        const card = document.getElementById(`card_${queryId}`);
+
+        if (response.ok) {
+          const res = await response.json();
+          const toolName = res.tool_selected || "governed_tool";
+
+          // Lock in the verified mood from server's grounded tool
+          const groundMood = toolToMood(toolName);
+          setMood(groundMood);
+
+          const answerHtml = formatText(res.answer || "No response received.");
+          const rawBoxId = `raw_${queryId}`;
+          let suggestionsHtml = "";
+          const suggestions = (res.tool_result && res.tool_result.suggestions) || res.suggestions || [];
+          if (suggestions && suggestions.length) {
+            suggestionsHtml = `
+              <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.1rem;">
+                ${suggestions.map(s => `
+                  <button type="button" class="suggestion-chip" onmouseenter="previewMood(predictMood('${escapeHtml(s)}'))" onmouseleave="restoreMood()" onclick="askQuestion('${escapeHtml(s)}')">${escapeHtml(s)}</button>
+                `).join('')}
+              </div>
+            `;
+          }
+
+          const badgeColorStyle = (currentEngineMode === "neo4j")
+            ? 'style="border-color: rgba(6,182,212,0.3); color: #0284c7;"'
+            : '';
+          const toolLabel = (currentEngineMode === "neo4j")
+            ? `Neo4j: ${escapeHtml(toolName)}`
+            : escapeHtml(toolName);
+
+          card.innerHTML = `
+            <div>${answerHtml}</div>
+            ${suggestionsHtml}
+            <div class="meta-footer">
+              <span class="tool-badge" ${badgeColorStyle}>${toolLabel}</span>
+              <span class="latency-badge">${latency}ms</span>
+            </div>
+            ${res.tool_result ? `
+              <div style="margin-top: 0.75rem;">
+                <button class="details-toggle" onclick="toggleRaw('${rawBoxId}')">View verified record</button>
+                <div class="raw-box" id="${rawBoxId}">${escapeHtml(JSON.stringify(res.tool_result, null, 2))}</div>
+              </div>
+            ` : ''}
+          `;
+        } else if (response.status === 403) {
+          const err = await response.json();
+          card.innerHTML = `
+            <div style="color: #ef4444; font-weight: 600;">Access Policy Interception</div>
+            <p style="margin-top: 0.5rem; color: var(--text-muted);">${escapeHtml(err.detail || "Query rejected by AST Security Guardrail.")}</p>
+            <div class="meta-footer">
+              <span class="tool-badge" style="color:#ef4444; border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1)">AST Sanitizer</span>
+              <span class="latency-badge" style="color: #ef4444;">Blocked in ${latency}ms</span>
+            </div>
+          `;
+        } else {
+          card.innerHTML = `<div style="color: #ef4444;">Server error: ${response.statusText}</div>`;
+        }
+      } catch (err) {
+        document.getElementById(`card_${queryId}`).innerHTML = `
+          <div style="color: #ef4444;">Failed to connect to tool server: ${escapeHtml(err.message)}</div>
+        `;
+      } finally {
+        if (bottomSubmitBtn) bottomSubmitBtn.disabled = false;
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }
+    }
+
+    function toggleRaw(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("open");
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // Initialize Theme & Default Mood on Load
+    initTheme();
+    const initialMood = document.body.getAttribute("data-mood") || "default";
+    setMood(initialMood);
+  </script>
+</body>
+</html>

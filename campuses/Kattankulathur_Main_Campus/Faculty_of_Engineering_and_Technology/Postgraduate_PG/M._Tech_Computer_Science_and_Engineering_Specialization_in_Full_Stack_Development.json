@@ -1,0 +1,26 @@
+{
+  "program_name": "M. Tech Computer Science and Engineering – Specialization in Full Stack Development",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Computing Technologies",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "6",
+  "annual_fees_raw": "1,60,000",
+  "annual_fees_inr": 160000,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-computer-science-and-engineering-specialization-in-full-stack-development/",
+  "last_updated": "2025-12-10T08:50:49+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "6",
+      "fees": "1,60,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 80
+}

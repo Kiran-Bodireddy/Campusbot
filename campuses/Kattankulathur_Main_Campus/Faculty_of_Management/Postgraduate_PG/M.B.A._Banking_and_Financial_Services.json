@@ -1,0 +1,26 @@
+{
+  "program_name": "M.B.A. Banking and Financial Services",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "MBA",
+  "faculty": "Faculty of Management",
+  "department": "Department of Management",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "120",
+  "annual_fees_raw": "INR 4,50,000",
+  "annual_fees_inr": 450000,
+  "eligibility_criteria": "1. A Bachelor’s degree with minimum aggregate of 50%.2. Admission will be done through SRM Joint Entrance Examination for Management (SRMJEEM) followed by a Personal Interview. Students with eligible entrance scores in CAT/XAT/MAT/GMAT/NMAT/CMAT/TANCET will be granted direct consideration for the personal interview.3. Preference would be given to candidates with work experience.",
+  "about_program": "Regulations, Curriculum and Syllabus",
+  "career_opportunities": "Banking, Financial Services, Corporate Finance, Risk & Compliance, Investment & Markets",
+  "program_url": "https://www.srmist.edu.in/program/m-b-a-banking-and-financial-services/",
+  "last_updated": "2026-03-09T10:52:34+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "120",
+      "fees": "INR 4,50,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 159
+}

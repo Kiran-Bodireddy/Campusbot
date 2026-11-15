@@ -1,0 +1,26 @@
+{
+  "program_name": "B.Tech. Electronics & Communication Engineering",
+  "degree_level": "Undergraduate (UG)",
+  "credential": "B.TECH",
+  "faculty": "Faculty of Engineering & Technology, Baburayanpettai, Acharapakkam",
+  "department": "Department of Electronics & Communication EngineeringVendhar Nagar, Baburayanpettai, Acharapakkam Campus",
+  "campuses_available": "Baburayanpettai",
+  "duration": "4 Years",
+  "sanctioned_intake": "120",
+  "annual_fees_raw": "(Tuition + Hostel): ₹2,75,000",
+  "annual_fees_inr": 275000,
+  "eligibility_criteria": "",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/b-tech-electronics-communication-engineering-2/",
+  "last_updated": "2026-04-15T07:54:57+00:00",
+  "offerings": [
+    {
+      "campus": "Baburayanpettai",
+      "intake": "120",
+      "fees": "(Tuition + Hostel): ₹2,75,000",
+      "duration": "4 Years"
+    }
+  ],
+  "program_id": 349
+}

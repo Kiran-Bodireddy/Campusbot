@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Arch. Architectural Design",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.ARCH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "School of Architecture and Interior Design",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "20",
+  "annual_fees_raw": "INR 1,00,000",
+  "annual_fees_inr": 100000,
+  "eligibility_criteria": "50% aggregate in Bachelor of Architecture degree course or any other equivalent qualification recognized by the council of Architecture/Competent Authority. Personal interview will be conducted by the School Of Architecture and Interior Design, SRMIST",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-arch-master-of-architecture/",
+  "last_updated": "2025-09-22T04:50:08+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "20",
+      "fees": "INR 1,00,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 82
+}

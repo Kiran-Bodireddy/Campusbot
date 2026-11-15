@@ -1,0 +1,26 @@
+{
+  "program_name": "MPH – Applied Health Research",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "MPH",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM School of Public Health",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "10",
+  "annual_fees_raw": "300000",
+  "annual_fees_inr": 300000,
+  "eligibility_criteria": "1. Master of Public Health – Applied Health Research (AHR) is open to graduates from all academic streams with a minimum of 50% marks. 2. An understanding of basic statistics and proficiency in computer application is desired.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/mph-applied-health-research/",
+  "last_updated": "2026-10-23T11:52:34+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "10",
+      "fees": "300000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 252
+}

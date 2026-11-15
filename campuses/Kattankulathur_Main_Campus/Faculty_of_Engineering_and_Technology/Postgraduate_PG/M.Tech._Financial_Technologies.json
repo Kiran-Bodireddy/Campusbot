@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Financial Technologies",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Computing Technologies",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "1,60,000",
+  "annual_fees_inr": 160000,
+  "eligibility_criteria": "",
+  "about_program": "A postgraduate program in Financial Technologies (Fintech) is critical for professionals aiming to stay ahead in a rapidly evolving field. It offers a blend of technical knowledge, financial expertise, and innovation-driven skills, opening diverse career paths in a dynamic and high-growth industry. Fintech is considered as a separate important vertical with lot of application development happening in the sector with advanced technologies. M.Tech in Financial Technologies integrates finance with cutting-edge technology, covering blockchain, AI, big data, cybersecurity, and cloud computing. It focuses on digital payments, algorithmic trading, RegTech, and financial analytics, preparing students for innovation in banking, investments, and insurance. The proposed degree bridge the gap between computing and finance, fostering innovation and meeting industry needs. This program will equip students with cutting-edge skills, enhancing employability in banking, fintech startups, and regulatory sectors. It will also strengthen industry-academia collaboration, driving research and technological advancements in financial domain.",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-financial-technologies/",
+  "last_updated": "2025-04-26T06:37:22+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "1,60,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 112
+}

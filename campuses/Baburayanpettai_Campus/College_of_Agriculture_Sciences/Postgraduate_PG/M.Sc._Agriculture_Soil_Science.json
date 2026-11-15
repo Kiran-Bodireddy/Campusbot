@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Sc. Agriculture – Soil Science",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.Sc",
+  "faculty": "College of Agriculture Sciences",
+  "department": "SRM College of Agricultural Sciences",
+  "campuses_available": "Baburayanpettai",
+  "duration": "2 Years",
+  "sanctioned_intake": "10",
+  "annual_fees_raw": "INR 1,20,000",
+  "annual_fees_inr": 120000,
+  "eligibility_criteria": "",
+  "about_program": "Postgraduate M.Sc programme offered by SRM Institute of Science and Technology in Agriculture with Soil Science and Agricultural Chemistry specialisation.",
+  "career_opportunities": "Soil Science, Agricultural Chemistry, Soil & Crop Management, Agri Research Support",
+  "program_url": "https://www.srmist.edu.in/program/m-sc-agriculture-soil-science-and-agricultural-chemistry/",
+  "last_updated": "2026-09-09T09:41:14+00:00",
+  "offerings": [
+    {
+      "campus": "Baburayanpettai",
+      "intake": "10",
+      "fees": "INR 1,20,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 72
+}

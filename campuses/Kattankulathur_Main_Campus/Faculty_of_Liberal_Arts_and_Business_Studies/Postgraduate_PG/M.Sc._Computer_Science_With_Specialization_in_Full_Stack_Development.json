@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Sc. Computer Science With Specialization in Full Stack Development",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.Sc",
+  "faculty": "Faculty of Liberal Arts & Business Studies",
+  "department": "Department of Computer Science",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "30",
+  "annual_fees_raw": "1,50,000",
+  "annual_fees_inr": 150000,
+  "eligibility_criteria": "1. A pass in B.Sc Computer Science / BCA / B.Sc IT / B.Sc Mathematics / B.Sc Statistics/ B.Sc Physics/ B.Sc Electronics / B.Sc Triple major subjects with Computer Science as one of the Major subjects / Bachelor Degree in Computer Science Engineering or equivalent Degree from a University recognized / certified by UGC / SRMIST / AIU2. A minimum aggregate of 50% in UG.",
+  "about_program": "Postgraduate M.Sc Computer Science programme offered by SRM Institute of Science and Technology with focus on Full Stack Development.",
+  "career_opportunities": "Full-Stack Development, Software Engineering, Web Applications, Application Engineering",
+  "program_url": "https://www.srmist.edu.in/program/m-sc-computer-science-full-stack-development/",
+  "last_updated": "2026-03-03T06:29:17+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "30",
+      "fees": "1,50,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 148
+}

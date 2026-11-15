@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Pharm. Pharmacognosy",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.PHARM",
+  "faculty": "Medicine & Health Sciences",
+  "department": "SRM College of Pharmacy",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "10",
+  "annual_fees_raw": "1,25,000",
+  "annual_fees_inr": 125000,
+  "eligibility_criteria": "1. The candidate shall have passed a Bachelor’s degree in Pharmacy from a PCI-approved institution.2. A minimum of 55% aggregate marks in the Bachelor’s degree is required.3. Students must submit a Pharmacist Registration Certificate obtained from the respective State Pharmacy Council at the time of admission.4. Age: The minimum age limit is 21 years on or before 31st December of the year of admission.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-pharm-pharmacognosy/",
+  "last_updated": "2026-10-23T11:29:41+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "10",
+      "fees": "1,25,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 220
+}

@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Tech. Computer Aided Design",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.TECH",
+  "faculty": "Faculty of Engineering & Technology",
+  "department": "Department of Mechanical Engineering",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "12",
+  "annual_fees_raw": "INR 1,60,000",
+  "annual_fees_inr": 160000,
+  "eligibility_criteria": "Eligibility for M.Tech Programs (Duration: 2 Years) Specialization Eligibility (A basic degree or equivalent in the following with a minimum aggregate of 50%) Computer Aided Design B.E / B.Tech. in Mechanical Engg. / Production Engg. / Automobile Engg. / Aerospace / Aeronautical Engg (or) AMIE (Mech) / AMAeSI(Aero) / IMechE. (or) any equivalent degree in the above Disciplines.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-tech-computer-aided-design/",
+  "last_updated": "2024-11-12T10:20:32+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "12",
+      "fees": "INR 1,60,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 105
+}

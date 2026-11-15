@@ -1,0 +1,26 @@
+{
+  "program_name": "M.Sc. Cardiovascular Sciences (Echocardiography)",
+  "degree_level": "Postgraduate (PG)",
+  "credential": "M.SC",
+  "faculty": "Medicine & Health Sciences",
+  "department": "Allied Health Sciences",
+  "campuses_available": "Kattankulathur (KTR)",
+  "duration": "2 Years",
+  "sanctioned_intake": "20",
+  "annual_fees_raw": "1,50,000",
+  "annual_fees_inr": 150000,
+  "eligibility_criteria": "1. Age limit: Completed the age of 21 years on or before 31st December of the year of admission to the program.2. Under-graduate degree from a recognized University with minimum 50% marks or CGPA of 5.0.3. In case of students from foreign Universities, they should have qualifications recognised as equivalent to an Under-graduate degree.4. Qualifying degree: B.Sc. in Cardiac Care Technology.",
+  "about_program": "",
+  "career_opportunities": "",
+  "program_url": "https://www.srmist.edu.in/program/m-sc-cardiovascular-sciences-echocardiography/",
+  "last_updated": "2026-10-23T10:38:04+00:00",
+  "offerings": [
+    {
+      "campus": "Kattankulathur (KTR)",
+      "intake": "20",
+      "fees": "1,50,000",
+      "duration": "2 Years"
+    }
+  ],
+  "program_id": 231
+}
