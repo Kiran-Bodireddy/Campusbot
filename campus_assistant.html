@@ -568,6 +568,82 @@
       font-weight: 500;
     }
 
+    /* Qwen Generative AI Indicator Badge */
+    .gen-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: #8b5cf6;
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.72rem;
+      letter-spacing: 0.01em;
+    }
+
+    .gen-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #8b5cf6;
+      box-shadow: 0 0 8px rgba(139, 92, 246, 0.8);
+      animation: pulseDot 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.85); }
+    }
+
+    /* Structured Markdown Typography */
+    .assistant-answer {
+      font-size: 0.98rem;
+      line-height: 1.75;
+      color: var(--text-main);
+    }
+
+    .md-h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-heading);
+      margin: 0.85rem 0 0.4rem 0;
+      letter-spacing: -0.01em;
+    }
+
+    .md-h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-heading);
+      margin: 0.65rem 0 0.25rem 0;
+    }
+
+    .md-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.84em;
+      background: rgba(125, 125, 125, 0.12);
+      padding: 0.15rem 0.38rem;
+      border-radius: 4px;
+      border: 1px solid var(--card-border);
+      color: var(--text-heading);
+    }
+
+    .md-li {
+      display: flex;
+      align-items: baseline;
+      gap: 0.55rem;
+      margin: 0.35rem 0;
+      line-height: 1.6;
+    }
+
+    .md-bullet {
+      color: var(--mood-accent);
+      font-size: 0.95rem;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
     /* Loading Pulse */
     .loading-shimmer {
       display: flex;
@@ -1489,14 +1565,36 @@
 
     function formatText(raw) {
       if (!raw) return "";
-      return raw
+      let text = escapeHtml(raw);
+      // Entity Tags
+      text = text
         .replace(/\[Course:\s*([^\]]+)\]/g, '<span class="entity-tag">[Course: $1]</span>')
         .replace(/\[Faculty:\s*([^\]]+)\]/g, '<span class="entity-tag">[Faculty: $1]</span>')
         .replace(/\[Room:\s*([^\]]+)\]/g, '<span class="entity-tag">[Room: $1]</span>')
         .replace(/\[Program:\s*([^\]]+)\]/g, '<span class="entity-tag">[Program: $1]</span>')
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-        .replace(/\n\n/g, '<br><br>')
-        .replace(/\n/g, '<br>');
+        .replace(/`([^`]+)`/g, '<code class="md-code">$1</code>');
+
+      // Headings
+      text = text.replace(/^### (.*$)/gim, '<div class="md-h3">$1</div>');
+      text = text.replace(/^#### (.*$)/gim, '<div class="md-h4">$1</div>');
+
+      // Unordered lists
+      const lines = text.split('\n');
+      const formattedLines = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.match(/^\s*[-*]\s+(.*)$/)) {
+          const content = line.replace(/^\s*[-*]\s+/, '');
+          formattedLines.push(`<div class="md-li"><span class="md-bullet">&#9679;</span><div>${content}</div></div>`);
+        } else {
+          formattedLines.push(line);
+        }
+      }
+      text = formattedLines.join('\n');
+      text = text.replace(/\n\n/g, '<div style="height:0.75rem;"></div>');
+      text = text.replace(/\n/g, '<br>');
+      return text;
     }
 
     function askQuestion(q) {
@@ -1554,7 +1652,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             query: query,
-            use_qwen: false,
+            use_qwen: true,
             role: "student",
             engine_mode: currentEngineMode
           })
@@ -1598,11 +1696,21 @@
             ? `Neo4j: ${escapeHtml(toolName)}`
             : escapeHtml(toolName);
 
+          const isQwen = res.synthesizer && res.synthesizer.includes("Qwen");
+
           card.innerHTML = `
-            <div>${answerHtml}</div>
+            <div class="assistant-answer">${answerHtml}</div>
             ${suggestionsHtml}
             <div class="meta-footer">
-              <span class="tool-badge" ${badgeColorStyle}>${toolLabel}</span>
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span class="tool-badge" ${badgeColorStyle}>${toolLabel}</span>
+                ${isQwen ? `
+                  <span class="gen-badge" title="Grounded synthesis generated live by local Qwen 2.5">
+                    <span class="gen-dot"></span>
+                    Qwen 2.5 Generative AI
+                  </span>
+                ` : ''}
+              </div>
               <span class="latency-badge">${latency}ms</span>
             </div>
             <div style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">

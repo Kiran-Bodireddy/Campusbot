@@ -1097,13 +1097,13 @@ class GovernedCampusAgent:
             return self._synthesize_grounded_answer(query, tool_name, result)
 
         try:
-            # Compact the payload to eliminate CPU prompt-evaluation latency
+            # Compact the payload to eliminate CPU prompt-evaluation latency while preserving rich context
             compact_res = {}
-            if "programs" in result:
+            if "programs" in result and result["programs"]:
                 compact_res["programs"] = [
                     {
                         "program": p.get("program_name"),
-                        "cutoff_gen": p.get("min_percentage_general"),
+                        "cutoff_gen": p.get("min_percentage_general", p.get("min_percentage")),
                         "exam": p.get("required_entrance_exam"),
                         "fee": p.get("annual_fee_inr"),
                         "duration": p.get("duration"),
@@ -1111,7 +1111,7 @@ class GovernedCampusAgent:
                     }
                     for p in result["programs"][:3]
                 ]
-            elif "faculty" in result:
+            elif "faculty" in result and result["faculty"]:
                 compact_res["faculty"] = [
                     {
                         "name": f.get("name"),
@@ -1122,38 +1122,78 @@ class GovernedCampusAgent:
                     }
                     for f in result["faculty"][:3]
                 ]
-            elif "courses" in result:
+            elif "courses" in result and result["courses"]:
                 compact_res["courses"] = [
-                    {"code": c.get("code"), "name": c.get("name"), "dept": c.get("department")}
+                    {
+                        "code": c.get("code") or c.get("course_code"),
+                        "name": c.get("name") or c.get("course_name"),
+                        "credits": c.get("credits"),
+                        "dept": c.get("department"),
+                        "semester": c.get("semester_range") or c.get("semester"),
+                        "summary": c.get("description", "")[:120] if c.get("description") else ""
+                    }
                     for c in result["courses"][:3]
                 ]
+            elif "prerequisites" in result and result["prerequisites"]:
+                compact_res["target_course"] = result.get("target_course")
+                compact_res["prerequisites"] = [
+                    {"code": p.get("prerequisite_code"), "name": p.get("prerequisite_name"), "depth": p.get("depth")}
+                    for p in result["prerequisites"][:4]
+                ]
+            elif "instructors" in result and result["instructors"]:
+                compact_res["course_code"] = result.get("course_code")
+                compact_res["instructors"] = [
+                    {
+                        "name": i.get("name"),
+                        "designation": i.get("designation"),
+                        "dept": i.get("department"),
+                        "cabin": describe_cabin_location(i.get("cabin", "")),
+                        "email": i.get("email")
+                    }
+                    for i in result["instructors"][:3]
+                ]
             elif "available_rooms" in result:
-                compact_res["available_rooms"] = [r.get("id") for r in result["available_rooms"][:5]]
                 compact_res["building"] = result.get("building_code")
+                compact_res["available_rooms"] = [r.get("id") if isinstance(r, dict) else str(r) for r in result["available_rooms"][:6]]
+                compact_res["total_vacant"] = result.get("available_count", len(result["available_rooms"]))
+            elif "schedules" in result and result["schedules"]:
+                compact_res["room_id"] = result.get("room_id")
+                compact_res["room_type"] = result.get("room_type")
+                compact_res["schedules"] = [
+                    {"day": s.get("day"), "slot": s.get("time_slot") or s.get("slot"), "course": s.get("course_name") or s.get("course_code")}
+                    for s in result["schedules"][:4]
+                ]
+            elif "statistics" in result:
+                compact_res["statistics"] = result["statistics"]
+            elif "semesters" in result:
+                compact_res["program"] = result.get("program_name")
+                compact_res["semesters"] = result.get("semesters")
             else:
                 compact_res = result
 
-            prompt = f"""You are the SRMIST Campus Knowledge Assistant. Answer in 2 concise sentences using ONLY the verified facts below.
-Include citations like [Program: ...], [Faculty: ...], [Course: ...], [Room: ...].
+            prompt = f"""You are the SRMIST Campus Knowledge AI Concierge — an articulate, collegiate, and welcoming academic assistant.
+Your goal is to answer the user's inquiry conversationally in 2-3 polished, natural sentences using ONLY the verified facts below.
+Highlight essential details clearly (such as designations, departments, cabin locations, or credits) and retain verified citations in brackets like [Faculty: Dr. Name], [Course: Code], [Program: Name], or [Room: Room ID].
+Conclude smoothly. Do not hallucinate any information not present in the verified facts.
 
-Verified Data:
+Verified Facts:
 {json.dumps(compact_res, default=str)}
 
-Question: {query}
-Answer:"""
+User Question: {query}
+Concierge Response:"""
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
                 json={
                     "model": self.model_name,
                     "prompt": prompt,
                     "stream": False,
-                    "options": {"temperature": 0.1, "num_predict": 90}
+                    "options": {"temperature": 0.35, "num_predict": 140}
                 },
-                timeout=15
+                timeout=25
             )
             if resp.status_code == 200:
                 ans = resp.json().get("response", "").strip()
-                if ans:
+                if ans and len(ans) > 15:
                     return ans
         except Exception:
             pass
