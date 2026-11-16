@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SRMIST Campus Knowledge Graph Schema Blueprint",
+  "version": "2.0.0",
+  "description": "Formal Property Graph Ontology for SRMIST Campus Knowledge Assistant (Regulations 2021)",
+  "nodes": [
+    {
+      "label": "Course",
+      "description": "Accredited academic courses under Regulations 2021",
+      "primary_key": "code",
+      "properties": {
+        "code": { "type": "string", "example": "21CSC206T" },
+        "name": { "type": "string", "example": "Artificial Intelligence" },
+        "credits": { "type": "integer", "example": 3 },
+        "ltpc": { "type": "string", "example": "2-1-0-3" },
+        "level": { "type": "string", "example": "UG" },
+        "department": { "type": "string", "example": "School of Computing" },
+        "faculty": { "type": "string", "example": "Faculty of Engineering & Technology" },
+        "semester_range": { "type": "string", "example": "Semester 4" },
+        "description": { "type": "string" },
+        "regulation": { "type": "string", "example": "2021" }
+      }
+    },
+    {
+      "label": "Program",
+      "description": "Academic degree programs offered across SRMIST campuses",
+      "primary_key": "id",
+      "properties": {
+        "id": { "type": "string", "example": "PROG-001" },
+        "name": { "type": "string", "example": "B.Tech Computer Science and Engineering" },
+        "degree": { "type": "string", "example": "B.Tech" },
+        "duration_years": { "type": "integer", "example": 4 },
+        "min_percentage_general": { "type": "number", "example": 60.0 },
+        "annual_fee_inr": { "type": "integer", "example": 450000 },
+        "entrance_exam": { "type": "string", "example": "SRMJEEE" }
+      }
+    },
+    {
+      "label": "FacultyMember",
+      "description": "Academic faculty members, designations, and cabin locations",
+      "primary_key": "id",
+      "properties": {
+        "id": { "type": "string", "example": "FAC-0042" },
+        "name": { "type": "string", "example": "Dr. Madhusoodhanan P" },
+        "designation": { "type": "string", "example": "Associate Professor and HoD" },
+        "department": { "type": "string", "example": "Career Development Centre" },
+        "cabin": { "type": "string", "example": "TP-402" },
+        "email": { "type": "string", "example": "madhusop@srmist.edu.in" },
+        "specialization": { "type": "string", "example": "Mathematics" }
+      }
+    },
+    {
+      "label": "Room",
+      "description": "Physical instructional spaces across Kattankulathur buildings",
+      "primary_key": "id",
+      "properties": {
+        "id": { "type": "string", "example": "TP-101" },
+        "room_number": { "type": "string", "example": "TP-101" },
+        "building_code": { "type": "string", "example": "TP" },
+        "floor": { "type": "integer", "example": 1 },
+        "type": { "type": "string", "example": "Smart Classroom" },
+        "capacity": { "type": "integer", "example": 50 }
+      }
+    },
+    {
+      "label": "Building",
+      "description": "Campus infrastructure blocks at Kattankulathur campus",
+      "primary_key": "code",
+      "properties": {
+        "code": { "type": "string", "example": "TP" },
+        "name": { "type": "string", "example": "Tech Park" },
+        "floors": { "type": "integer", "example": 15 },
+        "campus": { "type": "string", "example": "Kattankulathur (KTR)" },
+        "focus": { "type": "string", "example": "Engineering & Computing" }
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "type": "REQUIRES_PREREQUISITE",
+      "source": "Course",
+      "target": "Course",
+      "description": "Directed Acyclic Graph (DAG) dependency edge for course eligibility"
+    },
+    {
+      "type": "OFFERS_PROGRAM",
+      "source": "College",
+      "target": "Program",
+      "description": "Degree program offerings under specific faculties"
+    },
+    {
+      "type": "TEACHES",
+      "source": "FacultyMember",
+      "target": "Course",
+      "description": "Teaching assignment connecting instructors to courses"
+    },
+    {
+      "type": "LOCATED_IN",
+      "source": "Room",
+      "target": "Building",
+      "description": "Spatial containment relationship"
+    },
+    {
+      "type": "ALLOCATED_IN",
+      "source": "Course",
+      "target": "Room",
+      "properties": {
+        "day": { "type": "string", "example": "Monday" },
+        "slot": { "type": "string", "example": "08:45-09:35" }
+      }
+    }
+  ]
+}
