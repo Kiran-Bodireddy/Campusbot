@@ -243,6 +243,56 @@ class GovernedCampusAgent:
         ):
             return "find_faculty_for_course", {"course_code": codes[0]}
 
+        # 3b. Building info intent — MUST come before room schedule to prevent misroutes
+        # Matches: "tp1 building", "tech park", "tp2 building", "tell me about ub", "university building", etc.
+        BUILDING_ALIASES = {
+            "tp":  "TP",  "tp1": "TP",  "tp-1": "TP", "tech park": "TP",  "tech park 1": "TP",  "techpark": "TP",
+            "tp2": "TP2", "tp-2": "TP2", "tech park 2": "TP2", "techpark 2": "TP2",
+            "ub":  "UB",  "university building": "UB",  "university block": "UB",
+            "bel": "BEL", "bioengineering": "BEL", "bio engg": "BEL", "bio engineering": "BEL",
+            "meb": "MEB", "mechanical block": "MEB", "mechanical engineering block": "MEB",
+            "esb": "ESB", "electrical block": "ESB", "electrical sciences": "ESB",
+            "fmb": "FMB", "management block": "FMB", "management building": "FMB",
+            "slb": "SLB", "law block": "SLB", "school of law": "SLB", "law building": "SLB",
+            "mcb": "MCB", "medical block": "MCB", "medical college": "MCB",
+        }
+        BUILDING_KEYWORDS = [
+            "building", "block", "tech park", "university building", "bioengineering",
+            "mechanical block", "electrical block", "management block", "law block", "medical block",
+            "tp1", "tp2", "tp-1", "tp-2", "about tp", "about ub", "about bel"
+        ]
+        is_building_intent = any(w in raw_lower for w in BUILDING_KEYWORDS)
+        # Also detect bare building code like "tp1", "tp 1", "TP-1", "ub" with/without qualifiers
+        bare_bldg = re.match(
+            r"^\s*(tp-?[12]?|tp2|tech\s*park\s*[12]?|ub|university\s*build|bel|meb|esb|fmb|slb|mcb)"
+            r"[\s\-]*(building|block|info|details|about|rooms?)?\s*$",
+            raw_lower
+        )
+        # Also handle uppercase patterns: "TP-1 rooms", "TP-2", "UB info"
+        if not bare_bldg:
+            bare_bldg = re.match(
+                r"^\s*(TP-?[12]?|TP2?|UB|BEL|MEB|ESB|FMB|SLB|MCB)"
+                r"[\s\-]*(building|block|info|details|about|rooms?)?\s*$",
+                user_query.strip()
+            )
+        if is_building_intent or bare_bldg:
+            detected_code = "TP"
+            combined = raw_lower
+            for alias, code in BUILDING_ALIASES.items():
+                if alias in combined:
+                    detected_code = code
+                    break
+            else:
+                b_match2 = re.search(r"\b(TP2|TP|UB|BEL|MEB|ESB|FMB|SLB|MCB)\b", user_query.upper())
+                if b_match2:
+                    detected_code = b_match2.group(1)
+            # Route to find_available_rooms which lists all rooms for this building
+            day_match = re.search(r"\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b", user_query, re.IGNORECASE)
+            day_val = day_match.group(1).capitalize() if day_match else "Monday"
+            slot_match = re.search(r"\b(\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})\b", user_query)
+            slot_val = slot_match.group(1).replace(" ", "") if slot_match else "08:45-09:35"
+            return "find_available_rooms", {"building_code": detected_code, "day": day_val, "slot": slot_val, "min_capacity": 1}
+
         # 4. Room schedule / occupancy (e.g. TP-501, TP501, UB102, TP 201)
         r_match = re.search(r"\b(TP2|TP|UB|BEL|MEB|ESB|FMB|SLB|MCB)[\s-]*(\d{3})\b", user_query.upper())
         if r_match:
@@ -272,7 +322,17 @@ class GovernedCampusAgent:
             "sports", "facilities", "hostel", "mess", "canteen", "library", "wifi", "portal", "attendance",
             "placement", "placements", "jobs", "fees", "fee", "cost", "apply", "admission", "cut off"
         }
-        is_greeting_or_non_name = q_lower.strip() in COMMON_GREETINGS_AND_NON_NAMES or any(q_lower.strip().startswith(g) for g in ["hey ", "hello ", "hi ", "how are you"])
+        CAMPUS_LOCATION_TERMS = {
+            "tech park", "tp1", "tp2", "tp-1", "tp-2", "university building",
+            "bioengineering", "mechanical block", "electrical block", "management block",
+            "law block", "medical college", "campus", "building", "block", "hostel",
+            "canteen", "library", "lab", "auditorium", "ground", "playground"
+        }
+        is_greeting_or_non_name = (
+            q_lower.strip() in COMMON_GREETINGS_AND_NON_NAMES
+            or any(q_lower.strip().startswith(g) for g in ["hey ", "hello ", "hi ", "how are you"])
+            or any(loc in q_lower for loc in CAMPUS_LOCATION_TERMS)
+        )
 
         words = user_query.strip().split()
         raw_query_lower = user_query.lower()
@@ -341,8 +401,10 @@ class GovernedCampusAgent:
 
     def _select_tool_with_llm(self, user_query: str) -> Optional[tuple[str, Dict[str, Any]]]:
         """
-        Model-First Semantic Intent Parser & Typo Disambiguator using Qwen 2.5 (JSON Mode).
-        Naturally parses messy phrasing, arbitrary misspellings, and acronyms without hand-coded dictionaries.
+        Two-Stage Semantic Intent Parser using Qwen 2.5 (JSON Mode).
+        Stage 1: Qwen understands intent category and what the user really wants.
+        Stage 2: Qwen maps intent to the correct governed tool with parameters.
+        Handles typos, slang, abbreviations, and casual phrasing naturally.
         """
         try:
             prompt = f"{INTENT_ROUTING_PROMPT}\n\nUser Question: {user_query}\n\nJSON Output:"
@@ -358,7 +420,7 @@ class GovernedCampusAgent:
                         "top_p": 0.9
                     }
                 },
-                timeout=15.0
+                timeout=20.0
             )
             if resp.status_code == 200:
                 data = resp.json()
@@ -366,6 +428,16 @@ class GovernedCampusAgent:
                 parsed = json.loads(raw_text)
                 tool = parsed.get("tool")
                 params = parsed.get("parameters", {})
+
+                # Log intent understanding for traceability
+                intent_cat = parsed.get("intent_category", "?")
+                intent_desc = parsed.get("intent_description", "")
+                if intent_cat and intent_desc:
+                    import logging
+                    logging.getLogger("qwen_agent").info(
+                        f"[Qwen Intent] Category={intent_cat} | {intent_desc} | tool={tool}"
+                    )
+
                 if tool and tool in self.tool_map:
                     # Parameter normalization & tolerance across variations
                     if tool == "check_admission_eligibility":
@@ -376,18 +448,42 @@ class GovernedCampusAgent:
                     elif tool == "lookup_faculty_profile":
                         if "faculty_name" not in params and "name_query" in params:
                             params["faculty_name"] = params.pop("name_query")
+                        # Strip honorifics that Qwen might include
+                        name = params.get("faculty_name", "")
+                        name = re.sub(r"(?i)^(dr\.?\s*|prof\.?\s*|professor\s*|mr\.?\s*|ms\.?\s*|mrs\.?\s*)", "", name).strip()
+                        if name:
+                            params["faculty_name"] = name
                     elif tool == "find_available_rooms":
                         if "building_code" not in params:
                             params["building_code"] = "TP"
+                        # Normalize building code aliases Qwen might use
+                        bc = params["building_code"].upper().strip()
+                        BLDG_NORMALIZE = {"TP1": "TP", "TECHPARK": "TP", "TECH PARK": "TP",
+                                          "TP-1": "TP", "TP-2": "TP2", "TECH PARK 2": "TP2",
+                                          "UNIVERSITY": "UB", "UNIVERSITY BUILDING": "UB"}
+                        params["building_code"] = BLDG_NORMALIZE.get(bc, bc)
+                    elif tool == "find_room_schedule":
+                        if "room_id" not in params and "room" in params:
+                            params["room_id"] = params.pop("room")
+                        # Normalize room_id: TP101 -> TP-101
+                        if "room_id" in params:
+                            rid = params["room_id"].upper().strip()
+                            rid = re.sub(r"([A-Z]{2,3})\s*-?\s*(\d{3})", r"\1-\2", rid)
+                            params["room_id"] = rid
                     elif tool == "lookup_course":
                         if "query" not in params and "course_code" in params:
                             params["query"] = params.pop("course_code")
+                        elif "query" not in params and "course" in params:
+                            params["query"] = params.pop("course")
                     elif tool == "verify_prerequisites":
                         if isinstance(params.get("completed_courses"), str):
                             params["completed_courses"] = [params["completed_courses"]]
                     elif tool == "get_campus_statistics":
                         if "category" not in params:
-                            params["category"] = "programs"
+                            params["category"] = "all"
+                    elif tool == "get_semester_curriculum":
+                        if "program_query" not in params:
+                            params["program_query"] = "Computer Science and Engineering"
                     return tool, params
         except Exception:
             pass
@@ -873,18 +969,60 @@ Answer:"""
             day = result.get("day", "Monday")
             slot = result.get("slot", "08:45-09:35")
             count = result.get("available_count", len(avail))
+            is_building_info_mode = result.get("min_capacity", 30) <= 1
+
+            BUILDING_NAMES = {
+                "TP": "Tech Park (TP-1)", "TP2": "Tech Park 2 (TP-2)",
+                "UB": "University Building", "BEL": "Bioengineering Block",
+                "MEB": "Mechanical Engineering Block", "ESB": "Electrical Sciences Block",
+                "FMB": "Faculty of Management Block", "SLB": "School of Law Building",
+                "MCB": "Medical College Hospital Block"
+            }
+            BUILDING_FOCUS = {
+                "TP": "Engineering & Computing labs, smart classrooms, lecture halls (15 floors)",
+                "TP2": "Faculty Research Wings & Specialized Labs (12 floors)",
+                "UB": "Administration, Sciences & Arts departments (14 floors)",
+                "BEL": "Biotechnology & Genetic Engineering labs (8 floors)",
+                "MEB": "Mechanical & Automobile Engineering workshops (6 floors)",
+                "ESB": "ECE & EEE laboratories and classrooms (7 floors)",
+                "FMB": "Management, MBA & Business programs (5 floors)",
+                "SLB": "School of Law, moot court & seminars (4 floors)",
+                "MCB": "Medicine, Nursing & Health Sciences (10 floors)"
+            }
+
+            full_name = BUILDING_NAMES.get(b_code, b_code)
+            focus = BUILDING_FOCUS.get(b_code, "Campus building")
 
             result["suggestions"] = [
-                f"Schedule for {avail[0]['id']}" if avail else f"Find available rooms in UB",
-                "Eligibility for B.Tech",
-                "B.Tech CSE Semester 3"
+                f"Available rooms in {b_code} on Monday",
+                f"Room schedule for {avail[0]['id']}" if avail else f"Find available rooms in TP",
+                "Find available rooms in UB"
             ]
 
+            if is_building_info_mode:
+                # Building info response
+                total_rooms = len(avail)
+                room_types = {}
+                for r in avail:
+                    t = r.get("type", "Room")
+                    room_types[t] = room_types.get(t, 0) + 1
+                type_summary = ", ".join(f"{n} {t}s" for t, n in list(room_types.items())[:4])
+                lines = [
+                    f"**[Building: {full_name}]** is a campus facility at SRMIST Kattankulathur.\n",
+                    f"**Primary Focus:** {focus}\n",
+                    f"**Total Rooms on Record:** {total_rooms} rooms ({type_summary})\n",
+                    f"**Sample Rooms:**"
+                ]
+                for r in avail[:6]:
+                    lines.append(f"- **[Room: {r['id']}]**: {r.get('type', 'Room')} — Capacity: **{r.get('capacity', 'N/A')}** seats")
+                lines.append(f"\nWould you like to check available classrooms in **{full_name}** for a specific day and time?")
+                return "\n".join(lines)
+
             if not avail:
-                return f"No unoccupied classrooms found in Building **{b_code}** for **{day}** at slot **{slot}** with minimum capacity {result.get('min_capacity', 30)}."
+                return f"No unoccupied classrooms found in **{full_name}** for **{day}** at slot **{slot}** with minimum capacity {result.get('min_capacity', 30)}."
 
             lines = [
-                f"Found **{count} available classrooms** in Building **{b_code}** for **{day}** at slot **{slot}**:\n"
+                f"Found **{count} available classrooms** in **{full_name}** for **{day}** at slot **{slot}**:\n"
             ]
             for r in avail[:6]:
                 lines.append(f"- **[Room: {r['id']}]**: {r.get('type', 'Classroom')} (Capacity: **{r.get('capacity', 'N/A')}** seats)")
