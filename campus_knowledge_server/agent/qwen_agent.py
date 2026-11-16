@@ -12,6 +12,7 @@ from typing import Dict, List, Any, Optional
 
 from campus_knowledge_server.agent.prompts import SYSTEM_GROUNDING_PROMPT, TOOL_DEFINITIONS, INTENT_ROUTING_PROMPT
 from campus_knowledge_server.agent.normalizer import normalize_user_query
+from campus_knowledge_server.database.neo4j_client import get_graph_client
 from campus_knowledge_server.tools.campus_tools import (
     CampusKnowledgeTools,
     CourseLookupRequest,
@@ -26,6 +27,49 @@ from campus_knowledge_server.tools.campus_tools import (
     CampusStatisticsRequest,
     SemesterCurriculumRequest
 )
+
+def describe_cabin_location(cabin: str) -> str:
+    """Decodes SRMIST cabin codes into human-readable building and floor descriptions."""
+    if not cabin or cabin.strip().lower() in ("n/a", "none", "unknown"):
+        return "Main Campus Faculty Staff Room"
+    cabin_u = cabin.upper()
+    bldg = ""
+    floor = ""
+    if "TP2" in cabin_u or "TP-2" in cabin_u:
+        bldg = "Tech Park 2 (TP-2)"
+    elif "TP" in cabin_u or "TP1" in cabin_u:
+        bldg = "Tech Park (TP-1)"
+    elif "UB" in cabin_u:
+        bldg = "University Building (UB)"
+    elif "BEL" in cabin_u or "BIO" in cabin_u:
+        bldg = "Bioengineering Block (BEL)"
+    elif "MEB" in cabin_u or "MECH" in cabin_u:
+        bldg = "Mechanical Block (MEB)"
+    elif "ESB" in cabin_u or "ELEC" in cabin_u:
+        bldg = "Electrical Sciences Block (ESB)"
+    elif "FMB" in cabin_u or "MGMT" in cabin_u:
+        bldg = "Faculty of Management Building (FMB)"
+    elif "SLB" in cabin_u or "LAW" in cabin_u:
+        bldg = "School of Law Block (SLB)"
+    elif "MCB" in cabin_u or "MED" in cabin_u:
+        bldg = "Medical College Block (MCB)"
+
+    m_fl = re.search(r"(\d+)(?:st|nd|rd|th)?\s*Floor", cabin, re.IGNORECASE)
+    if m_fl:
+        floor = f"Floor {m_fl.group(1)}"
+    else:
+        m_num = re.search(r"(?:FR|TP|UB)?[\s-]*(\d{3,4})", cabin_u)
+        if m_num:
+            digits = m_num.group(1)
+            if len(digits) == 3:
+                floor = f"Floor {digits[0]}"
+            elif len(digits) == 4:
+                floor = f"Floor {digits[:2]}"
+
+    parts = [p for p in [bldg, floor] if p]
+    if parts:
+        return f"{cabin} ({', '.join(parts)})"
+    return cabin
 
 class GovernedCampusAgent:
     def __init__(self, ollama_url: str = "http://localhost:11434", model_name: str = "qwen2.5:1.5b"):
@@ -62,6 +106,28 @@ class GovernedCampusAgent:
             "get_campus_statistics": lambda args: CampusKnowledgeTools.get_campus_statistics(CampusStatisticsRequest(**args), caller="qwen_agent"),
             "get_semester_curriculum": lambda args: CampusKnowledgeTools.get_semester_curriculum(SemesterCurriculumRequest(**args), caller="qwen_agent"),
         }
+
+    def _detect_faculty_name(self, query: str) -> Optional[str]:
+        """Detects whether any word in the query corresponds to a known faculty member in the graph."""
+        client = get_graph_client()
+        raw_tokens = re.findall(r"[A-Za-z]+", query.lower())
+        STOPWORDS = {
+            "who", "is", "where", "what", "which", "are", "tell", "me", "about",
+            "the", "a", "an", "in", "at", "for", "does", "do", "find", "show",
+            "search", "can", "you", "please", "details", "info", "give", "get",
+            "room", "rooms", "building", "block", "floor", "cabin", "dept", "department",
+            "college", "campus", "hi", "hello", "hey", "course", "syllabus", "admission",
+            "fee", "fees", "eligibility", "cutoff", "cutoffs", "prereq", "prerequisites",
+            "and", "to", "of", "from", "on", "with", "located", "sit", "stay", "work",
+            "available", "free", "vacant", "class", "classroom", "classes", "schedule",
+            "srm", "srmist", "university", "faculty", "professor", "prof", "dr", "dean", "hod"
+        }
+        candidates = [t for t in raw_tokens if len(t) >= 3 and t not in STOPWORDS]
+        if hasattr(client, "_faculty_by_token"):
+            for t in candidates:
+                if t in client._faculty_by_token:
+                    return t
+        return None
 
     def _select_tool_heuristically(self, user_query: str) -> Optional[tuple[str, Dict[str, Any]]]:
         """High-precision fuzzy & normalized router tolerant of typos, slang, and misspellings."""
@@ -243,6 +309,13 @@ class GovernedCampusAgent:
         ):
             return "find_faculty_for_course", {"course_code": codes[0]}
 
+        # 3a. Direct faculty name recognition (matches indexed faculty tokens like 'godfrey', 'saravanan', 'revathi')
+        # Evaluated before building room checks so that questions like "which building is godfrey in?" or "godfrey"
+        # route directly to faculty profile instead of classrooms.
+        detected_fac = self._detect_faculty_name(user_query)
+        if detected_fac and not codes:
+            return "lookup_faculty_profile", {"faculty_name": detected_fac}
+
         # 3b. Building info intent — MUST come before room schedule to prevent misroutes
         # Matches: "tp1 building", "tech park", "tp2 building", "tell me about ub", "university building", etc.
         BUILDING_ALIASES = {
@@ -261,7 +334,11 @@ class GovernedCampusAgent:
             "mechanical block", "electrical block", "management block", "law block", "medical block",
             "tp1", "tp2", "tp-1", "tp-2", "about tp", "about ub", "about bel"
         ]
-        is_building_intent = any(w in raw_lower for w in BUILDING_KEYWORDS)
+        is_faculty_clue = (
+            detected_fac is not None
+            or any(w in raw_lower for w in ["dr.", "dr ", "professor", "prof.", "prof ", "faculty", "who is", "who's", "where is", "where's", "where does", "cabin of", "office of", "contact of", "email of", "staff room"])
+        )
+        is_building_intent = any(w in raw_lower for w in BUILDING_KEYWORDS) and not is_faculty_clue
         # Also detect bare building code like "tp1", "tp 1", "TP-1", "ub" with/without qualifiers
         bare_bldg = re.match(
             r"^\s*(tp-?[12]?|tp2|tech\s*park\s*[12]?|ub|university\s*build|bel|meb|esb|fmb|slb|mcb)"
@@ -291,7 +368,7 @@ class GovernedCampusAgent:
             day_val = day_match.group(1).capitalize() if day_match else "Monday"
             slot_match = re.search(r"\b(\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})\b", user_query)
             slot_val = slot_match.group(1).replace(" ", "") if slot_match else "08:45-09:35"
-            return "find_available_rooms", {"building_code": detected_code, "day": day_val, "slot": slot_val, "min_capacity": 1}
+            return "find_available_rooms", {"building_code": detected_code, "day": day_val, "slot": slot_val, "min_capacity": 10}
 
         # 4. Room schedule / occupancy (e.g. TP-501, TP501, UB102, TP 201)
         r_match = re.search(r"\b(TP2|TP|UB|BEL|MEB|ESB|FMB|SLB|MCB)[\s-]*(\d{3})\b", user_query.upper())
@@ -320,7 +397,8 @@ class GovernedCampusAgent:
             "okay", "yes", "no", "thanks", "thank you", "bye", "good", "bad", "fine", "cool", "why", "what",
             "how", "who", "where", "when", "srm", "srmist", "campus", "college", "department",
             "sports", "facilities", "hostel", "mess", "canteen", "library", "wifi", "portal", "attendance",
-            "placement", "placements", "jobs", "fees", "fee", "cost", "apply", "admission", "cut off"
+            "placement", "placements", "jobs", "fees", "fee", "cost", "apply", "admission", "cut off",
+            "ai", "ml", "dl", "ds", "cse", "ece", "eee", "it", "mech", "civil", "iot", "cyber", "cloud", "data", "math", "physics", "chemistry"
         }
         CAMPUS_LOCATION_TERMS = {
             "tech park", "tp1", "tp2", "tp-1", "tp-2", "university building",
@@ -340,18 +418,18 @@ class GovernedCampusAgent:
             meta.get("is_faculty_intent")
             or any(w in raw_query_lower for w in [
                 "dr.", "dr ", "professor", "prof.", "prof ", "faculty", "research", "hod", "dean",
-                "who is", "who's", "tell me about", "tell us about", "can you tell me about", "can u tell me about",
+                "who is", "who's", "where is", "where's", "where does", "tell me about", "tell us about", "can you tell me about", "can u tell me about",
                 "know about", "details of", "profile of", "cabin of", "email of", "contact of", "cabin", "staff room"
             ])
             or any(w in q_lower for w in ["dr.", "dr ", "professor", "prof.", "faculty", "cabin", "staff room"])
         )
         is_solitary_name = (
-            len(words) <= 3 
+            len(words) <= 3
+            and all(len(w) >= 3 for w in words)
             and not codes 
             and not is_admission_or_fee 
             and not any(w in q_lower for w in ["room", "course", "prereq", "syllabus", "building", "class", "schedule"])
             and not any(w.lower() in COMMON_GREETINGS_AND_NON_NAMES for w in words)
-            and any(w[0].isupper() for w in words if w)
         )
         is_faculty_query = (
             not is_greeting_or_non_name
@@ -489,6 +567,261 @@ class GovernedCampusAgent:
             pass
         return None
 
+    def _federated_cross_entity_search(
+        self,
+        user_query: str,
+        role: str = "student",
+        engine_mode: str = "neo4j",
+        attempted_tool: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Federated cross-entity graph scanner.
+        Executes an instant, multi-domain search across all 4 catalogs
+        (Faculty, Courses, Classrooms/Buildings, Programs) to eliminate single-database tunnel vision.
+        """
+        client = get_graph_client()
+        matched = client.find_entities(user_query, max_per_type=5)
+
+        fac_list = matched.get("faculty", [])
+        course_list = matched.get("courses", [])
+        room_list = matched.get("rooms", [])
+        prog_list = matched.get("programs", [])
+        bldg_list = matched.get("buildings", [])
+
+        # If an attempted tool failed to find data, exclude that empty category
+        if attempted_tool == "lookup_faculty_profile":
+            fac_list = []
+        elif attempted_tool in ("lookup_course", "search_courses_semantic"):
+            course_list = []
+        elif attempted_tool == "find_room_schedule":
+            room_list = []
+        elif attempted_tool == "check_admission_eligibility":
+            prog_list = []
+
+        total_hits = len(fac_list) + len(course_list) + len(room_list) + len(prog_list) + len(bldg_list)
+        if total_hits == 0:
+            return None
+
+        # Determine non-empty categories
+        active_cats = []
+        if fac_list:
+            active_cats.append("faculty")
+        if course_list:
+            active_cats.append("courses")
+        if prog_list:
+            active_cats.append("programs")
+        if room_list or bldg_list:
+            active_cats.append("rooms")
+
+        # Single category match: synthesize grounded answer using specialized formatter
+        if len(active_cats) == 1:
+            cat = active_cats[0]
+            if cat == "faculty":
+                tool_name = "lookup_faculty_profile"
+                tool_res = {"faculty": fac_list, "query": user_query, "status": "SUCCESS"}
+                answer = self._synthesize_grounded_answer(user_query, tool_name, tool_res)
+                return {
+                    "user_query": user_query,
+                    "tool_selected": tool_name,
+                    "parameters": {"faculty_name": fac_list[0]["name"]},
+                    "status": "SUCCESS",
+                    "suggestions": [
+                        f"Who teaches in {fac_list[0].get('short_department', 'Computing Technologies')}?",
+                        "Find available rooms in Tech Park",
+                        "Eligibility for B.Tech"
+                    ],
+                    "tool_result": tool_res,
+                    "answer": answer,
+                    "grounded": True,
+                    "intent_source": "Federated Cross-Entity Search (Graph Fallback)",
+                    "engine_mode": engine_mode,
+                    "source": "SRMIST Faculty Directory",
+                    "synthesizer": "Governed Campus Engine"
+                }
+            elif cat == "courses":
+                tool_name = "lookup_course"
+                tool_res = {"courses": course_list, "query": user_query, "status": "SUCCESS"}
+                answer = self._synthesize_grounded_answer(user_query, tool_name, tool_res)
+                c_code = course_list[0].get("code", "")
+                return {
+                    "user_query": user_query,
+                    "tool_selected": tool_name,
+                    "parameters": {"query": c_code},
+                    "status": "SUCCESS",
+                    "suggestions": [
+                        f"Prerequisites for {c_code}",
+                        f"Who teaches {c_code}?",
+                        "Find available rooms in Tech Park"
+                    ],
+                    "tool_result": tool_res,
+                    "answer": answer,
+                    "grounded": True,
+                    "intent_source": "Federated Cross-Entity Search (Graph Fallback)",
+                    "engine_mode": engine_mode,
+                    "source": "SRMIST Academic Regulations 2021",
+                    "synthesizer": "Governed Campus Engine"
+                }
+            elif cat == "programs":
+                tool_name = "check_admission_eligibility"
+                tool_res = {"eligible": True, "evaluated_programs": prog_list, "query": user_query, "status": "SUCCESS"}
+                answer = self._synthesize_grounded_answer(user_query, tool_name, tool_res)
+                return {
+                    "user_query": user_query,
+                    "tool_selected": tool_name,
+                    "parameters": {"program_query": prog_list[0]["program_name"]},
+                    "status": "SUCCESS",
+                    "suggestions": [
+                        f"B.Tech CSE Semester 3",
+                        "Eligibility for B.Tech",
+                        "Course details for 21CSC206T"
+                    ],
+                    "tool_result": tool_res,
+                    "answer": answer,
+                    "grounded": True,
+                    "intent_source": "Federated Cross-Entity Search (Graph Fallback)",
+                    "engine_mode": engine_mode,
+                    "source": "SRMIST Admissions Directorate",
+                    "synthesizer": "Governed Campus Engine"
+                }
+            elif cat == "rooms":
+                if room_list:
+                    r = room_list[0]
+                    tool_name = "find_room_schedule"
+                    tool_res = {
+                        "room_id": r["id"],
+                        "room_type": r.get("type", "Classroom"),
+                        "capacity": r.get("capacity", 60),
+                        "building_code": r.get("building_code", "TP"),
+                        "schedules": client._schedules_by_room.get(r["id"], [])[:10],
+                        "source": "SRMIST Room Allocation Master"
+                    }
+                    answer = self._synthesize_grounded_answer(user_query, tool_name, tool_res)
+                    return {
+                        "user_query": user_query,
+                        "tool_selected": tool_name,
+                        "parameters": {"room_id": r["id"]},
+                        "status": "SUCCESS",
+                        "suggestions": [
+                            f"Find available rooms in {r.get('building_code', 'TP')}",
+                            "Who teaches 21CSC206T?",
+                            "Eligibility for B.Tech"
+                        ],
+                        "tool_result": tool_res,
+                        "answer": answer,
+                        "grounded": True,
+                        "intent_source": "Federated Cross-Entity Search (Graph Fallback)",
+                        "engine_mode": engine_mode,
+                        "source": "SRMIST Room Allocation Master",
+                        "synthesizer": "Governed Campus Engine"
+                    }
+                else:
+                    b = bldg_list[0]
+                    b_code = b.get("code", "TP")
+                    tool_name = "find_available_rooms"
+                    tool_res = {
+                        "building_code": b_code,
+                        "day": "Monday",
+                        "slot": "08:45-09:35",
+                        "min_capacity": 10,
+                        "available_count": 20,
+                        "available_rooms": [r for r in client.in_memory_data.get("rooms", []) if r.get("building_code") == b_code][:20],
+                        "source": "SRMIST Space Allocation Matrix"
+                    }
+                    answer = self._synthesize_grounded_answer(user_query, tool_name, tool_res)
+                    return {
+                        "user_query": user_query,
+                        "tool_selected": tool_name,
+                        "parameters": {"building_code": b_code},
+                        "status": "SUCCESS",
+                        "suggestions": [
+                            f"Schedule for {b_code}-101",
+                            "Who teaches 21CSC206T?",
+                            "Eligibility for B.Tech"
+                        ],
+                        "tool_result": tool_res,
+                        "answer": answer,
+                        "grounded": True,
+                        "intent_source": "Federated Cross-Entity Search (Graph Fallback)",
+                        "engine_mode": engine_mode,
+                        "source": "SRMIST Space Allocation Matrix",
+                        "synthesizer": "Governed Campus Engine"
+                    }
+
+        # Multi-category match: Query spans multiple domains (e.g. "AI", "Cloud", "Computing")
+        md_lines = [
+            f"### SRMIST Campus Knowledge Graph: Cross-Entity Results for '{user_query}'\n",
+            "I checked across all campus catalogs (Programs, Courses, Faculty, and Classrooms) and found matching records:\n"
+        ]
+
+        if prog_list:
+            md_lines.append("#### Academic Programs & Degrees")
+            for p in prog_list[:3]:
+                fee_val = p.get('annual_fee_inr')
+                fee_str = f"INR {fee_val:,}/yr" if fee_val else "Official Norms"
+                dur = p.get('duration', '4 Years')
+                min_pct = p.get('min_percentage_general', p.get('min_percentage', 60.0))
+                md_lines.append(f"- **[Program: {p['program_name']}]** ({p.get('degree', 'Degree')})")
+                md_lines.append(f"  - Minimum Criteria: {min_pct}% in qualifying exam | Duration: {dur} | Fee: {fee_str}")
+            md_lines.append("")
+
+        if course_list:
+            md_lines.append("#### Curriculum & Courses")
+            for c in course_list[:3]:
+                c_code = c.get('code', '')
+                c_name = c.get('name', '')
+                c_cr = c.get('credits', 3)
+                c_dept = c.get('department', 'Engineering')
+                md_lines.append(f"- **[{c_code} - {c_name}]** ({c_cr} Credits, {c_dept})")
+            md_lines.append("")
+
+        if fac_list:
+            md_lines.append("#### Faculty & Researchers")
+            for f in fac_list[:3]:
+                f_name = f.get('name', '')
+                f_desig = f.get('designation', 'Faculty')
+                f_dept = f.get('department', '')
+                f_cabin = describe_cabin_location(f.get('cabin', 'Staff Room'))
+                f_email = f.get('email', '')
+                md_lines.append(f"- **[Faculty: {f_name}]**: {f_desig}, {f_dept}")
+                md_lines.append(f"  - Cabin: **{f_cabin}** | Email: `{f_email}`")
+            md_lines.append("")
+
+        if room_list:
+            md_lines.append("#### Campus Classrooms & Spaces")
+            for r in room_list[:3]:
+                md_lines.append(f"- **[Room: {r.get('id')}]**: {r.get('type', 'Classroom')}, Capacity: {r.get('capacity', 'N/A')}, Building: {r.get('building_code', '')}")
+            md_lines.append("")
+
+        md_lines.append("Would you like more details on any specific program, course, faculty member, or classroom above?")
+
+        answer = "\n".join(md_lines)
+        return {
+            "user_query": user_query,
+            "tool_selected": "federated_cross_entity_search",
+            "parameters": {"query": user_query},
+            "status": "SUCCESS",
+            "suggestions": [
+                f"Course details for {course_list[0]['code']}" if course_list else "Course details for 21CSC206T",
+                f"Cabin of {fac_list[0]['name']}" if fac_list else "Find available rooms in Tech Park",
+                "Eligibility for B.Tech"
+            ],
+            "tool_result": {
+                "type": "federated_cross_entity_discovery",
+                "query": user_query,
+                "programs": prog_list,
+                "courses": course_list,
+                "faculty": fac_list,
+                "rooms": room_list,
+                "buildings": bldg_list
+            },
+            "answer": answer,
+            "grounded": True,
+            "intent_source": "Federated Cross-Entity Search (Graph Fallback)",
+            "engine_mode": engine_mode,
+            "source": "SRMIST Unified Knowledge Graph",
+            "synthesizer": "Governed Multi-Entity Engine"
+        }
+
     def execute_query(self, user_query: str, use_llm_synthesis: bool = True, role: str = "student", engine_mode: str = "neo4j") -> Dict[str, Any]:
         """
         Executes a user question through the governed Model-First pipeline:
@@ -594,6 +927,11 @@ class GovernedCampusAgent:
                 intent_source = "Qwen 2.5 Semantic Intent Parser (JSON Mode)"
 
         if not tool_call:
+            # Fallback to federated cross-entity search across all 4 catalogs
+            fed_res = self._federated_cross_entity_search(user_query, role=role, engine_mode=engine_mode)
+            if fed_res:
+                return fed_res
+
             return {
                 "user_query": user_query,
                 "status": "CLARIFICATION_NEEDED",
@@ -690,7 +1028,7 @@ class GovernedCampusAgent:
         elif "courses" in tool_result and tool_result["courses"]:
             has_data = True
         elif "available_rooms" in tool_result:
-            has_data = True
+            has_data = bool(tool_result.get("available_rooms"))
         elif tool_name == "find_room_schedule" and "room_id" in tool_result and not tool_result.get("error"):
             has_data = True
         elif "schedules" in tool_result and tool_result["schedules"]:
@@ -710,6 +1048,11 @@ class GovernedCampusAgent:
         suggestions = []
 
         if not has_data:
+            # Check across all other catalogs before declaring nothing found
+            fed_res = self._federated_cross_entity_search(user_query, role=role, engine_mode=engine_mode, attempted_tool=tool_name)
+            if fed_res:
+                return fed_res
+
             status_code = "CLARIFICATION_NEEDED"
             if tool_name == "lookup_faculty_profile":
                 suggestions = ["Who teaches 21CSC206T?", "B.Tech CSE Semester 3", "Eligibility for B.Tech", "Find available rooms in Tech Park"]
@@ -804,7 +1147,7 @@ class GovernedCampusAgent:
                         "name": f.get("name"),
                         "designation": f.get("designation"),
                         "dept": f.get("department"),
-                        "cabin": f.get("cabin"),
+                        "cabin": describe_cabin_location(f.get("cabin", "Staff Room")),
                         "email": f.get("email")
                     }
                     for f in result["faculty"][:3]
@@ -913,7 +1256,7 @@ Answer:"""
                     "\nCould you please specify which professor you are referring to?\n"
                 ]
                 for i, f in enumerate(top_matches[:5], 1):
-                    lines.append(f"- **[Faculty: {f['name']}]**: {f['designation']}, {f['department']} (Cabin: **{f.get('cabin', 'Staff Room')}**)")
+                    lines.append(f"- **[Faculty: {f['name']}]**: {f['designation']}, {f['department']} (Cabin: **{describe_cabin_location(f.get('cabin', 'Staff Room'))}**)")
                 lines.append("\nYou can click one of the suggested buttons below or mention their department:")
                 return "\n".join(lines)
             else:
@@ -931,7 +1274,7 @@ Answer:"""
                 return (
                     f"**[Faculty: {f['name']}]** is an **{f['designation']}** in the **{f['department']}**, {f['college']}.\n\n"
                     f"**Campus Office & Contact Information:**\n"
-                    f"- **Cabin / Staff Room:** **{f.get('cabin', 'Staff Room')}**\n"
+                    f"- **Cabin / Staff Room:** **{describe_cabin_location(f.get('cabin', 'Staff Room'))}**\n"
                     f"- **Official Email:** `{f['email']}`{phone_str}{spec_str}{exp_str}\n\n"
                     f"Would you like to check their teaching timetable, see courses in this department, or find classrooms nearby?"
                 )
@@ -969,7 +1312,7 @@ Answer:"""
             day = result.get("day", "Monday")
             slot = result.get("slot", "08:45-09:35")
             count = result.get("available_count", len(avail))
-            is_building_info_mode = result.get("min_capacity", 30) <= 1
+            is_building_info_mode = result.get("min_capacity", 30) <= 10 and not any(w in query.lower() for w in ["available room", "free room", "vacant", "empty room"])
 
             BUILDING_NAMES = {
                 "TP": "Tech Park (TP-1)", "TP2": "Tech Park 2 (TP-2)",

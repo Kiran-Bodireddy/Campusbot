@@ -6,6 +6,7 @@ the unified campus catalog for offline testing & rapid evaluation.
 """
 
 import os
+import re
 import json
 import logging
 from typing import Dict, List, Any, Optional
@@ -37,6 +38,7 @@ class CampusGraphClient:
         self._course_by_id: Dict[str, Dict[str, Any]] = {}
         self._faculty_by_id: Dict[str, Dict[str, Any]] = {}
         self._faculty_by_name: Dict[str, List[Dict[str, Any]]] = {}
+        self._faculty_by_token: Dict[str, List[Dict[str, Any]]] = {}
         self._room_by_id: Dict[str, Dict[str, Any]] = {}
         self._prereqs_by_target: Dict[str, List[Dict[str, Any]]] = {}
         self._schedules_by_room: Dict[str, List[Dict[str, Any]]] = {}
@@ -69,10 +71,16 @@ class CampusGraphClient:
             self._course_by_code[c["code"].upper()] = c
 
         # Index faculty
+        HONORIFICS = {"dr", "dr.", "prof", "prof.", "mr", "mr.", "mrs", "mrs.", "ms", "ms.", "hod", "dean"}
         for fac in self.in_memory_data.get("faculty", []):
             self._faculty_by_id[fac["id"]] = fac
             norm_name = fac["name"].lower().strip()
             self._faculty_by_name.setdefault(norm_name, []).append(fac)
+            # Index significant name tokens (e.g. "godfrey", "winster")
+            tokens = [re.sub(r"[^\w]", "", w) for w in norm_name.split()]
+            for t in tokens:
+                if len(t) >= 3 and t not in HONORIFICS:
+                    self._faculty_by_token.setdefault(t, []).append(fac)
 
         # Index rooms
         for r in self.in_memory_data.get("rooms", []):
@@ -160,6 +168,122 @@ class CampusGraphClient:
     def close(self):
         if self.driver:
             self.driver.close()
+
+    def find_entities(self, query: str, max_per_type: int = 5) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Federated cross-entity graph scanner.
+        Scans all 4 campus entity domains (Faculty, Courses, Rooms/Buildings, Programs)
+        simultaneously and returns matched entities ranked by relevance.
+        """
+        import re
+        q_raw = query.strip()
+        q_lower = q_raw.lower()
+        NOISE = {
+            "who", "is", "where", "what", "which", "are", "tell", "me", "about",
+            "the", "a", "an", "in", "at", "for", "does", "do", "find", "show",
+            "search", "can", "you", "please", "details", "info", "give", "get"
+        }
+        raw_tokens = re.findall(r"\w+", q_lower)
+        sig_tokens = [t for t in raw_tokens if len(t) >= 2 and t not in NOISE]
+
+        results: Dict[str, List[Dict[str, Any]]] = {
+            "faculty": [],
+            "courses": [],
+            "rooms": [],
+            "programs": [],
+            "buildings": []
+        }
+
+        # 1. Faculty matching
+        matched_faculty_ids = set()
+        for t in sig_tokens:
+            if t in self._faculty_by_token:
+                for fac in self._faculty_by_token[t]:
+                    if fac["id"] not in matched_faculty_ids:
+                        matched_faculty_ids.add(fac["id"])
+                        results["faculty"].append(fac)
+                    if len(results["faculty"]) >= max_per_type:
+                        break
+            if len(results["faculty"]) >= max_per_type:
+                break
+
+        if len(results["faculty"]) < max_per_type:
+            for fac in self.in_memory_data.get("faculty", []):
+                if fac["id"] in matched_faculty_ids:
+                    continue
+                fac_name = fac.get("name", "").lower()
+                fac_spec = fac.get("specialization", "").lower()
+                fac_cabin = fac.get("cabin", "").lower()
+                if q_lower in fac_name or q_lower in fac_cabin:
+                    matched_faculty_ids.add(fac["id"])
+                    results["faculty"].append(fac)
+                elif sig_tokens and any(t in fac_spec for t in sig_tokens if len(t) >= 3):
+                    matched_faculty_ids.add(fac["id"])
+                    results["faculty"].append(fac)
+                if len(results["faculty"]) >= max_per_type:
+                    break
+
+        # 2. Courses matching
+        matched_course_codes = set()
+        q_norm = q_raw.upper()
+        if q_norm in self._course_by_code:
+            matched_course_codes.add(q_norm)
+            results["courses"].append(self._course_by_code[q_norm])
+
+        for c in self.in_memory_data.get("courses", []):
+            code = c.get("code", "").upper()
+            if code in matched_course_codes:
+                continue
+            name = c.get("name", "").lower()
+            if q_lower in name or q_lower in code.lower():
+                matched_course_codes.add(code)
+                results["courses"].append(c)
+            elif sig_tokens and any(t in name for t in sig_tokens if len(t) >= 3):
+                matched_course_codes.add(code)
+                results["courses"].append(c)
+            if len(results["courses"]) >= max_per_type:
+                break
+
+        # 3. Rooms & Buildings matching
+        matched_room_ids = set()
+        if q_norm in self._room_by_id:
+            matched_room_ids.add(q_norm)
+            results["rooms"].append(self._room_by_id[q_norm])
+
+        for r in self.in_memory_data.get("rooms", []):
+            rid = r.get("id", "")
+            if rid in matched_room_ids:
+                continue
+            if q_lower in rid.lower():
+                matched_room_ids.add(rid)
+                results["rooms"].append(r)
+            if len(results["rooms"]) >= max_per_type:
+                break
+
+        for b in self.in_memory_data.get("buildings", []):
+            b_code = b.get("code", "").lower()
+            b_name = b.get("name", "").lower()
+            if q_lower in b_code or q_lower in b_name or (sig_tokens and any(t in b_name for t in sig_tokens if len(t) >= 3)):
+                results["buildings"].append(b)
+
+        # 4. Programs / Admissions matching
+        matched_prog_ids = set()
+        for p in self.admission_eligibility:
+            pid = p.get("program_id", "")
+            pname = p.get("program_name", "").lower()
+            deg = p.get("degree", "").lower()
+            if q_lower in pname or q_lower in deg:
+                if pid not in matched_prog_ids:
+                    matched_prog_ids.add(pid)
+                    results["programs"].append(p)
+            elif sig_tokens and any(t in pname for t in sig_tokens if len(t) >= 3):
+                if pid not in matched_prog_ids:
+                    matched_prog_ids.add(pid)
+                    results["programs"].append(p)
+            if len(results["programs"]) >= max_per_type:
+                break
+
+        return results
 
     # Governed Query Primitives
     def query_read(self, cypher: str, parameters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:

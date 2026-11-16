@@ -413,18 +413,39 @@ class CampusKnowledgeTools:
         audit = get_audit_logger()
         STOP_WORDS = {"for", "and", "the", "with", "from", "about", "what", "where", "how", "who", "which", "are", "is", "can", "take", "course", "courses", "study", "want", "related", "to", "in", "on", "at", "by", "all", "of", "a", "an", "i"}
         raw_tokens = re.findall(r"\w+", req.query.lower())
-        query_terms = [t for t in raw_tokens if len(t) > 2 and t not in STOP_WORDS]
+        query_terms = [t for t in raw_tokens if (len(t) > 2 or t in ("ai", "ml", "ds", "it", "cs", "ui")) and t not in STOP_WORDS]
+        # Expand common computer science abbreviations
+        EXPANSIONS = {
+            "ai": ["ai", "artificial intelligence"],
+            "ml": ["ml", "machine learning"],
+            "ds": ["data science"],
+            "dbms": ["database", "dbms"],
+            "os": ["operating systems", "operating system"]
+        }
+        search_terms = []
+        for t in query_terms:
+            if t in EXPANSIONS:
+                search_terms.extend(EXPANSIONS[t])
+            else:
+                search_terms.append(t)
 
         scored_courses = []
-        if query_terms:
+        if search_terms:
             for c in client.in_memory_data.get("courses", []):
                 content = f"{c['code']} {c['name']} {c['department']} {c['faculty']} {c['description']}".lower()
+                c_words = set(re.findall(r"\w+", content))
                 score = 0
-                for term in query_terms:
-                    if term in content:
-                        score += content.count(term) * 2
+                for term in search_terms:
+                    if " " in term:
+                        if term in content:
+                            score += 8
+                    else:
+                        if term in c_words:
+                            score += 4
+                        elif term in content:
+                            score += 2
                     if term in c["name"].lower():
-                        score += 5
+                        score += 6
                 # Score threshold guardrail: must score at least 2 to be relevant
                 if score >= 2:
                     scored_courses.append((score, c))
@@ -433,11 +454,11 @@ class CampusKnowledgeTools:
             for p in getattr(client, "admission_eligibility", []):
                 p_content = f"{p['program_name']} {p['department']} {p['faculty']} {p.get('mandatory_subjects', '')}".lower()
                 score = 0
-                for term in query_terms:
+                for term in search_terms:
                     if term in p_content:
-                        score += p_content.count(term) * 2
+                        score += 4
                     if term in p["program_name"].lower():
-                        score += 5
+                        score += 6
                 if score >= 3:
                     scored_courses.append((score, {
                         "code": f"PROG-{p['program_id']}",

@@ -106,3 +106,31 @@ def test_semantic_search_stop_word_guardrail():
     req = SemanticSearchRequest(query="for", limit=5)
     result = CampusKnowledgeTools.search_courses_semantic(req, caller="test_runner")
     assert len(result.get("courses", [])) == 0
+
+def test_federated_entity_search_faculty_resolution():
+    from campus_knowledge_server.agent.qwen_agent import GovernedCampusAgent
+    agent = GovernedCampusAgent()
+
+    # Lowercase single name
+    res1 = agent.execute_query("godfrey", use_llm_synthesis=False)
+    assert res1["status"] == "SUCCESS"
+    assert res1["tool_selected"] == "lookup_faculty_profile"
+    assert "Godfrey" in res1["answer"]
+    assert "TP2-FR-1001" in res1["answer"]
+    assert "Tech Park 2 (TP-2), Floor 10" in res1["answer"]
+
+    # Location query with 'building' keyword must NOT be hijacked by room search
+    res2 = agent.execute_query("which building is godfrey in?", use_llm_synthesis=False)
+    assert res2["status"] == "SUCCESS"
+    assert res2["tool_selected"] == "lookup_faculty_profile"
+    assert "TP2-FR-1001" in res2["answer"]
+
+def test_federated_cross_entity_discovery():
+    from campus_knowledge_server.agent.qwen_agent import GovernedCampusAgent
+    agent = GovernedCampusAgent()
+
+    res = agent.execute_query("biotechnology", use_llm_synthesis=False)
+    assert res["status"] == "SUCCESS"
+    assert res["tool_selected"] == "federated_cross_entity_search"
+    assert "Biotechnology" in res["answer"]
+    assert "Programs" in res["answer"] or "Courses" in res["answer"]
