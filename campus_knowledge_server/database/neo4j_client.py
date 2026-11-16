@@ -76,7 +76,7 @@ class CampusGraphClient:
             self._faculty_by_id[fac["id"]] = fac
             norm_name = fac["name"].lower().strip()
             self._faculty_by_name.setdefault(norm_name, []).append(fac)
-            # Index significant name tokens (e.g. "godfrey", "winster")
+            # Index distinct name tokens across all faculty members
             tokens = [re.sub(r"[^\w]", "", w) for w in norm_name.split()]
             for t in tokens:
                 if len(t) >= 3 and t not in HONORIFICS:

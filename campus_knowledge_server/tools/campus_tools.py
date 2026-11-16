@@ -286,7 +286,7 @@ class CampusKnowledgeTools:
                 elif matched_count > 0 and len(meaningful_terms) > 1:
                     score = 50.0 + (matched_count / len(meaningful_terms)) * 15.0
 
-            # 5. Fuzzy typo match for faculty names (e.g. 'godfry' -> 'godfrey')
+            # 5. Fuzzy typo match for faculty names via sequence similarity
             if score == 0.0 and meaningful_terms:
                 max_sim = 0.0
                 for t in meaningful_terms:

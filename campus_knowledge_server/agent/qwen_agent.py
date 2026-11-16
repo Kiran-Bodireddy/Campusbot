@@ -107,28 +107,6 @@ class GovernedCampusAgent:
             "get_semester_curriculum": lambda args: CampusKnowledgeTools.get_semester_curriculum(SemesterCurriculumRequest(**args), caller="qwen_agent"),
         }
 
-    def _detect_faculty_name(self, query: str) -> Optional[str]:
-        """Detects whether any word in the query corresponds to a known faculty member in the graph."""
-        client = get_graph_client()
-        raw_tokens = re.findall(r"[A-Za-z]+", query.lower())
-        STOPWORDS = {
-            "who", "is", "where", "what", "which", "are", "tell", "me", "about",
-            "the", "a", "an", "in", "at", "for", "does", "do", "find", "show",
-            "search", "can", "you", "please", "details", "info", "give", "get",
-            "room", "rooms", "building", "block", "floor", "cabin", "dept", "department",
-            "college", "campus", "hi", "hello", "hey", "course", "syllabus", "admission",
-            "fee", "fees", "eligibility", "cutoff", "cutoffs", "prereq", "prerequisites",
-            "and", "to", "of", "from", "on", "with", "located", "sit", "stay", "work",
-            "available", "free", "vacant", "class", "classroom", "classes", "schedule",
-            "srm", "srmist", "university", "faculty", "professor", "prof", "dr", "dean", "hod"
-        }
-        candidates = [t for t in raw_tokens if len(t) >= 3 and t not in STOPWORDS]
-        if hasattr(client, "_faculty_by_token"):
-            for t in candidates:
-                if t in client._faculty_by_token:
-                    return t
-        return None
-
     def _select_tool_heuristically(self, user_query: str) -> Optional[tuple[str, Dict[str, Any]]]:
         """High-precision fuzzy & normalized router tolerant of typos, slang, and misspellings."""
         norm_query, meta = normalize_user_query(user_query)
@@ -309,13 +287,6 @@ class GovernedCampusAgent:
         ):
             return "find_faculty_for_course", {"course_code": codes[0]}
 
-        # 3a. Direct faculty name recognition (matches indexed faculty tokens like 'godfrey', 'saravanan', 'revathi')
-        # Evaluated before building room checks so that questions like "which building is godfrey in?" or "godfrey"
-        # route directly to faculty profile instead of classrooms.
-        detected_fac = self._detect_faculty_name(user_query)
-        if detected_fac and not codes:
-            return "lookup_faculty_profile", {"faculty_name": detected_fac}
-
         # 3b. Building info intent — MUST come before room schedule to prevent misroutes
         # Matches: "tp1 building", "tech park", "tp2 building", "tell me about ub", "university building", etc.
         BUILDING_ALIASES = {
@@ -330,14 +301,12 @@ class GovernedCampusAgent:
             "mcb": "MCB", "medical block": "MCB", "medical college": "MCB",
         }
         BUILDING_KEYWORDS = [
-            "building", "block", "tech park", "university building", "bioengineering",
+            "tech park", "university building", "university block", "bioengineering block",
             "mechanical block", "electrical block", "management block", "law block", "medical block",
-            "tp1", "tp2", "tp-1", "tp-2", "about tp", "about ub", "about bel"
+            "tp1 building", "tp2 building", "tp-1 building", "tp-2 building", "about tp", "about ub", "about bel",
+            "tp building", "ub building", "bel building"
         ]
-        is_faculty_clue = (
-            detected_fac is not None
-            or any(w in raw_lower for w in ["dr.", "dr ", "professor", "prof.", "prof ", "faculty", "who is", "who's", "where is", "where's", "where does", "cabin of", "office of", "contact of", "email of", "staff room"])
-        )
+        is_faculty_clue = any(w in raw_lower for w in ["dr.", "dr ", "professor", "prof.", "prof ", "faculty", "who is", "who's", "where is", "where's", "which building is", "what building is", "where does", "cabin", "staff room"])
         is_building_intent = any(w in raw_lower for w in BUILDING_KEYWORDS) and not is_faculty_clue
         # Also detect bare building code like "tp1", "tp 1", "TP-1", "ub" with/without qualifiers
         bare_bldg = re.match(
@@ -408,8 +377,8 @@ class GovernedCampusAgent:
         }
         is_greeting_or_non_name = (
             q_lower.strip() in COMMON_GREETINGS_AND_NON_NAMES
+            or q_lower.strip() in CAMPUS_LOCATION_TERMS
             or any(q_lower.strip().startswith(g) for g in ["hey ", "hello ", "hi ", "how are you"])
-            or any(loc in q_lower for loc in CAMPUS_LOCATION_TERMS)
         )
 
         words = user_query.strip().split()
@@ -418,7 +387,7 @@ class GovernedCampusAgent:
             meta.get("is_faculty_intent")
             or any(w in raw_query_lower for w in [
                 "dr.", "dr ", "professor", "prof.", "prof ", "faculty", "research", "hod", "dean",
-                "who is", "who's", "where is", "where's", "where does", "tell me about", "tell us about", "can you tell me about", "can u tell me about",
+                "who is", "who's", "where is", "where's", "where does", "which building is", "what building is", "which block is", "tell me about", "tell us about", "can you tell me about", "can u tell me about",
                 "know about", "details of", "profile of", "cabin of", "email of", "contact of", "cabin", "staff room"
             ])
             or any(w in q_lower for w in ["dr.", "dr ", "professor", "prof.", "faculty", "cabin", "staff room"])
@@ -442,10 +411,11 @@ class GovernedCampusAgent:
                 raw_name = m.group(1).strip()
                 clean_name = re.sub(r"(?i)\b(?:and|his|her|qualifications|about|tell|me|who|is|what|department|college|cabin)\b.*", "", raw_name).strip()
             else:
-                cleaned = re.sub(r"(?i)\b(?:can\s+(?:you|u)\s+)?(?:please\s+)?(?:tell\s+(?:me|us)\s+about|know\s+about|information\s+about|who\s+is|who\'s|where\s+is|where\s+does|cabin\s+of|profile\s+of|details\s+of|contact\s+of|email\s+of|about)\b", "", user_query)
-                clean_name = re.sub(r"(?i)\b(?:and|his|her|qualifications|about|department|college|cabin|sit|stay|work|located)\b.*", "", cleaned).strip()
+                cleaned = re.sub(r"(?i)\b(?:can\s+(?:you|u)\s+)?(?:please\s+)?(?:tell\s+(?:me|us)\s+about|know\s+about|information\s+about|who\s+is|who\'s|where\s+is|where\s+does|which\s+building\s+is|what\s+building\s+is|which\s+block\s+is|cabin\s+of|profile\s+of|details\s+of|contact\s+of|email\s+of|about)\b", "", user_query)
+                clean_name = re.sub(r"(?i)\b(?:and|his|her|qualifications|about|department|college|cabin|sit|stay|work|located|in|at)\b.*", "", cleaned).strip()
             clean_name = re.sub(r"^[^\w]+|[^\w]+$", "", clean_name).strip()
-            return "lookup_faculty_profile", {"faculty_name": clean_name if clean_name else "godfrey"}
+            if clean_name:
+                return "lookup_faculty_profile", {"faculty_name": clean_name}
 
         # 7. Direct course lookup by code
         if codes:
