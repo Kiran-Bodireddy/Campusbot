@@ -604,6 +604,22 @@
       color: var(--text-main);
     }
 
+    .stream-cursor {
+      display: inline-block;
+      width: 7px;
+      height: 16px;
+      margin-left: 3px;
+      background: var(--mood-accent, #6366f1);
+      vertical-align: middle;
+      border-radius: 2px;
+      animation: blinkCursor 0.8s infinite;
+    }
+
+    @keyframes blinkCursor {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
     .md-h3 {
       font-size: 1.05rem;
       font-weight: 700;
@@ -1418,6 +1434,11 @@
     const API_BASE = window.location.protocol.startsWith("http") ? window.location.origin : "http://localhost:8000";
     let currentEngineMode = "neo4j";
     let activeMood = "default";
+    let clientSessionId = sessionStorage.getItem("srm_session_id");
+    if (!clientSessionId) {
+      clientSessionId = "srm_sess_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now();
+      sessionStorage.setItem("srm_session_id", clientSessionId);
+    }
 
     // =========================================================================
     // DYNAMIC CONTEXTUAL MOOD SYSTEM (Smooth, gradual 1.8s transitions)
@@ -1552,6 +1573,8 @@
     // =========================================================================
     function resetToHome(e) {
       if (e) e.preventDefault();
+      clientSessionId = "srm_sess_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now();
+      sessionStorage.setItem("srm_session_id", clientSessionId);
       document.getElementById("heroSection").classList.remove("hidden");
       document.getElementById("bottomSearchBar").classList.remove("visible");
       document.getElementById("stream").innerHTML = "";
@@ -1647,38 +1670,89 @@
 
       const t0 = performance.now();
       try {
-        const response = await fetch(`${API_BASE}/agent/ask`, {
+        const streamUrl = `${API_BASE}/agent/ask/stream`;
+        const payload = {
+          query: query,
+          use_qwen: true,
+          role: "student",
+          engine_mode: currentEngineMode,
+          session_id: clientSessionId
+        };
+
+        const response = await fetch(streamUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query: query,
-            use_qwen: true,
-            role: "student",
-            engine_mode: currentEngineMode
-          })
+          body: JSON.stringify(payload)
         });
 
-        const latency = Math.round(performance.now() - t0);
         const card = document.getElementById(`card_${queryId}`);
 
-        if (response.ok) {
-          const res = await response.json();
-          const toolName = res.tool_selected || "governed_tool";
+        if (response.ok && response.body) {
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let meta = null;
+          let streamedText = "";
 
-          // Lock in the verified mood from server's grounded tool
-          const groundMood = toolToMood(toolName);
-          setMood(groundMood);
+          // Switch card to streaming view
+          card.innerHTML = `
+            <div class="assistant-answer" id="ans_${queryId}">
+              <span class="stream-cursor"></span>
+            </div>
+          `;
+          const ansEl = document.getElementById(`ans_${queryId}`);
 
-          // Update real-time architecture telemetry trace
-          recordLatestArchitectureTrace(query, res, latency);
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const parts = buffer.split("\n\n");
+            buffer = parts.pop();
 
-          const answerHtml = formatText(res.answer || "No response received.");
+            for (const part of parts) {
+              if (!part.trim()) continue;
+              let eventType = "message";
+              let dataStr = "";
+              for (const line of part.split("\n")) {
+                if (line.startsWith("event: ")) eventType = line.slice(7).trim();
+                else if (line.startsWith("data: ")) dataStr = line.slice(6).trim();
+              }
+              if (!dataStr) continue;
+
+              try {
+                const data = JSON.parse(dataStr);
+                if (eventType === "meta") {
+                  meta = data;
+                  const toolName = data.tool_selected || "governed_tool";
+                  setMood(toolToMood(toolName));
+                } else if (eventType === "delta") {
+                  streamedText += (data.token || "");
+                  if (ansEl) {
+                    ansEl.innerHTML = formatText(streamedText) + `<span class="stream-cursor"></span>`;
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                  }
+                } else if (eventType === "done") {
+                  if (data.answer) streamedText = data.answer;
+                } else if (eventType === "error") {
+                  throw new Error(data.detail || "Access Policy Interception");
+                }
+              } catch (pErr) {
+                console.warn("SSE frame error:", pErr);
+              }
+            }
+          }
+
+          const latency = Math.round(performance.now() - t0);
+          const toolName = (meta && meta.tool_selected) || "governed_tool";
+          recordLatestArchitectureTrace(query, meta || { answer: streamedText }, latency);
+
+          const answerHtml = formatText(streamedText || (meta && meta.answer) || "No response received.");
           const rawBoxId = `raw_${queryId}`;
           const traceBoxId = `trace_${queryId}`;
-          const cypherQuery = getCypherForTool(toolName, res.parameters);
+          const cypherQuery = getCypherForTool(toolName, meta ? meta.parameters : {});
 
           let suggestionsHtml = "";
-          const suggestions = (res.tool_result && res.tool_result.suggestions) || res.suggestions || [];
+          const suggestions = (meta && meta.suggestions) || [];
           if (suggestions && suggestions.length) {
             suggestionsHtml = `
               <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.1rem;">
@@ -1696,7 +1770,7 @@
             ? `Neo4j: ${escapeHtml(toolName)}`
             : escapeHtml(toolName);
 
-          const isQwen = res.synthesizer && res.synthesizer.includes("Qwen");
+          const isQwen = meta && meta.synthesizer && meta.synthesizer.includes("Qwen");
 
           card.innerHTML = `
             <div class="assistant-answer">${answerHtml}</div>
@@ -1715,16 +1789,16 @@
             </div>
             <div style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
               <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                ${res.tool_result ? `<button class="details-toggle" onclick="toggleRaw('${rawBoxId}')">View verified record</button>` : ''}
+                ${(meta && meta.tool_result) ? `<button class="details-toggle" onclick="toggleRaw('${rawBoxId}')">View verified record</button>` : ''}
                 <button class="details-toggle" onclick="toggleRaw('${traceBoxId}')">View architecture trace</button>
               </div>
-              ${res.tool_result ? `<div class="raw-box" id="${rawBoxId}">${escapeHtml(JSON.stringify(res.tool_result, null, 2))}</div>` : ''}
+              ${(meta && meta.tool_result) ? `<div class="raw-box" id="${rawBoxId}">${escapeHtml(JSON.stringify(meta.tool_result, null, 2))}</div>` : ''}
               <div class="trace-drawer" id="${traceBoxId}">
                 <div style="font-weight:700; color:var(--text-heading); margin-bottom:0.4rem; font-size:0.8rem;">OFFLINE ARCHITECTURE EXECUTION PIPELINE:</div>
                 <div><strong style="color:#10b981;">Step 1 (Input):</strong> "${escapeHtml(query)}"</div>
-                <div><strong style="color:#10b981;">Step 2 (Router):</strong> ${escapeHtml(res.intent_source || 'High-Speed Normalized Router (~8ms)')}</div>
+                <div><strong style="color:#10b981;">Step 2 (Router):</strong> ${escapeHtml((meta && meta.intent_source) || 'High-Speed Normalized Router (~8ms)')}</div>
                 <div><strong style="color:#10b981;">Step 3 (RBAC Guard):</strong> Role 'student' &rarr; APPROVED (policy.yaml AST whitelist)</div>
-                <div><strong style="color:#10b981;">Step 4 (Database):</strong> ${res.engine_mode === 'neo4j' ? 'Neo4j Community (bolt://127.0.0.1:7687)' : 'In-Memory Mirror'}</div>
+                <div><strong style="color:#10b981;">Step 4 (Database):</strong> ${currentEngineMode === 'neo4j' ? 'Neo4j Community (bolt://127.0.0.1:7687)' : 'In-Memory Mirror'}</div>
                 <div style="margin: 0.4rem 0;"><strong>Executed Cypher:</strong><pre style="margin:0.25rem 0 0 0; color:#0284c7; white-space:pre-wrap; word-break:break-all; font-family:'JetBrains Mono', monospace; font-size:0.75rem;">${escapeHtml(cypherQuery)}</pre></div>
                 <div><strong style="color:#10b981;">Step 5 (Audit Ledger):</strong> Appended to audit_telemetry.jsonl (SHA-256 Chained)</div>
                 <div><strong style="color:#10b981;">Step 6 (Synthesis):</strong> Zero-Hallucination Grounded Citation (${latency}ms)</div>

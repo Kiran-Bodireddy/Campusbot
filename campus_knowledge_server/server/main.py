@@ -1,13 +1,15 @@
 """
 FastAPI Governed Campus Knowledge Tool Server
 Exposes secure REST endpoints with Pydantic v2 validation,
-AST injection defense, and audit logging.
+AST injection defense, audit logging, and SSE streaming.
 """
 
 import os
+import json
+import asyncio
 from typing import Dict, Any, List, Optional
 from fastapi import FastAPI, HTTPException, Request, status
-from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -137,6 +139,7 @@ class AgentAskRequest(BaseModel):
     use_qwen: bool = Field(True, description="Whether to use local Qwen 2.5 (via Ollama) to synthesize the grounded answer")
     role: str = Field("student", description="User role: student, faculty, or admin (enforced via policy.yaml)")
     engine_mode: Optional[str] = Field("neo4j", description="Active knowledge engine: 'neo4j' (default) or 'backup'")
+    session_id: Optional[str] = Field(None, description="Client session ID for multi-turn conversational context")
 
 @app.post("/agent/ask", tags=["Agent"])
 @app.post("/ask", tags=["Agent"])
@@ -148,7 +151,13 @@ def ask_agent(req: AgentAskRequest):
     """
     from campus_knowledge_server.agent.qwen_agent import GovernedCampusAgent
     agent = GovernedCampusAgent()
-    res = agent.execute_query(req.query, use_llm_synthesis=req.use_qwen, role=req.role, engine_mode=req.engine_mode or "neo4j")
+    res = agent.execute_query(
+        req.query,
+        use_llm_synthesis=req.use_qwen,
+        role=req.role,
+        engine_mode=req.engine_mode or "neo4j",
+        session_id=req.session_id or ""
+    )
     if res.get("status") == "POLICY_VIOLATION":
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -160,6 +169,37 @@ def ask_agent(req: AgentAskRequest):
             }
         )
     return res
+
+@app.post("/agent/ask/stream", tags=["Agent"])
+@app.post("/ask/stream", tags=["Agent"])
+def ask_agent_stream(req: AgentAskRequest):
+    """
+    Server-Sent Events (SSE) streaming endpoint for real-time generative responses.
+    Streams tool metadata, live LLM tokens, and completion events with multi-turn memory.
+    """
+    from campus_knowledge_server.agent.qwen_agent import GovernedCampusAgent
+    agent = GovernedCampusAgent()
+
+    def event_generator():
+        for chunk in agent.stream_query(
+            req.query,
+            use_llm_synthesis=req.use_qwen,
+            role=req.role,
+            engine_mode=req.engine_mode or "neo4j",
+            session_id=req.session_id or ""
+        ):
+            event_type = chunk.get("event", "message")
+            yield f"event: {event_type}\ndata: {json.dumps(chunk)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 @app.get("/audit/logs", tags=["Governance & Observability"])
 def get_audit_logs(limit: int = 50):

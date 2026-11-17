@@ -71,6 +71,103 @@ def describe_cabin_location(cabin: str) -> str:
         return f"{cabin} ({', '.join(parts)})"
     return cabin
 
+class ConversationMemory:
+    """Lightweight session-scoped multi-turn conversation memory.
+    Stores recent (query, tool_name, compact_answer) tuples per session_id
+    so the agent can resolve pronouns and follow-up questions."""
+
+    _sessions: Dict[str, List[Dict[str, str]]] = {}
+    MAX_TURNS = 6  # Keep last 6 exchanges per session
+
+    @classmethod
+    def add_turn(cls, session_id: str, query: str, tool_name: str, answer_summary: str, entities: Optional[Dict[str, Any]] = None):
+        if session_id not in cls._sessions:
+            cls._sessions[session_id] = []
+        cls._sessions[session_id].append({
+            "query": query,
+            "tool": tool_name,
+            "answer": answer_summary[:200],
+            "entities": entities or {}
+        })
+        # Trim to last MAX_TURNS
+        if len(cls._sessions[session_id]) > cls.MAX_TURNS:
+            cls._sessions[session_id] = cls._sessions[session_id][-cls.MAX_TURNS:]
+
+    @classmethod
+    def get_history(cls, session_id: str) -> List[Dict[str, str]]:
+        return cls._sessions.get(session_id, [])
+
+    @classmethod
+    def get_last_entities(cls, session_id: str) -> Dict[str, Any]:
+        """Returns entity context from the last turn (faculty name, course code, etc.)."""
+        history = cls._sessions.get(session_id, [])
+        if history:
+            return history[-1].get("entities", {})
+        return {}
+
+    @classmethod
+    def resolve_followup(cls, session_id: str, user_query: str) -> Optional[str]:
+        """Resolves pronoun-based follow-up queries using conversation history.
+        E.g. 'what is his email?' -> resolves 'his' to last faculty entity."""
+        q_lower = user_query.lower().strip()
+        pronouns = {"his", "her", "their", "them", "that", "this", "it", "its", "he", "she"}
+        has_pronoun = any(p in q_lower.split() for p in pronouns)
+
+        if not has_pronoun:
+            return None
+
+        last_ent = cls.get_last_entities(session_id)
+        if not last_ent:
+            return None
+
+        # Faculty follow-up: resolve 'his/her email' -> 'email of Dr. X'
+        if last_ent.get("faculty_name"):
+            fname = last_ent["faculty_name"]
+            if any(w in q_lower for w in ["email", "contact", "mail"]):
+                return f"email of {fname}"
+            if any(w in q_lower for w in ["cabin", "office", "room", "where", "located", "building", "block", "sit"]):
+                return f"where is {fname} cabin"
+            if any(w in q_lower for w in ["teach", "course", "subject"]):
+                return f"what does {fname} teach"
+            if any(w in q_lower for w in ["department", "dept"]):
+                return f"department of {fname}"
+            # Generic: just re-query the faculty name
+            return f"tell me about {fname}"
+
+        # Course follow-up: resolve 'its prerequisites' -> 'prerequisites for CODE'
+        if last_ent.get("course_code"):
+            ccode = last_ent["course_code"]
+            if any(w in q_lower for w in ["prereq", "prerequisite", "dependency", "require"]):
+                return f"prerequisites for {ccode}"
+            if any(w in q_lower for w in ["teach", "instructor", "professor", "who"]):
+                return f"who teaches {ccode}"
+            if any(w in q_lower for w in ["credit", "detail", "about", "syllabus"]):
+                return f"course details for {ccode}"
+            return f"tell me about {ccode}"
+
+        # Program follow-up
+        if last_ent.get("program_name"):
+            pname = last_ent["program_name"]
+            if any(w in q_lower for w in ["fee", "cost", "tuition"]):
+                return f"fees for {pname}"
+            if any(w in q_lower for w in ["cutoff", "eligibility", "admission"]):
+                return f"eligibility for {pname}"
+            return f"tell me about {pname}"
+
+        return None
+
+    @classmethod
+    def build_context_prompt(cls, session_id: str) -> str:
+        """Builds a compact conversation context string for Qwen synthesis."""
+        history = cls.get_history(session_id)
+        if not history:
+            return ""
+        lines = ["Previous conversation context:"]
+        for turn in history[-3:]:  # Last 3 turns only
+            lines.append(f"- User asked: \"{turn['query']}\" -> Tool: {turn['tool']} -> Key info: {turn['answer'][:100]}")
+        return "\n".join(lines)
+
+
 class GovernedCampusAgent:
     def __init__(self, ollama_url: str = "http://localhost:11434", model_name: str = "qwen2.5:1.5b"):
         self.ollama_url = ollama_url
@@ -337,7 +434,9 @@ class GovernedCampusAgent:
             day_val = day_match.group(1).capitalize() if day_match else "Monday"
             slot_match = re.search(r"\b(\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})\b", user_query)
             slot_val = slot_match.group(1).replace(" ", "") if slot_match else "08:45-09:35"
-            return "find_available_rooms", {"building_code": detected_code, "day": day_val, "slot": slot_val, "min_capacity": 10}
+            cap_match = re.search(r"\b(?:capacity|cap|seats?|students?)\s*(?:of\s*)?(\d{1,3})\b|\b(?:for\s*)?(\d{1,3})\s*(?:seats?|students?|capacity)\b", user_query, re.IGNORECASE)
+            cap_val = int(cap_match.group(1) or cap_match.group(2)) if cap_match else 10
+            return "find_available_rooms", {"building_code": detected_code, "day": day_val, "slot": slot_val, "min_capacity": cap_val}
 
         # 4. Room schedule / occupancy (e.g. TP-501, TP501, UB102, TP 201)
         r_match = re.search(r"\b(TP2|TP|UB|BEL|MEB|ESB|FMB|SLB|MCB)[\s-]*(\d{3})\b", user_query.upper())
@@ -357,7 +456,9 @@ class GovernedCampusAgent:
             day_val = day_match.group(1).capitalize() if day_match else "Monday"
             slot_match = re.search(r"\b(\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})\b", user_query)
             slot_val = slot_match.group(1).replace(" ", "") if slot_match else "08:45-09:35"
-            return "find_available_rooms", {"building_code": b_code, "day": day_val, "slot": slot_val, "min_capacity": 30}
+            cap_match = re.search(r"\b(?:capacity|cap|seats?|students?)\s*(?:of\s*)?(\d{1,3})\b|\b(?:for\s*)?(\d{1,3})\s*(?:seats?|students?|capacity)\b", user_query, re.IGNORECASE)
+            cap_val = int(cap_match.group(1) or cap_match.group(2)) if cap_match else 30
+            return "find_available_rooms", {"building_code": b_code, "day": day_val, "slot": slot_val, "min_capacity": cap_val}
 
         # 6. Faculty profile & research lookup
         COMMON_GREETINGS_AND_NON_NAMES = {
@@ -792,9 +893,10 @@ class GovernedCampusAgent:
             "synthesizer": "Governed Multi-Entity Engine"
         }
 
-    def execute_query(self, user_query: str, use_llm_synthesis: bool = True, role: str = "student", engine_mode: str = "neo4j") -> Dict[str, Any]:
+    def execute_query(self, user_query: str, use_llm_synthesis: bool = True, role: str = "student", engine_mode: str = "neo4j", session_id: str = "") -> Dict[str, Any]:
         """
         Executes a user question through the governed Model-First pipeline:
+        0. Multi-Turn Follow-Up Resolution (pronoun & context)
         1. Interactive Conversational & Greeting Handler
         2. Fast-Path Bypass for direct identifiers (~1ms)
         3. High-Speed Fuzzy Normalized Router (~8ms)
@@ -804,6 +906,12 @@ class GovernedCampusAgent:
         7. Field Masking & Row Limits by Role (Student/Faculty/Admin)
         8. Grounded Answer Synthesis with Entity Citations
         """
+        # -1. Multi-Turn Follow-Up Resolution
+        original_query = user_query
+        if session_id:
+            resolved = ConversationMemory.resolve_followup(session_id, user_query)
+            if resolved:
+                user_query = resolved
         # 0. Zero-Trust AST Security Guardrail: Intercept destructive operations and injections (~1ms)
         from campus_knowledge_server.security.ast_validator import ASTSecurityValidator
         from campus_knowledge_server.security.audit import get_audit_logger
@@ -990,29 +1098,7 @@ class GovernedCampusAgent:
 
         # Synthesize Grounded Answer with Citations
         # Check whether records were found in the graph
-        has_data = False
-        if "programs" in tool_result and tool_result["programs"]:
-            has_data = True
-        elif "faculty" in tool_result and tool_result["faculty"]:
-            has_data = True
-        elif "courses" in tool_result and tool_result["courses"]:
-            has_data = True
-        elif "available_rooms" in tool_result:
-            has_data = bool(tool_result.get("available_rooms"))
-        elif tool_name == "find_room_schedule" and "room_id" in tool_result and not tool_result.get("error"):
-            has_data = True
-        elif "schedules" in tool_result and tool_result["schedules"]:
-            has_data = True
-        elif "instructors" in tool_result and tool_result["instructors"]:
-            has_data = True
-        elif "prerequisites" in tool_result:
-            has_data = True
-        elif "eligible" in tool_result:
-            has_data = True
-        elif "statistics" in tool_result:
-            has_data = True
-        elif "semesters" in tool_result or ("courses" in tool_result and tool_name == "get_semester_curriculum"):
-            has_data = True
+        has_data = self._check_result_has_data(tool_result, tool_name)
 
         status_code = "SUCCESS"
         suggestions = []
@@ -1043,7 +1129,7 @@ class GovernedCampusAgent:
             tool_result["suggestions"] = suggestions
         else:
             if use_llm_synthesis and self.ollama_active:
-                grounded_answer = self._synthesize_with_qwen(user_query, tool_name, tool_result)
+                grounded_answer = self._synthesize_with_qwen(user_query, tool_name, tool_result, session_id=session_id)
             else:
                 grounded_answer = self._synthesize_grounded_answer(user_query, tool_name, tool_result)
 
@@ -1052,8 +1138,20 @@ class GovernedCampusAgent:
             if tool_result.get("suggestions"):
                 suggestions = tool_result.get("suggestions")
 
-        return {
+        # Extract entities for conversation memory
+        entities = self._extract_entities_from_result(tool_name, tool_result, has_data)
+
+        # Record turn in conversation memory
+        if session_id:
+            ConversationMemory.add_turn(
+                session_id, original_query, tool_name,
+                grounded_answer[:200] if grounded_answer else "",
+                entities
+            )
+
+        result_payload = {
             "user_query": user_query,
+            "original_query": original_query if original_query != user_query else None,
             "tool_selected": tool_name,
             "parameters": tool_params,
             "status": status_code,
@@ -1066,113 +1164,158 @@ class GovernedCampusAgent:
             "source": "Neo4j Community Graph & Vector Index" if engine_mode == "neo4j" else "Governed Campus Knowledge Mirror",
             "synthesizer": "Qwen 2.5 (Ollama)" if (use_llm_synthesis and self.ollama_active and has_data) else "Deterministic Governed Synthesizer"
         }
+        # Remove None fields
+        return {k: v for k, v in result_payload.items() if v is not None}
 
     def ask_qwen(self, user_query: str) -> Dict[str, Any]:
         """Direct query method using Qwen 2.5 for grounded natural language synthesis."""
         return self.execute_query(user_query, use_llm_synthesis=True)
 
-    def _synthesize_with_qwen(self, query: str, tool_name: str, result: Dict[str, Any]) -> str:
-        # Zero-Hallucination Guardrail: If database returned 0 records, do NOT ask LLM to invent facts
-        has_data = False
+    def _check_result_has_data(self, result: Dict[str, Any], tool_name: str = "") -> bool:
+        """Determines whether a tool execution produced verified records from the graph."""
+        if not result or not isinstance(result, dict):
+            return False
         if "programs" in result and result["programs"]:
-            has_data = True
+            return True
+        if "faculty" in result and result["faculty"]:
+            return True
+        if "courses" in result and result["courses"]:
+            return True
+        if "available_rooms" in result:
+            return bool(result.get("available_rooms"))
+        if tool_name == "find_room_schedule" and "room_id" in result and not result.get("error"):
+            return True
+        if "schedules" in result and result["schedules"]:
+            return True
+        if "instructors" in result and result["instructors"]:
+            return True
+        if tool_name in ("get_prerequisite_tree", "verify_prerequisites") and ("target_course" in result or "prerequisites" in result or "eligible" in result):
+            return True
+        if "prerequisites" in result:
+            return True
+        if "eligible" in result:
+            return True
+        if "statistics" in result and result["statistics"]:
+            return True
+        if "semesters" in result or ("courses" in result and tool_name == "get_semester_curriculum"):
+            return True
+        return False
+
+    def _extract_entities_from_result(self, tool_name: str, tool_result: Dict[str, Any], has_data: bool) -> Dict[str, Any]:
+        """Extracts primary entity keys from tool result for conversation memory tracking."""
+        entities = {}
+        if not has_data or not isinstance(tool_result, dict):
+            return entities
+        if tool_name == "lookup_faculty_profile":
+            fac_list = tool_result.get("faculty", [])
+            if fac_list:
+                entities["faculty_name"] = fac_list[0].get("name", "")
+        elif tool_name in ("lookup_course", "get_prerequisite_tree", "verify_prerequisites"):
+            courses = tool_result.get("courses", [])
+            if courses:
+                entities["course_code"] = courses[0].get("code", "")
+            elif tool_result.get("target_course"):
+                entities["course_code"] = tool_result["target_course"]
+        elif tool_name == "find_faculty_for_course":
+            instructors = tool_result.get("instructors", [])
+            if instructors:
+                entities["faculty_name"] = instructors[0].get("name", "")
+            if tool_result.get("course_code"):
+                entities["course_code"] = tool_result["course_code"]
+        elif tool_name == "check_admission_eligibility":
+            progs = tool_result.get("programs", [])
+            if progs:
+                entities["program_name"] = progs[0].get("program_name", "")
+        elif tool_name == "find_room_schedule":
+            entities["room_id"] = tool_result.get("room_id", "")
+        return entities
+
+    def _compact_tool_payload(self, result: Dict[str, Any], tool_name: str = "") -> Dict[str, Any]:
+        """Compacts the payload to eliminate CPU prompt-evaluation latency while preserving rich context."""
+        compact_res = {}
+        if "programs" in result and result["programs"]:
+            compact_res["programs"] = [
+                {
+                    "program": p.get("program_name"),
+                    "cutoff_gen": p.get("min_percentage_general", p.get("min_percentage")),
+                    "exam": p.get("required_entrance_exam"),
+                    "fee": p.get("annual_fee_inr"),
+                    "duration": p.get("duration"),
+                    "campuses": p.get("campuses")
+                }
+                for p in result["programs"][:3]
+            ]
         elif "faculty" in result and result["faculty"]:
-            has_data = True
+            compact_res["faculty"] = [
+                {
+                    "name": f.get("name"),
+                    "designation": f.get("designation"),
+                    "dept": f.get("department"),
+                    "cabin": describe_cabin_location(f.get("cabin", "Staff Room")),
+                    "email": f.get("email")
+                }
+                for f in result["faculty"][:3]
+            ]
         elif "courses" in result and result["courses"]:
-            has_data = True
-        elif "available_rooms" in result and result["available_rooms"]:
-            has_data = True
-        elif "schedules" in result and result["schedules"]:
-            has_data = True
+            compact_res["courses"] = [
+                {
+                    "code": c.get("code") or c.get("course_code"),
+                    "name": c.get("name") or c.get("course_name"),
+                    "credits": c.get("credits"),
+                    "dept": c.get("department"),
+                    "semester": c.get("semester_range") or c.get("semester"),
+                    "summary": c.get("description", "")[:120] if c.get("description") else ""
+                }
+                for c in result["courses"][:3]
+            ]
+        elif "prerequisites" in result and result["prerequisites"]:
+            compact_res["target_course"] = result.get("target_course")
+            compact_res["prerequisites"] = [
+                {"code": p.get("prerequisite_code"), "name": p.get("prerequisite_name"), "depth": p.get("depth")}
+                for p in result["prerequisites"][:4]
+            ]
         elif "instructors" in result and result["instructors"]:
-            has_data = True
-        elif result.get("eligible") is not None:
-            has_data = True
+            compact_res["course_code"] = result.get("course_code")
+            compact_res["instructors"] = [
+                {
+                    "name": i.get("name"),
+                    "designation": i.get("designation"),
+                    "dept": i.get("department"),
+                    "cabin": describe_cabin_location(i.get("cabin", "")),
+                    "email": i.get("email")
+                }
+                for i in result["instructors"][:3]
+            ]
+        elif "available_rooms" in result:
+            compact_res["building"] = result.get("building_code")
+            compact_res["available_rooms"] = [r.get("id") if isinstance(r, dict) else str(r) for r in result["available_rooms"][:6]]
+            compact_res["total_vacant"] = result.get("available_count", len(result["available_rooms"]))
+        elif "schedules" in result and result["schedules"]:
+            compact_res["room_id"] = result.get("room_id")
+            compact_res["room_type"] = result.get("room_type")
+            compact_res["schedules"] = [
+                {"day": s.get("day"), "slot": s.get("time_slot") or s.get("slot"), "course": s.get("course_name") or s.get("course_code")}
+                for s in result["schedules"][:4]
+            ]
         elif "statistics" in result:
-            has_data = True
-        elif "semesters" in result or ("courses" in result and tool_name == "get_semester_curriculum"):
-            has_data = True
+            compact_res["statistics"] = result["statistics"]
+        elif "semesters" in result:
+            compact_res["program"] = result.get("program_name")
+            compact_res["semesters"] = result.get("semesters")
+        else:
+            compact_res = result
+        return compact_res
 
-        if not has_data:
-            return self._synthesize_grounded_answer(query, tool_name, result)
+    def _build_concierge_prompt(self, query: str, compact_res: Dict[str, Any], session_id: str = "") -> str:
+        """Constructs the grounded synthesis prompt with conversation context."""
+        context_block = ""
+        if session_id:
+            ctx = ConversationMemory.build_context_prompt(session_id)
+            if ctx:
+                context_block = f"\n{ctx}\n"
 
-        try:
-            # Compact the payload to eliminate CPU prompt-evaluation latency while preserving rich context
-            compact_res = {}
-            if "programs" in result and result["programs"]:
-                compact_res["programs"] = [
-                    {
-                        "program": p.get("program_name"),
-                        "cutoff_gen": p.get("min_percentage_general", p.get("min_percentage")),
-                        "exam": p.get("required_entrance_exam"),
-                        "fee": p.get("annual_fee_inr"),
-                        "duration": p.get("duration"),
-                        "campuses": p.get("campuses")
-                    }
-                    for p in result["programs"][:3]
-                ]
-            elif "faculty" in result and result["faculty"]:
-                compact_res["faculty"] = [
-                    {
-                        "name": f.get("name"),
-                        "designation": f.get("designation"),
-                        "dept": f.get("department"),
-                        "cabin": describe_cabin_location(f.get("cabin", "Staff Room")),
-                        "email": f.get("email")
-                    }
-                    for f in result["faculty"][:3]
-                ]
-            elif "courses" in result and result["courses"]:
-                compact_res["courses"] = [
-                    {
-                        "code": c.get("code") or c.get("course_code"),
-                        "name": c.get("name") or c.get("course_name"),
-                        "credits": c.get("credits"),
-                        "dept": c.get("department"),
-                        "semester": c.get("semester_range") or c.get("semester"),
-                        "summary": c.get("description", "")[:120] if c.get("description") else ""
-                    }
-                    for c in result["courses"][:3]
-                ]
-            elif "prerequisites" in result and result["prerequisites"]:
-                compact_res["target_course"] = result.get("target_course")
-                compact_res["prerequisites"] = [
-                    {"code": p.get("prerequisite_code"), "name": p.get("prerequisite_name"), "depth": p.get("depth")}
-                    for p in result["prerequisites"][:4]
-                ]
-            elif "instructors" in result and result["instructors"]:
-                compact_res["course_code"] = result.get("course_code")
-                compact_res["instructors"] = [
-                    {
-                        "name": i.get("name"),
-                        "designation": i.get("designation"),
-                        "dept": i.get("department"),
-                        "cabin": describe_cabin_location(i.get("cabin", "")),
-                        "email": i.get("email")
-                    }
-                    for i in result["instructors"][:3]
-                ]
-            elif "available_rooms" in result:
-                compact_res["building"] = result.get("building_code")
-                compact_res["available_rooms"] = [r.get("id") if isinstance(r, dict) else str(r) for r in result["available_rooms"][:6]]
-                compact_res["total_vacant"] = result.get("available_count", len(result["available_rooms"]))
-            elif "schedules" in result and result["schedules"]:
-                compact_res["room_id"] = result.get("room_id")
-                compact_res["room_type"] = result.get("room_type")
-                compact_res["schedules"] = [
-                    {"day": s.get("day"), "slot": s.get("time_slot") or s.get("slot"), "course": s.get("course_name") or s.get("course_code")}
-                    for s in result["schedules"][:4]
-                ]
-            elif "statistics" in result:
-                compact_res["statistics"] = result["statistics"]
-            elif "semesters" in result:
-                compact_res["program"] = result.get("program_name")
-                compact_res["semesters"] = result.get("semesters")
-            else:
-                compact_res = result
-
-            prompt = f"""You are the SRMIST Campus Knowledge AI Concierge — an articulate, collegiate, and welcoming academic assistant.
-Your goal is to answer the user's inquiry conversationally in 2-3 polished, natural sentences using ONLY the verified facts below.
+        return f"""You are the SRMIST Campus Knowledge AI Concierge — an articulate, collegiate, and welcoming academic assistant.
+Your goal is to answer the user's inquiry conversationally in 2-3 polished, natural sentences using ONLY the verified facts below.{context_block}
 Highlight essential details clearly (such as designations, departments, cabin locations, or credits) and retain verified citations in brackets like [Faculty: Dr. Name], [Course: Code], [Program: Name], or [Room: Room ID].
 Conclude smoothly. Do not hallucinate any information not present in the verified facts.
 
@@ -1181,6 +1324,15 @@ Verified Facts:
 
 User Question: {query}
 Concierge Response:"""
+
+    def _synthesize_with_qwen(self, query: str, tool_name: str, result: Dict[str, Any], session_id: str = "") -> str:
+        has_data = self._check_result_has_data(result, tool_name)
+        if not has_data:
+            return self._synthesize_grounded_answer(query, tool_name, result)
+
+        try:
+            compact_res = self._compact_tool_payload(result, tool_name)
+            prompt = self._build_concierge_prompt(query, compact_res, session_id=session_id)
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
                 json={
@@ -1198,6 +1350,350 @@ Concierge Response:"""
         except Exception:
             pass
         return self._synthesize_grounded_answer(query, tool_name, result)
+
+    def stream_query(
+        self,
+        user_query: str,
+        use_llm_synthesis: bool = True,
+        role: str = "student",
+        engine_mode: str = "neo4j",
+        session_id: str = ""
+    ):
+        """
+        Server-Sent Events generator streaming tool metadata, real-time LLM tokens, and completion events.
+        """
+        from campus_knowledge_server.security.ast_validator import ASTSecurityValidator
+        from campus_knowledge_server.security.audit import get_audit_logger
+
+        original_query = user_query
+        if session_id:
+            resolved = ConversationMemory.resolve_followup(session_id, user_query)
+            if resolved:
+                user_query = resolved
+
+        # 0. Zero-Trust AST Security Guardrail
+        is_adversarial, violation_reason = ASTSecurityValidator.is_adversarial_or_destructive(user_query)
+        if is_adversarial:
+            audit_logger = get_audit_logger()
+            audit_logger.log_event(
+                caller="web_user",
+                tool_name="ast_security_interception",
+                parameters={"query": user_query},
+                status="POLICY_VIOLATION",
+                latency_ms=1.1,
+                result_count=0,
+                violation_reason=f"Access Policy Violation: {violation_reason}",
+                role=role
+            )
+            yield {
+                "event": "error",
+                "status": "POLICY_VIOLATION",
+                "tool_selected": "ast_security_interception",
+                "detail": f"Access Policy Violation: Destructive operations ('{user_query.strip()}') are strictly prohibited."
+            }
+            return
+
+        # Interactive Conversational Greetings
+        clean_input = re.sub(r"[^\w\s]", " ", user_query.strip().lower())
+        input_words = clean_input.split()
+        GREETINGS = {"hey", "hello", "hi", "howdy", "greetings", "good morning", "good afternoon", "good evening", "sup", "yo", "namaste"}
+        CONVERSATIONAL_PHRASES = [
+            "help", "can you help", "who are you", "what are you", "what can you do", "what do you do",
+            "how to use", "how do i use", "how does this work", "i want to ask", "i have a question",
+            "tell me something", "features", "menu", "options", "commands", "start", "guide", "assist", "instructions"
+        ]
+        is_greeting = clean_input in GREETINGS or (input_words and input_words[0] in GREETINGS and len(input_words) <= 3)
+        is_help = any(p in clean_input for p in CONVERSATIONAL_PHRASES) or (clean_input in {"help", "start", "hi", "hey"})
+
+        if is_greeting or is_help:
+            ans = (
+                "Hello! I am the SRMIST Campus Knowledge Assistant.\n\n"
+                "I provide verified facts across the campus graph. What would you like to look up?\n\n"
+                "- Admissions: Check cutoffs and requirements (e.g., 'eligibility for btech' or 'fees for cse')\n"
+                "- Curriculum: View semester courses (e.g., 'B.Tech CSE Semester 3' or 'AI Semester 4')\n"
+                "- Courses: Check course details and prerequisites (e.g., 'Course details for 21CSC206T' or 'Prerequisites for 21CSO451T')\n"
+                "- Classrooms: Find vacant rooms or view timetables (e.g., 'Find available rooms in Tech Park')"
+            )
+            yield {
+                "event": "meta",
+                "user_query": user_query,
+                "original_query": original_query if original_query != user_query else None,
+                "tool_selected": "interactive_assistant",
+                "parameters": {},
+                "status": "INTERACTIVE_GREETING",
+                "suggestions": [
+                    "B.Tech CSE Semester 3", "Eligibility for B.Tech",
+                    "Course details for 21CSC206T", "Find available rooms in Tech Park"
+                ],
+                "tool_result": {"type": "interactive_guidance"},
+                "grounded": True,
+                "engine_mode": engine_mode,
+                "intent_source": "Interactive Conversational Engine",
+                "source": "SRMIST Campus Knowledge Assistant",
+                "synthesizer": "Interactive Campus Assistant"
+            }
+            for word in ans.split(" "):
+                yield {"event": "delta", "token": word + " "}
+            if session_id:
+                ConversationMemory.add_turn(session_id, original_query, "interactive_assistant", ans[:200])
+            yield {"event": "done", "answer": ans, "status": "INTERACTIVE_GREETING"}
+            return
+
+        # Routing
+        tool_call = self._fast_path_match(user_query)
+        intent_source = "Fast-Path Matcher (~1ms)" if tool_call else None
+
+        if not tool_call:
+            tool_call = self._select_tool_heuristically(user_query)
+            if tool_call:
+                intent_source = "High-Speed Normalized Router (~8ms)"
+
+        if not tool_call and self.ollama_active:
+            tool_call = self._select_tool_with_llm(user_query)
+            if tool_call:
+                intent_source = "Qwen 2.5 Semantic Intent Parser (JSON Mode)"
+
+        if not tool_call:
+            fed_res = self._federated_cross_entity_search(user_query, role=role, engine_mode=engine_mode)
+            if fed_res:
+                yield {
+                    "event": "meta",
+                    "user_query": fed_res["user_query"],
+                    "original_query": original_query if original_query != user_query else None,
+                    "tool_selected": fed_res["tool_selected"],
+                    "parameters": fed_res["parameters"],
+                    "status": fed_res["status"],
+                    "suggestions": fed_res.get("suggestions", []),
+                    "tool_result": fed_res.get("tool_result"),
+                    "grounded": True,
+                    "engine_mode": engine_mode,
+                    "intent_source": fed_res.get("intent_source"),
+                    "source": fed_res.get("source"),
+                    "synthesizer": fed_res.get("synthesizer")
+                }
+                for word in fed_res["answer"].split(" "):
+                    yield {"event": "delta", "token": word + " "}
+                if session_id:
+                    ConversationMemory.add_turn(session_id, original_query, fed_res["tool_selected"], fed_res["answer"][:200])
+                yield {"event": "done", "answer": fed_res["answer"], "status": "SUCCESS"}
+                return
+
+            clarification_ans = (
+                f"I did not find a specific campus entity matching '{user_query}'.\n\n"
+                "Could you specify what you are looking for?\n\n"
+                "- Curriculum: Mention the branch and semester (e.g., 'B.Tech CSE Semester 3')\n"
+                "- Admissions: Mention the program (e.g., 'Eligibility for B.Tech' or 'MBA cutoffs')\n"
+                "- Courses: Provide the course code (e.g., '21CSC206T' or 'Prerequisites for 21CSO451T')\n"
+                "- Rooms: Mention the building (e.g., 'Available rooms in Tech Park')"
+            )
+            yield {
+                "event": "meta",
+                "user_query": user_query,
+                "original_query": original_query if original_query != user_query else None,
+                "tool_selected": "interactive_clarification",
+                "parameters": {"query": user_query},
+                "status": "CLARIFICATION_NEEDED",
+                "suggestions": [
+                    "B.Tech CSE Semester 3", "Eligibility for B.Tech",
+                    "Course details for 21CSC206T", "Find available rooms in Tech Park"
+                ],
+                "tool_result": {"type": "clarification"},
+                "grounded": True,
+                "engine_mode": engine_mode,
+                "intent_source": "Interactive Clarification Engine",
+                "source": "SRMIST Campus Knowledge Assistant",
+                "synthesizer": "Interactive Campus Assistant"
+            }
+            for word in clarification_ans.split(" "):
+                yield {"event": "delta", "token": word + " "}
+            yield {"event": "done", "answer": clarification_ans, "status": "CLARIFICATION_NEEDED"}
+            return
+
+        tool_name, tool_params = tool_call
+        if tool_name not in self.tool_map:
+            yield {
+                "event": "error",
+                "status": "UNAUTHORIZED_TOOL",
+                "detail": f"Tool '{tool_name}' is not authorized."
+            }
+            return
+
+        # RBAC Check
+        policy = getattr(self, "policy", None)
+        if policy and "roles" in policy and role in policy["roles"]:
+            role_cfg = policy["roles"][role]
+            forbidden = role_cfg.get("forbidden_tools", [])
+            allowed = role_cfg.get("allowed_tools", [])
+            if tool_name in forbidden or (allowed and tool_name not in allowed):
+                yield {
+                    "event": "error",
+                    "status": "FORBIDDEN_TOOL_FOR_ROLE",
+                    "detail": f"Access Policy Violation: Role '{role}' is not permitted to execute tool '{tool_name}'."
+                }
+                return
+
+        # Tool execution
+        try:
+            tool_result = self.tool_map[tool_name](tool_params)
+        except Exception as e:
+            yield {
+                "event": "error",
+                "status": "EXECUTION_ERROR",
+                "detail": str(e)
+            }
+            return
+
+        # Field masking & row limits
+        if policy and "roles" in policy and role in policy["roles"]:
+            role_cfg = policy["roles"][role]
+            hidden_fields = set(role_cfg.get("hidden_fields", []))
+            row_limit = role_cfg.get("row_limit", 50)
+            if hidden_fields:
+                for k, v in tool_result.items():
+                    if isinstance(v, list):
+                        for item in v:
+                            if isinstance(item, dict):
+                                for hf in hidden_fields:
+                                    if hf in item:
+                                        item[hf] = "[Hidden by Policy]"
+                    elif isinstance(v, dict):
+                        for hf in hidden_fields:
+                            if hf in v:
+                                v[hf] = "[Hidden by Policy]"
+            for k in ["faculty", "courses", "programs", "rooms", "classes"]:
+                if k in tool_result and isinstance(tool_result[k], list):
+                    tool_result[k] = tool_result[k][:row_limit]
+
+        has_data = self._check_result_has_data(tool_result, tool_name)
+        status_code = "SUCCESS"
+        suggestions = []
+
+        if not has_data:
+            fed_res = self._federated_cross_entity_search(user_query, role=role, engine_mode=engine_mode, attempted_tool=tool_name)
+            if fed_res:
+                yield {
+                    "event": "meta",
+                    "user_query": fed_res["user_query"],
+                    "original_query": original_query if original_query != user_query else None,
+                    "tool_selected": fed_res["tool_selected"],
+                    "parameters": fed_res["parameters"],
+                    "status": fed_res["status"],
+                    "suggestions": fed_res.get("suggestions", []),
+                    "tool_result": fed_res.get("tool_result"),
+                    "grounded": True,
+                    "engine_mode": engine_mode,
+                    "intent_source": fed_res.get("intent_source"),
+                    "source": fed_res.get("source"),
+                    "synthesizer": fed_res.get("synthesizer")
+                }
+                for word in fed_res["answer"].split(" "):
+                    yield {"event": "delta", "token": word + " "}
+                if session_id:
+                    ConversationMemory.add_turn(session_id, original_query, fed_res["tool_selected"], fed_res["answer"][:200])
+                yield {"event": "done", "answer": fed_res["answer"], "status": "SUCCESS"}
+                return
+
+            status_code = "CLARIFICATION_NEEDED"
+            if tool_name == "lookup_faculty_profile":
+                suggestions = ["Who teaches 21CSC206T?", "B.Tech CSE Semester 3", "Eligibility for B.Tech", "Find available rooms in Tech Park"]
+                grounded_answer = f"I could not find a faculty profile matching '{user_query}' in the SRMIST directory.\n\nTry searching with a department or course code, or select an option below:"
+            elif tool_name in ["lookup_course", "search_courses_semantic"]:
+                suggestions = ["21CSC206T", "21CSO451T", "Who teaches 21CSC206T?", "Prerequisites for 21CSO451T"]
+                grounded_answer = f"I could not find any course matching '{user_query}' in the official catalog.\n\nTry searching with a standard course code or select a suggestion below:"
+            elif tool_name == "find_room_schedule":
+                suggestions = ["Schedule for TP-101", "Find available rooms in Tech Park", "Find available rooms in University Building"]
+                grounded_answer = f"No classes or schedules found for '{user_query}'.\n\nTry checking room availability or a known room code:"
+            elif tool_name == "check_admission_eligibility":
+                suggestions = ["Eligibility for B.Tech", "MBA admission requirements", "MBBS cutoff", "M.Tech eligibility"]
+                grounded_answer = f"No specific admission rules found for '{user_query}'.\n\nSelect a program below to view official admission criteria:"
+            else:
+                suggestions = ["B.Tech CSE Semester 3", "Eligibility for B.Tech", "Course details for 21CSC206T", "Find available rooms in Tech Park"]
+                grounded_answer = f"I did not find any campus records matching '{user_query}'.\n\nHere are some common things you can ask me:"
+
+            yield {
+                "event": "meta",
+                "user_query": user_query,
+                "original_query": original_query if original_query != user_query else None,
+                "tool_selected": tool_name,
+                "parameters": tool_params,
+                "status": status_code,
+                "suggestions": suggestions,
+                "tool_result": tool_result,
+                "grounded": True,
+                "engine_mode": engine_mode,
+                "intent_source": intent_source,
+                "source": "SRMIST Campus Knowledge Assistant",
+                "synthesizer": "Interactive Campus Assistant"
+            }
+            for word in grounded_answer.split(" "):
+                yield {"event": "delta", "token": word + " "}
+            yield {"event": "done", "answer": grounded_answer, "status": status_code}
+            return
+
+        # Data found: yield meta event first
+        suggestions = tool_result.get("suggestions", [])
+        yield {
+            "event": "meta",
+            "user_query": user_query,
+            "original_query": original_query if original_query != user_query else None,
+            "tool_selected": tool_name,
+            "parameters": tool_params,
+            "status": status_code,
+            "suggestions": suggestions,
+            "tool_result": tool_result,
+            "grounded": True,
+            "engine_mode": engine_mode,
+            "intent_source": intent_source,
+            "source": "Neo4j Community Graph & Vector Index" if engine_mode == "neo4j" else "Governed Campus Knowledge Mirror",
+            "synthesizer": "Qwen 2.5 (Ollama)" if (use_llm_synthesis and self.ollama_active and has_data) else "Deterministic Governed Synthesizer"
+        }
+
+        # Token Streaming
+        tokens_emitted = []
+        if use_llm_synthesis and self.ollama_active:
+            try:
+                compact_res = self._compact_tool_payload(tool_result, tool_name)
+                prompt = self._build_concierge_prompt(user_query, compact_res, session_id=session_id)
+                resp = requests.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": self.model_name,
+                        "prompt": prompt,
+                        "stream": True,
+                        "options": {"temperature": 0.35, "num_predict": 140}
+                    },
+                    stream=True,
+                    timeout=30
+                )
+                if resp.status_code == 200:
+                    for line in resp.iter_lines():
+                        if line:
+                            data = json.loads(line)
+                            tok = data.get("response", "")
+                            if tok:
+                                tokens_emitted.append(tok)
+                                yield {"event": "delta", "token": tok}
+            except Exception:
+                pass
+
+        if tokens_emitted:
+            final_answer = "".join(tokens_emitted).strip()
+        else:
+            grounded_answer = self._synthesize_grounded_answer(user_query, tool_name, tool_result)
+            for word in grounded_answer.split(" "):
+                yield {"event": "delta", "token": word + " "}
+            final_answer = grounded_answer
+
+        # Entity extraction & conversation memory
+        entities = self._extract_entities_from_result(tool_name, tool_result, has_data)
+        if session_id:
+            ConversationMemory.add_turn(session_id, original_query, tool_name, final_answer[:200], entities)
+
+        yield {
+            "event": "done",
+            "answer": final_answer,
+            "status": "SUCCESS"
+        }
 
     def _synthesize_grounded_answer(self, query: str, tool_name: str, result: Dict[str, Any]) -> str:
         """Synthesizes structured, strictly-grounded text with entity citations."""
