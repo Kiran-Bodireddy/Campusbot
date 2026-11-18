@@ -31,6 +31,14 @@ from campus_knowledge_server.config.matching_config import (
 class CourseLookupRequest(BaseModel):
     query: str = Field(..., min_length=2, max_length=100, description="Course code (e.g., '21CSC206T') or course title.")
 
+    @field_validator("query", mode="before")
+    @classmethod
+    def validate_query(cls, v: Any) -> str:
+        s = str(v).strip() if v is not None else ""
+        if len(s) < 2:
+            raise ValueError("Query must contain at least 2 non-whitespace characters.")
+        return s
+
 class PrerequisiteTreeRequest(BaseModel):
     course_code: str = Field(..., min_length=3, max_length=20, description="Course code (e.g., '21CSO451T').")
     max_depth: int = Field(default=3, ge=1, le=4, description="Maximum traversal depth (bounded <= 4).")
@@ -44,6 +52,14 @@ class FacultyCourseRequest(BaseModel):
 
 class FacultyProfileRequest(BaseModel):
     faculty_name: str = Field(..., min_length=2, max_length=100, description="Faculty member's full or partial name.")
+
+    @field_validator("faculty_name", mode="before")
+    @classmethod
+    def validate_faculty_name(cls, v: Any) -> str:
+        s = str(v).strip() if v is not None else ""
+        if len(s) < 2:
+            raise ValueError("Faculty name must contain at least 2 non-whitespace characters.")
+        return s
 
 class RoomScheduleRequest(BaseModel):
     room_id: str = Field(..., min_length=2, max_length=20, description="Room ID (e.g., 'TP-101', 'UB-203').")
@@ -109,6 +125,14 @@ class CampusStatisticsRequest(BaseModel):
 
 class BuildingLookupRequest(BaseModel):
     query: str = Field(..., min_length=2, max_length=150, description="Building code (e.g. 'TP', 'TP2', 'UB', 'BEL', 'CVR', 'ARCH') or natural language inquiry (e.g. 'tp1 building', 'where is placement office').")
+
+    @field_validator("query", mode="before")
+    @classmethod
+    def validate_query(cls, v: Any) -> str:
+        s = str(v).strip() if v is not None else ""
+        if len(s) < 2:
+            raise ValueError("Query must contain at least 2 non-whitespace characters.")
+        return s
 
 # ----------------- Pre-Approved Cypher Templates (Immutable) -----------------
 

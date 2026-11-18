@@ -29,6 +29,9 @@ roles:
       - mobile
       - personal_phone
       - contact_number
+      - phone
+      - phone_note
+      - phone_shared_count
 
   faculty:
     description: "Academic faculty and teaching staff. Access to academic tools, room availability, and faculty communications."

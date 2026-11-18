@@ -465,8 +465,25 @@ class GovernedCampusAgent:
         norm_query, meta = normalize_user_query(user_query)
         q_lower = norm_query.lower()
         codes = re.findall(r"\b(?:21[A-Z]{2,4}\d{3}[A-Z]?|[A-Za-z]{3,4}\d{3})\b", user_query.upper())
-
         raw_lower = user_query.lower()
+
+        # Dynamically resolve known course titles to their canonical code if no explicit code pattern was found
+        if not codes:
+            gc = get_graph_client()
+            course_map = getattr(gc, "_cached_course_title_to_code", None)
+            if course_map is None:
+                course_map = {}
+                if hasattr(gc, "_course_by_code"):
+                    for c_code, c_obj in gc._course_by_code.items():
+                        c_name = (c_obj.get("name") or "").strip().lower()
+                        if len(c_name) >= 5:
+                            course_map[c_name] = c_code
+                gc._cached_course_title_to_code = course_map
+
+            for name, c_code in sorted(course_map.items(), key=lambda x: len(x[0]), reverse=True):
+                if re.search(r"\b" + re.escape(name) + r"\b", raw_lower):
+                    codes.append(c_code)
+                    break
 
         # 0. Official Semester Curriculum & Implementation Plan
         # Matches queries like: '3rd sem subjects for cse', 'what courses in semester 4 AI', 'curriculum for mechanical', 'subjects in sem 1'
@@ -554,34 +571,48 @@ class GovernedCampusAgent:
             return "get_campus_statistics", {"category": "departments"}
 
         # 0. Campus Overview & Aggregation Statistics (e.g. 'number of courses offered at srmist', 'how many programs', 'total faculty')
+        is_credit_query = bool(re.search(r"\b(?:credit|credits|ltpc|l-t-p-c)\b", raw_lower))
+        is_floor_query = bool(re.search(r"\b(?:floor|floors|level|levels)\b", raw_lower))
         is_stat_intent = (
-            any(w in raw_lower or w in q_lower for w in [
-                "number of", "how many", "total number", "count of", "total count", "statistics",
-                "overview of", "summary of", "about srm", "about srmist", "tell me about srm",
-                "tell me about srmist", "what is srmist", "what does srmist offer", "programs offered",
-                "courses offered", "couses offered", "degrees offered", "courses at srm", "couses at srm",
-                "programs at srm", "degrees at srm"
-            ])
-            or (
-                any(w in raw_lower or w in q_lower for w in ["how many", "number of", "total", "count of"])
-                and any(w in raw_lower or w in q_lower for w in ["course", "couse", "program", "faculty", "prof", "room", "student", "degree", "subject", "branch", "department"])
+            not is_credit_query
+            and not is_floor_query
+            and (
+                any(w in raw_lower or w in q_lower for w in [
+                    "number of", "how many", "total number", "count of", "total count", "statistics",
+                    "overview of", "summary of", "about srm", "about srmist", "tell me about srm",
+                    "tell me about srmist", "what is srmist", "what does srmist offer", "programs offered",
+                    "courses offered", "couses offered", "degrees offered", "courses at srm", "couses at srm",
+                    "programs at srm", "degrees at srm"
+                ])
+                or (
+                    any(w in raw_lower or w in q_lower for w in ["how many", "number of", "total", "count of"])
+                    and any(w in raw_lower or w in q_lower for w in ["course", "couse", "program", "faculty", "prof", "room", "student", "degree", "subject", "branch", "department"])
+                )
             )
         )
         if is_stat_intent:
-            stat_cat = "all"
+            cats_found = set()
             if any(w in raw_lower or w in q_lower for w in ["faculty", "prof", "teacher", "staff", "lecturer"]):
-                stat_cat = "faculty"
-            elif any(w in raw_lower or w in q_lower for w in ["room", "classroom", "lab", "venue", "hall"]):
-                stat_cat = "rooms"
-            elif any(w in raw_lower or w in q_lower for w in ["course", "couse", "program", "degree", "subject", "curriculum", "branch"]):
-                stat_cat = "programs"
+                cats_found.add("faculty")
+            if any(w in raw_lower or w in q_lower for w in ["room", "classroom", "lab", "venue", "hall"]):
+                cats_found.add("rooms")
+            if any(w in raw_lower or w in q_lower for w in ["course", "couse", "program", "degree", "subject", "curriculum", "branch"]):
+                cats_found.add("courses")
+            if any(w in raw_lower or w in q_lower for w in ["department", "departments"]):
+                cats_found.add("departments")
+
+            if len(cats_found) > 1 or not cats_found:
+                stat_cat = "all"
+            else:
+                stat_cat = cats_found.pop()
             return "get_campus_statistics", {"category": stat_cat}
 
         # 1. Admission eligibility & Program Details (fees, intake, cutoffs, duration)
-        # Matches queries like: 'eligibity for btech', 'how much fee for cse', 'admission for mbbs', 'cutoff for mba'
+        # Matches queries like: 'eligibity for btech', 'how much fee for cse', 'admission for mbbs', 'cutoff for mba', 'scored 55% in 12th'
+        has_percentage = bool(re.search(r"\d+\s*%", user_query))
         is_admission_or_fee = meta.get("is_admission_intent") or meta.get("is_fee_intent") or any(
-            w in q_lower for w in ["admission", "admissions", "cutoff", "entrance exam", "srmjeee", "neet", "fee", "fees", "tuition", "cost", "criteria", "qualify", "eligible", "eligibility"]
-        )
+            w in q_lower for w in ["admission", "admissions", "cutoff", "entrance exam", "srmjeee", "neet", "fee", "fees", "tuition", "cost", "criteria", "qualify", "eligible", "eligibility", "join", "can i join", "get into", "take admission"]
+        ) or (has_percentage and has_degree)
         has_degree = (
             meta.get("detected_degree") is not None
             or meta.get("detected_discipline") is not None
@@ -600,9 +631,10 @@ class GovernedCampusAgent:
 
             # Extract full program name without truncating specializations (e.g. M.Tech Artificial Intelligence)
             prog_stripped = re.sub(
-                r"(?i)\b(what|is|the|are|admission|admissions|eligibility|requirements|criteria|for|in|into|can|i|get|with|"
+                r"(?i)\b(what|which|is|the|are|admission|admissions|eligibility|requirements|criteria|for|in|into|can|i|get|with|"
                 r"\d+(?:\.\d+)?\s*%|percent|aggregate|score|marks|sc|st|obc|pwd|reserved|candidate|category|student|"
-                r"degree|programs?|entrance|exams?|minimum|percentage|required|12th|qualifying|fee|fees|cost|tuition|annual|and|of|cutoff)\b",
+                r"degree|programs?|entrance|exams?|minimum|percentage|required|12th|qualifying|fee|fees|cost|tuition|annual|and|of|cutoff|"
+                r"do|need|join|apply|scored|have|i\'?ve|take)\b",
                 " ",
                 norm_query,
             )
@@ -629,17 +661,20 @@ class GovernedCampusAgent:
             }
 
         # 1. Course Prerequisite eligibility check (handles both "passed Y take X" AND "register for X having passed Y")
-        if any(w in q_lower for w in ["eligible", "can i take", "can a student", "passed", "take", "satisfy", "completed", "register"]) and len(codes) >= 2:
+        if (
+            any(w in q_lower for w in ["eligible", "can i take", "can a student", "passed", "take", "satisfy", "completed", "register", "done", "finished", "enrol", "enroll", "allowed to", "go for"])
+            and len(codes) >= 2
+        ):
             # Find position of completed-course marker relative to course codes
             comp_marker = re.search(
-                r"(?i)\b(?:having\s+passed|having\s+completed|after\s+passing|after\s+completing|"
-                r"if\s+i\s+(?:have\s+|already\s+)?(?:passed|completed|finished|taken)|"
-                r"given\s+(?:i\s+(?:have\s+)?)?(?:passed|completed)|with\s+completed\s+courses?)\b",
+                r"(?i)\b(?:having\s+passed|having\s+completed|having\s+done|after\s+passing|after\s+completing|"
+                r"if\s+i\s+(?:have\s+|already\s+)?(?:passed|completed|finished|taken|done)|"
+                r"i\'?ve\s+done|i\s+finished|given\s+(?:i\s+(?:have\s+)?)?(?:passed|completed)|with\s+completed\s+courses?)\b",
                 user_query,
             )
             if comp_marker:
-                before_codes = re.findall(r"\b(?:21[A-Z]{2,4}\d{3}[A-Z]?|[A-Z]{3,4}\d{3})\b", user_query[:comp_marker.start()].upper())
-                after_codes = re.findall(r"\b(?:21[A-Z]{2,4}\d{3}[A-Z]?|[A-Z]{3,4}\d{3})\b", user_query[comp_marker.end():].upper())
+                before_codes = re.findall(r"\b(?:21[A-Z]{2,4}\d{3}[A-Z]?|[A-Za-z]{3,4}\d{3})\b", user_query[:comp_marker.start()].upper())
+                after_codes = re.findall(r"\b(?:21[A-Z]{2,4}\d{3}[A-Z]?|[A-Za-z]{3,4}\d{3})\b", user_query[comp_marker.end():].upper())
                 if before_codes and after_codes:
                     # Target precedes completed marker ("register for X having passed Y")
                     target = before_codes[-1]
@@ -653,18 +688,21 @@ class GovernedCampusAgent:
                 completed = codes[:-1]
             return "verify_prerequisites", {"target_course": target, "completed_courses": completed}
 
-        if any(w in q_lower for w in ["verify eligibility", "check eligibility", "eligible to take", "eligibility for", "eligible to register", "prior completed"]) and codes:
+        if any(w in q_lower for w in ["verify eligibility", "check eligibility", "eligible to take", "eligibility for", "eligible to register", "prior completed", "haven't completed any", "without completing", "no courses yet"]) and codes:
             return "verify_prerequisites", {"target_course": codes[0], "completed_courses": []}
 
         # 2. Prerequisite dependency tree
-        if (meta.get("is_prereq_intent") or any(w in q_lower for w in ["prereq", "dependency", "leads to", "prerequisites for", "before taking", "complete before", "must i complete", "must take before"])) and codes:
+        if (
+            meta.get("is_prereq_intent")
+            or any(w in q_lower for w in ["prereq", "dependency", "leads to", "prerequisites for", "before taking", "complete before", "finish before", "must i complete", "must take before", "build on", "builds on", "need any prerequisite"])
+        ) and codes:
             return "get_prerequisite_tree", {"course_code": codes[0], "max_depth": 3}
 
         # 3. Faculty teaching a specific course
         q_raw_lower = user_query.lower()
         if codes and (
-            any(w in q_raw_lower for w in ["who teaches", "instructor", "instruct", "professor for", "professors for", "professors are assigned", "teach", "faculty for", "faculty teaching", "assigned to"])
-            or any(w in q_lower for w in ["who teaches", "instructor", "instruct", "professor for", "professors are assigned", "teach"])
+            any(w in q_raw_lower for w in ["who teaches", "who takes", "takes", "instructor", "instruct", "professor for", "professors for", "professors are assigned", "teach", "faculty for", "faculty teaching", "assigned to", "lead instructor"])
+            or any(w in q_lower for w in ["who teaches", "who takes", "instructor", "instruct", "professor for", "professors are assigned", "teach", "lead instructor"])
             or (meta.get("is_faculty_intent") and not any(w in q_raw_lower for w in ["dr.", "dr ", "profile of", "cabin", "qualifications"]))
         ):
             return "find_faculty_for_course", {"course_code": codes[0]}
@@ -672,16 +710,22 @@ class GovernedCampusAgent:
         # 3b. Building info intent — derived dynamically from live Neo4j Building nodes (no hardcoded dict)
         graph_building_aliases = get_graph_client().get_building_alias_map()
         graph_building_codes = sorted(get_graph_client().get_building_code_map().keys(), key=len, reverse=True)
+        # Expand bidirectional school of X <-> X school aliases
+        expanded_bldg_aliases = dict(graph_building_aliases)
+        for alias, code in graph_building_aliases.items():
+            if alias.startswith("school of "):
+                expanded_bldg_aliases[alias.replace("school of ", "").strip() + " school"] = code
+
         matched_bldg_code = None
         matched_bldg_alias = None
-        for alias, code in graph_building_aliases.items():
+        for alias, code in expanded_bldg_aliases.items():
             if len(alias) >= 2 and re.search(r"\b" + re.escape(alias) + r"\b", raw_lower):
                 matched_bldg_code = code
                 matched_bldg_alias = alias
                 break
 
         is_faculty_clue = any(w in raw_lower for w in ["dr.", "dr ", "professor", "prof.", "prof ", "faculty", "who is", "who's", "where does", "cabin", "staff room"])
-        has_bldg_qualifier = any(w in raw_lower for w in ["building", "block", "lab", "hall", "auditorium", "library", "complex", "park", "hospital", "college", "school", "about", "where is", "where are", "tell me", "info", "details", "available", "vacant", "free room", "free classroom", "rooms"])
+        has_bldg_qualifier = any(w in raw_lower for w in ["building", "block", "lab", "hall", "auditorium", "library", "complex", "park", "hospital", "college", "school", "about", "where is", "where are", "tell me", "info", "details", "available", "vacant", "free room", "free classroom", "rooms", "room in", "rooms in", "any room"])
         is_building_intent = (
             bool(matched_bldg_code)
             and (
@@ -699,20 +743,41 @@ class GovernedCampusAgent:
         )
 
         if is_building_intent or bare_bldg:
-            is_availability_query = any(w in raw_lower for w in ["available", "vacant", "free room", "free classroom", "empty", "slot", "occupancy"])
+            is_availability_query = any(w in raw_lower for w in [
+                "available", "vacant", "free room", "free classroom", "empty", "slot", "occupancy",
+                "room in", "rooms in", "any room", "hall in", "fits", "seats", "capacity"
+            ])
             if is_availability_query:
                 detected_code = matched_bldg_code or meta.get("detected_building")
                 day_match = re.search(r"\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b", user_query, re.IGNORECASE)
                 day_val = day_match.group(1).capitalize() if day_match else "Monday"
                 slot_time_match = re.search(r"\b(\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})\b", user_query)
                 slot_num_match = re.search(r"\bslot\s*(\d+)\b", user_query, re.IGNORECASE)
+                single_time_match = re.search(r"\b(\d{1,2}:\d{2})\s*(?:am|pm)?\b", user_query, re.IGNORECASE)
+                period_match = re.search(r"\b(?:first|1st)\s+period\b", raw_lower)
+
                 if slot_time_match:
                     slot_val: Any = slot_time_match.group(1).replace(" ", "")
                 elif slot_num_match:
                     slot_val = int(slot_num_match.group(1))
+                elif period_match:
+                    slot_val = "08:45-09:35"
+                elif single_time_match:
+                    t_str = single_time_match.group(1)
+                    t_map = {
+                        "08:45": "08:45-09:35", "8:45": "08:45-09:35",
+                        "09:45": "09:45-10:35", "9:45": "09:45-10:35",
+                        "10:45": "10:45-11:35",
+                        "11:45": "11:45-12:35",
+                        "13:30": "13:30-14:20", "1:30": "13:30-14:20",
+                        "14:30": "14:30-15:20", "2:30": "14:30-15:20",
+                        "15:30": "15:30-16:20", "3:30": "15:30-16:20",
+                    }
+                    slot_val = t_map.get(t_str, "08:45-09:35")
                 else:
                     slot_val = "08:45-09:35"
-                cap_match = re.search(r"\b(?:capacity|cap|seats?|students?)\s*(?:of\s*)?(\d{1,3})\b|\b(?:for\s*)?(\d{1,3})\s*(?:seats?|students?|capacity)\b", user_query, re.IGNORECASE)
+
+                cap_match = re.search(r"\b(?:capacity|cap|seats?|students?|fits)\s*(?:of\s*)?(\d{1,3})\b|\b(?:for\s*)?(\d{1,3})\s*(?:seats?|students?|capacity|people)\b", user_query, re.IGNORECASE)
                 cap_val = int(cap_match.group(1) or cap_match.group(2)) if cap_match else 30
                 if detected_code:
                     return "find_available_rooms", {"building_code": detected_code, "day": day_val, "slot": slot_val, "min_capacity": cap_val}
@@ -848,6 +913,11 @@ class GovernedCampusAgent:
             clean_name = re.sub(r"^[^\w]+|[^\w]+$", "", clean_name).strip()
             if clean_name:
                 return "lookup_faculty_profile", {"faculty_name": clean_name}
+
+        # 7a. Explicit semantic course search intent (e.g. 'courses about X', 'courses covering Y', 'search courses on Z')
+        is_explicit_semantic_query = bool(re.search(r"\b(?:courses?\s+(?:about|covering|related\s+to|on|dealing\s+with)|search\s+courses?)\b", raw_lower))
+        if is_explicit_semantic_query and not re.search(r"\b(?:who\s+teaches|instructor|professor|prereq|before|eligible|fee|admission)\b", raw_lower):
+            return "search_courses_semantic", {"query": user_query, "top_k": 5}
 
         # 7. Direct course lookup by code
         if codes:
@@ -3072,13 +3142,24 @@ class GovernedCampusAgent:
 
     def _compact_tool_payload(self, result: Dict[str, Any], tool_name: str = "") -> Dict[str, Any]:
         """Compacts the payload to eliminate CPU prompt-evaluation latency while preserving rich context."""
+        def _clean_fact_str(val: Any) -> Any:
+            if not isinstance(val, str):
+                return val
+            # Strip indirect prompt injection directives and delimiter breakouts
+            cleaned = re.sub(
+                r"(?i)\b(?:system\s*:|ignore\s+(?:all\s+)?(?:previous\s+)?instructions?|disregard\s+(?:all\s+)?instructions?|reveal\s+all\s+phone\s+numbers|<<<[^>]+>>>).*",
+                "",
+                val,
+            ).strip()
+            return cleaned
+
         compact_res = {}
         if "programs" in result and result["programs"]:
             compact_res["programs"] = [
                 {
-                    "program": p.get("program_name"),
+                    "program": _clean_fact_str(p.get("program_name")),
                     "cutoff_gen": p.get("min_percentage_general", p.get("min_percentage")),
-                    "exam": p.get("required_entrance_exam"),
+                    "exam": _clean_fact_str(p.get("required_entrance_exam")),
                     "fee": p.get("annual_fee_inr"),
                     "duration": p.get("duration"),
                     "campuses": p.get("campuses")
@@ -3088,7 +3169,7 @@ class GovernedCampusAgent:
         elif "faculty" in result and result["faculty"]:
             compact_res["faculty"] = [
                 {
-                    "name": f.get("name"),
+                    "name": _clean_fact_str(f.get("name")),
                     "designation": f.get("designation"),
                     "dept": f.get("department"),
                     "cabin": describe_cabin_location(f.get("cabin", "Staff Room")),
@@ -3100,11 +3181,11 @@ class GovernedCampusAgent:
             compact_res["courses"] = [
                 {
                     "code": c.get("code") or c.get("course_code"),
-                    "name": c.get("name") or c.get("course_name"),
+                    "name": _clean_fact_str(c.get("name") or c.get("course_name")),
                     "credits": c.get("credits"),
                     "dept": c.get("department"),
                     "semester": c.get("semester_range") or c.get("semester"),
-                    "summary": c.get("description", "")[:120] if c.get("description") else ""
+                    "summary": _clean_fact_str(c.get("description", "")[:120]) if c.get("description") else ""
                 }
                 for c in result["courses"][:3]
             ]

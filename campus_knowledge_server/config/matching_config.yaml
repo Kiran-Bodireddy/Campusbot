@@ -9,6 +9,9 @@ faculty_matching:
     - "mr"
     - "mrs"
     - "ms"
+    - "madam"
+    - "sir"
+    - "doctor"
   min_similarity: 0.72
   max_displayed_matches: 5
   max_names_per_query: 10

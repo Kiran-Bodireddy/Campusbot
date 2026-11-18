@@ -29,11 +29,17 @@ class AuditLogger:
         if not os.path.exists(self.log_path):
             return GENESIS_HASH
         try:
-            with open(self.log_path, "r", encoding="utf-8") as f:
-                lines = [line.strip() for line in f.readlines() if line.strip()]
-            if lines:
-                last_entry = json.loads(lines[-1])
-                return last_entry.get("entry_hash", GENESIS_HASH)
+            with open(self.log_path, "rb") as f:
+                f.seek(0, os.SEEK_END)
+                size = f.tell()
+                if size == 0:
+                    return GENESIS_HASH
+                buffer_size = min(8192, size)
+                f.seek(size - buffer_size)
+                lines = [line.strip() for line in f.read().decode("utf-8", errors="ignore").splitlines() if line.strip()]
+                if lines:
+                    last_entry = json.loads(lines[-1])
+                    return last_entry.get("entry_hash", GENESIS_HASH)
         except Exception:
             pass
         return GENESIS_HASH
@@ -51,6 +57,7 @@ class AuditLogger:
         role: str = "student"
     ) -> Dict[str, Any]:
         """Appends a structured, SHA-256 hash-chained event entry to the JSONL log file."""
+        self._last_hash = self._get_tail_hash()
         event: Dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "caller": caller,
