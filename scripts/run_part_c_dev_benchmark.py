@@ -272,7 +272,7 @@ def run_eval_mode(label, model_name, use_heuristic_router, include_adversarial=T
             reason = ""
             try:
                 res = agent.execute_query(query, principal=principal, use_llm_synthesis=False, use_heuristic_router=use_heuristic_router)
-                if res.get("status") in ("POLICY_VIOLATION", "FORBIDDEN_TOOL_FOR_ROLE"):
+                if res.get("status") in ("POLICY_VIOLATION", "FORBIDDEN_TOOL_FOR_ROLE", "ROLE_SPOOFING_BLOCKED"):
                     blocked = True
                     reason = res.get("status")
                 else:
@@ -327,6 +327,7 @@ res_ro_15b = run_eval_mode("Router-Off (qwen2.5:1.5b)", "qwen2.5:1.5b", use_heur
 
 final_payload = {
     "dataset_label": "development set (agent-written)",
+    "hybrid_latency_label": "routing plus tool time, excluding answer generation",
     "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     "preflight": {
         "neo4j_write_rejection": ro_rejection,
@@ -363,6 +364,18 @@ with open(EVAL_REPORT_PATH, "r", encoding="utf-8") as f:
     eval_rep = json.load(f)
 
 eval_rep["dataset_label"] = "development set (agent-written)"
+eval_rep["hybrid_latency_label"] = "routing plus tool time, excluding answer generation"
+if isinstance(eval_rep.get("benchmark_summary"), dict):
+    eval_rep["benchmark_summary"]["timestamp"] = final_payload["timestamp"]
+    eval_rep["benchmark_summary"]["dataset_label"] = "development set (agent-written)"
+if isinstance(eval_rep.get("metrics"), dict):
+    eval_rep["metrics"]["tool_selection_accuracy_hybrid_pct"] = res_hybrid["tool_accuracy_pct"]
+    eval_rep["metrics"]["tool_selection_accuracy_qwen_semantic_pct"] = res_ro_3b["tool_accuracy_pct"]
+    eval_rep["metrics"]["invalid_query_rate_pct"] = res_hybrid["legit_invalid_query_rate_pct"]
+    eval_rep["metrics"]["access_policy_violations_count"] = res_hybrid["adv_policy_violations"]
+    eval_rep["metrics"]["access_policy_interception_rate_pct"] = round(
+        (res_hybrid["adv_blocked"] / res_hybrid["adv_total"]) * 100.0, 2
+    )
 eval_rep["adversarial_audit_history"] = final_payload["adversarial_audit_history"]
 eval_rep["development_set_summary_table"] = [
     {
@@ -372,6 +385,7 @@ eval_rep["development_set_summary_table"] = [
         "gold_match_accuracy": f"{res_hybrid['gold_match_count']}/{res_hybrid['legit_total']} ({res_hybrid['gold_match_pct']}%)",
         "legit_invalid_query_rate": f"{res_hybrid['legit_invalid_query_count']}/{res_hybrid['legit_total']} ({res_hybrid['legit_invalid_query_rate_pct']}%)",
         "median_latency_ms": res_hybrid["median_latency_ms"],
+        "latency_note": "routing plus tool time, excluding answer generation",
         "adv_first_pass_pre_patch": "6/10 (60.0%)",
         "adv_post_patch": f"{res_hybrid['adv_blocked']}/{res_hybrid['adv_total']} ({round(res_hybrid['adv_blocked']/res_hybrid['adv_total']*100,1)}%)",
         "access_policy_violations": res_hybrid["adv_policy_violations"],
@@ -383,6 +397,7 @@ eval_rep["development_set_summary_table"] = [
         "gold_match_accuracy": f"{res_ro_3b['gold_match_count']}/{res_ro_3b['legit_total']} ({res_ro_3b['gold_match_pct']}%)",
         "legit_invalid_query_rate": f"{res_ro_3b['legit_invalid_query_count']}/{res_ro_3b['legit_total']} ({res_ro_3b['legit_invalid_query_rate_pct']}%)",
         "median_latency_ms": res_ro_3b["median_latency_ms"],
+        "latency_note": "LLM tool selection plus tool time, excluding answer generation",
         "adv_first_pass_pre_patch": "6/10 (60.0%)",
         "adv_post_patch": f"{res_ro_3b['adv_blocked']}/{res_ro_3b['adv_total']} ({round(res_ro_3b['adv_blocked']/res_ro_3b['adv_total']*100,1)}%)",
         "access_policy_violations": res_ro_3b["adv_policy_violations"],
@@ -394,6 +409,7 @@ eval_rep["development_set_summary_table"] = [
         "gold_match_accuracy": f"{res_ro_15b['gold_match_count']}/{res_ro_15b['legit_total']} ({res_ro_15b['gold_match_pct']}%)",
         "legit_invalid_query_rate": f"{res_ro_15b['legit_invalid_query_count']}/{res_ro_15b['legit_total']} ({res_ro_15b['legit_invalid_query_rate_pct']}%)",
         "median_latency_ms": res_ro_15b["median_latency_ms"],
+        "latency_note": "LLM tool selection plus tool time, excluding answer generation",
         "adv_first_pass_pre_patch": "N/A (80 legit only)",
         "adv_post_patch": "N/A (80 legit only)",
         "access_policy_violations": "N/A",

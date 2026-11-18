@@ -133,16 +133,38 @@ def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Princ
         )
         raise SecurityViolationError(err)
 
-    # 3. Schema Validation
+    # 3. Pre-Validation Argument Sanitization (drop nulls, coerce semester strings like 'Sem 3' -> 3)
+    import re as _re
+    sanitized_args: Dict[str, Any] = {}
+    for k, v in (args or {}).items():
+        if v is None:
+            continue
+        if k == "semester" and isinstance(v, str):
+            m_sem = _re.search(r"(\d+)", v)
+            if m_sem:
+                sanitized_args[k] = int(m_sem.group(1))
+                continue
+        if k == "slot" and isinstance(v, str):
+            m_slot = _re.match(r"^\s*slot\s+(\d+)\s*$", v, _re.IGNORECASE)
+            if m_slot:
+                sanitized_args[k] = int(m_slot.group(1))
+                continue
+        if k in ("min_capacity", "max_depth", "top_k") and isinstance(v, str):
+            m_int = _re.search(r"(\d+)", v)
+            if m_int:
+                sanitized_args[k] = int(m_int.group(1))
+                continue
+        sanitized_args[k] = v
+
     schema_cls = TOOL_SCHEMA_MAP[tool_name]
     try:
-        req_obj = schema_cls(**args)
+        req_obj = schema_cls(**sanitized_args)
     except ValidationError as ve:
         err = f"Schema validation error on tool '{tool_name}': {ve}"
         audit.log_event(
             caller=caller_id,
             tool_name=tool_name,
-            parameters=args,
+            parameters=sanitized_args,
             status="VALIDATION_ERROR",
             latency_ms=(time.time() - t0) * 1000,
             violation_reason=err,
@@ -187,9 +209,13 @@ def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Princ
                     if hf in v:
                         v[hf] = "[Hidden by Policy]"
 
-    for list_key in ["courses", "faculty", "instructors", "rooms", "programs", "prerequisites", "classes", "allocations"]:
+    for list_key in ["courses", "faculty", "instructors", "rooms", "available_rooms", "schedules", "programs", "prerequisites", "classes", "allocations", "departments"]:
         if list_key in raw_result and isinstance(raw_result[list_key], list):
-            raw_result[list_key] = raw_result[list_key][:row_limit]
+            orig_len = len(raw_result[list_key])
+            if orig_len > row_limit:
+                raw_result[list_key] = raw_result[list_key][:row_limit]
+                raw_result["row_cap_applied"] = row_limit
+                raw_result["total_before_cap"] = orig_len
 
     # 7. Standardized Entity Extraction for Grounding Verification (S1)
     entities = extract_standardized_entities(tool_name, raw_result)

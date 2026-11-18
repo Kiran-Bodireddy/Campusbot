@@ -25,25 +25,42 @@ def test_lookup_course():
     assert res["match_count"] >= 1
     assert any(c["code"] == "CSE201" for c in res["courses"])
 
+def _pick_real_prereq_pair():
+    from campus_knowledge_server.database.neo4j_client import get_graph_client
+    client = get_graph_client()
+    if client.is_connected and client.driver:
+        rows = client.query_read(
+            "MATCH (t:Course)-[:REQUIRES_PREREQUISITE]->(p:Course) "
+            "RETURN t.code AS target, p.code AS prereq LIMIT 1"
+        )
+        if rows:
+            return rows[0]["target"], rows[0]["prereq"]
+    for tgt, plist in client._prereqs_by_target.items():
+        if plist:
+            return tgt, plist[0]["prerequisite_course_code"]
+    raise AssertionError("No prerequisite edges found in graph")
+
 def test_prerequisite_tree():
-    req = PrerequisiteTreeRequest(course_code="CSE201", max_depth=3)
+    target, prereq = _pick_real_prereq_pair()
+    req = PrerequisiteTreeRequest(course_code=target, max_depth=3)
     res = CampusKnowledgeTools.get_prerequisite_tree(req, caller="test_runner")
     assert "prerequisites" in res
-    assert res["target_course"] == "CSE201"
+    assert res["target_course"] == target
+    assert any(p["prerequisite_code"] == prereq for p in res["prerequisites"])
 
 def test_verify_prerequisites_satisfied():
-    # If student completed CSE101, they should satisfy CSE201
-    req = PrerequisiteVerifyRequest(completed_courses=["CSE101"], target_course="CSE201")
+    target, prereq = _pick_real_prereq_pair()
+    req = PrerequisiteVerifyRequest(completed_courses=[prereq], target_course=target)
     res = CampusKnowledgeTools.verify_prerequisites(req, caller="test_runner")
     assert res["eligible"] is True
     assert len(res["missing_prerequisites"]) == 0
 
 def test_verify_prerequisites_missing():
-    # Student hasn't taken CSE101
-    req = PrerequisiteVerifyRequest(completed_courses=[], target_course="CSE201")
+    target, prereq = _pick_real_prereq_pair()
+    req = PrerequisiteVerifyRequest(completed_courses=[], target_course=target)
     res = CampusKnowledgeTools.verify_prerequisites(req, caller="test_runner")
     assert res["eligible"] is False
-    assert "CSE101" in res["missing_prerequisites"]
+    assert prereq in res["missing_prerequisites"]
 
 def test_find_faculty_for_course():
     req = FacultyCourseRequest(course_code="CSE101")

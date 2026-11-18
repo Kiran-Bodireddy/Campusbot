@@ -28,7 +28,7 @@ BUILDINGS = [
     {"code": "TP", "name": "Tech Park", "floors": 15, "campus": "Kattankulathur (KTR)", "focus": "Engineering & Computing"},
     {"code": "TP2", "name": "Tech Park 2 (TP-2)", "floors": 12, "campus": "Kattankulathur (KTR)", "focus": "Faculty Research Wings & Specialized Labs"},
     {"code": "UB", "name": "University Building", "floors": 14, "campus": "Kattankulathur (KTR)", "focus": "Administration & Sciences"},
-    {"code": "BEL", "name": "Bioengineering Block", "floors": 8, "campus": "Kattankulathur (KTR)", "focus": "Biotechnology & Genetic Engg"},
+    {"code": "BEL", "name": "Basic Engineering Lab", "floors": 8, "campus": "Kattankulathur (KTR)", "focus": "1st-Year Engineering Practicals, Foundational Labs & Workshops"},
     {"code": "MEB", "name": "Mechanical Engineering Block", "floors": 6, "campus": "Kattankulathur (KTR)", "focus": "Mechanical & Automobile"},
     {"code": "ESB", "name": "Electrical Sciences Block", "floors": 7, "campus": "Kattankulathur (KTR)", "focus": "ECE & EEE"},
     {"code": "FMB", "name": "Faculty of Management Block", "floors": 5, "campus": "Kattankulathur (KTR)", "focus": "Management & MBA"},

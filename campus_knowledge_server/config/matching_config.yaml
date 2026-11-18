@@ -1,5 +1,5 @@
-# Generic faculty name matching & cabin labeling configuration.
-# No person names, IDs, course codes, buildings, or departments belong here.
+# Generic matching, normalization, slot, and cabin labeling configuration.
+# Single source of tunable values — no person names, IDs, course codes, or expected answers.
 
 faculty_matching:
   honorifics:
@@ -11,7 +11,270 @@ faculty_matching:
     - "ms"
   min_similarity: 0.72
   max_displayed_matches: 5
+  max_names_per_query: 10
   fuzzy_min_token_length: 3
+  # Words stripped from the tail of extracted faculty names (including location/action words)
+  name_trailing_stop_words:
+    - "and"
+    - "his"
+    - "her"
+    - "qualifications"
+    - "about"
+    - "tell"
+    - "me"
+    - "who"
+    - "is"
+    - "what"
+    - "department"
+    - "college"
+    - "cabin"
+    - "teach"
+    - "teaches"
+    - "teaching"
+    - "email"
+    - "mail"
+    - "contact"
+    - "office"
+    - "located"
+    - "sit"
+    - "stay"
+    - "work"
+    - "in"
+    - "at"
+
+rate_limiting:
+  max_requests: 20
+  window_seconds: 60
+
+llm:
+  keep_alive: "30m"
+  warmup_on_startup: true
+  intent_timeout_s: 25.0
+  synthesis_timeout_s: 30.0
+
+small_talk:
+  greetings:
+    - "hi"
+    - "hello"
+    - "hey"
+    - "howdy"
+    - "greetings"
+    - "good morning"
+    - "good afternoon"
+    - "good evening"
+    - "namaste"
+    - "sup"
+    - "yo"
+  thanks:
+    - "thanks"
+    - "thank you"
+    - "thx"
+    - "ty"
+    - "much appreciated"
+  how_are_you:
+    - "how are you"
+    - "how are you doing"
+    - "how r u"
+    - "how is it going"
+    - "whats up"
+    - "what is up"
+  filler_words:
+    - "there"
+    - "bot"
+    - "assistant"
+    - "ai"
+    - "please"
+    - "today"
+    - "so"
+    - "much"
+    - "very"
+    - "a"
+    - "lot"
+  templates:
+    greeting: "Hello! I am the SRMIST Campus Knowledge Assistant. I can look up courses, prerequisites, faculty profiles, classrooms, curricula, departments, and admissions."
+    thanks: "You're welcome! Ask anytime if you need another campus lookup."
+    how_are_you: "I'm doing well, thank you! Ask me about SRMIST courses, prerequisites, faculty profiles, classrooms, curricula, departments, or admissions."
+
+write_requests:
+  status: "WRITE_REQUEST_REFUSED"
+  refusal_message: "I can only read campus data; I can’t add, change or delete records"
+  verbs:
+    - "add"
+    - "change"
+    - "delete"
+    - "replace"
+    - "remove"
+    - "modify"
+    - "update"
+    - "insert"
+    - "create"
+    - "drop"
+    - "erase"
+    - "overwrite"
+    - "wipe"
+    - "edit"
+    - "alter"
+    - "reset"
+    - "destroy"
+    - "purge"
+    - "rename"
+  destructive_targets:
+    - "everything"
+    - "all"
+    - "records"
+    - "record"
+    - "data"
+    - "database"
+    - "graph"
+    - "catalog"
+    - "directory"
+    - "entry"
+    - "entries"
+    - "row"
+    - "rows"
+    - "node"
+    - "nodes"
+    - "faculty"
+    - "professor"
+    - "course"
+    - "courses"
+    - "room"
+    - "rooms"
+    - "department"
+    - "departments"
+    - "program"
+    - "programs"
+    - "instance"
+    - "server"
+    - "table"
+    - "user"
+    - "account"
+  target_fuzzy_min_similarity: 0.78
+
+semantic_search:
+  min_similarity_score: 0.76
+  min_lexical_score: 4
+  no_match_message: "I couldn’t find anything relevant in the campus data"
+  capabilities_list:
+    - "Course details, credits, syllabi, and prerequisites"
+    - "Faculty profiles, departments, cabins, and course instructors"
+    - "Classroom timetables and available rooms"
+    - "Semester curricula and admission eligibility"
+    - "Campus statistics and academic department listings"
+
+conversational:
+  small_talk_phrases:
+    - "how are you"
+    - "how are you doing"
+    - "how r u"
+    - "whats up"
+    - "what is up"
+    - "good day"
+    - "thank you"
+    - "thanks"
+    - "thx"
+    - "bye"
+    - "goodbye"
+    - "see you"
+    - "ok"
+    - "okay"
+    - "cool"
+    - "nice"
+  read_only_out_of_scope_patterns:
+    - "\\b(?:create|spin\\s+up|deploy|launch|provision|start|stop|restart|modify|update|insert|add|edit|change)\\s+(?:(?:a|an|new|the|my|another)\\s+)*(?:instance|server|database|db|container|vm|user|account|record|table|node|course|faculty|room|entry)\\b"
+  faculty_attribute_keywords:
+    specialization:
+      - "research"
+      - "specialization"
+      - "specialisation"
+      - "area of research"
+      - "research area"
+      - "research interest"
+      - "expertise"
+      - "domain"
+      - "field"
+    email:
+      - "email"
+      - "mail"
+      - "e-mail"
+    phone:
+      - "phone"
+      - "number"
+      - "call"
+      - "contact"
+    cabin:
+      - "cabin"
+      - "office"
+      - "room"
+      - "where"
+      - "located"
+      - "building"
+      - "block"
+      - "sit"
+    department:
+      - "department"
+      - "dept"
+      - "school"
+    experience:
+      - "experience"
+      - "years"
+      - "how long"
+    designation:
+      - "designation"
+      - "position"
+      - "role"
+      - "title"
+    courses:
+      - "teach"
+      - "teaches"
+      - "teaching"
+      - "course"
+      - "subject"
+  followup_projection:
+    exclude_markers:
+      - "remove"
+      - "without"
+      - "exclude"
+      - "hide"
+      - "drop"
+      - "omit"
+      - "skip"
+      - "don't show"
+      - "dont show"
+      - "except"
+    include_markers:
+      - "show only"
+      - "display only"
+      - "give me only"
+      - "just show"
+      - "only show"
+      - "only the"
+      - "only "
+      - "just the"
+      - "what is"
+      - "what are"
+      - "tell me"
+    course_fields:
+      credits: ["credits", "credit"]
+      ltpc: ["ltpc", "l-t-p-c", "l t p c"]
+      category: ["category", "course type"]
+      level: ["level", "degree level"]
+      department: ["department", "dept"]
+      description: ["description", "summary", "overview", "rationale", "about"]
+      course_outcomes: ["course outcomes", "outcomes", "learning outcomes", "cos"]
+      syllabus_units: ["syllabus units", "syllabus", "units", "chapters", "modules", "topics"]
+      textbooks: ["textbooks", "textbook", "books", "references", "reference books"]
+      prerequisites: ["prerequisites", "prerequisite", "prereqs", "prereq"]
+      offered_in: ["offered in", "programs", "semesters", "branches"]
+    faculty_fields:
+      specialization: ["area of research", "research area", "research interest", "research", "specialization", "specialisation", "expertise", "domain"]
+      description: ["description", "bio", "biography", "about", "summary", "profile"]
+      designation: ["designation", "position", "title", "role"]
+      department: ["department", "dept", "school"]
+      cabin: ["cabin", "office", "room", "location", "building", "block"]
+      email: ["email", "mail", "e-mail"]
+      phone: ["phone", "phone number", "number", "contact"]
+      experience: ["experience", "teaching experience", "years"]
 
 cabin_labeling:
   # Characters considered an unambiguous separator after a graph Building.code
@@ -20,3 +283,118 @@ cabin_labeling:
     - "/"
     - ":"
     - " "
+
+# Real campus timetable slots (7 slots: 08:45 to 16:20; no 16:30 slot)
+timetable_slots:
+  1: "08:45-09:35"
+  2: "09:45-10:35"
+  3: "10:45-11:35"
+  4: "11:45-12:35"
+  5: "13:30-14:20"
+  6: "14:30-15:20"
+  7: "15:30-16:20"
+
+# Canonical Course.category normalization (maps raw PDF/curriculum strings to canonical names)
+course_category_normalization:
+  "professional core": "Professional Core"
+  "c professional core": "Professional Core"
+  "open elective": "Open Elective"
+  "o open elective": "Open Elective"
+  "project / practice": "Project / Practice"
+  "p project work, seminar, internship in industry / higher technical institutions": "Project / Practice"
+  "engineering sciences": "Engineering Sciences"
+  "s engineering sciences": "Engineering Sciences"
+  "engineering science / foundation": "Engineering Sciences"
+  "basic sciences": "Basic Sciences"
+  "humanities and social sciences": "Humanities and Social Sciences"
+  "h humanities and social sciences": "Humanities and Social Sciences"
+  "mandatory non-credit": "Mandatory Non-Credit"
+  "m non credit": "Mandatory Non-Credit"
+  "m non-credit": "Mandatory Non-Credit"
+  "m non graded": "Mandatory Non-Credit"
+  "professional elective": "Professional Elective"
+
+# Canonical department normalization (maps spelling variants / short codes to one canonical name)
+department_normalization:
+  # Regex patterns stripped before alias lookup (removes scraped markdown links & trailing campus bio noise)
+  strip_patterns:
+    - "\\]\\(https?://.*$"
+    - "\\s*vendhar\\s+nagar.*$"
+    - "\\s+at\\s+srm\\b.*$"
+  aliases:
+    "ctech": "Department of Computing Technologies"
+    "department of ctech": "Department of Computing Technologies"
+    "computing technologies": "Department of Computing Technologies"
+    "department of computing technologies": "Department of Computing Technologies"
+    "cintel": "Department of Computational Intelligence"
+    "computational intelligence": "Department of Computational Intelligence"
+    "department of computational intelligence": "Department of Computational Intelligence"
+    "nwc": "Department of Networking and Communications"
+    "networking and communications": "Department of Networking and Communications"
+    "department of networking and communications": "Department of Networking and Communications"
+    "dsbs": "Department of Data Science and Business Systems"
+    "data science and business systems": "Department of Data Science and Business Systems"
+    "department of data science and business systems": "Department of Data Science and Business Systems"
+    "ece": "Department of Electronics and Communication Engineering"
+    "department of ece": "Department of Electronics and Communication Engineering"
+    "department of electronics & communication": "Department of Electronics and Communication Engineering"
+    "department of electronics & communication engineering": "Department of Electronics and Communication Engineering"
+    "electronics and communication": "Department of Electronics and Communication Engineering"
+    "electronics and communication engineering": "Department of Electronics and Communication Engineering"
+    "department of electronics and communication engineering": "Department of Electronics and Communication Engineering"
+    "eee": "Department of Electrical and Electronics Engineering"
+    "department of eee": "Department of Electrical and Electronics Engineering"
+    "electrical and electronics engineering": "Department of Electrical and Electronics Engineering"
+    "department of electrical and electronics engineering": "Department of Electrical and Electronics Engineering"
+    "civil": "Department of Civil Engineering"
+    "department of civil": "Department of Civil Engineering"
+    "civil engineering": "Department of Civil Engineering"
+    "department of civil engineering": "Department of Civil Engineering"
+    "mech": "Department of Mechanical Engineering"
+    "mechanical": "Department of Mechanical Engineering"
+    "department of mechanical": "Department of Mechanical Engineering"
+    "mechanical engineering": "Department of Mechanical Engineering"
+    "department of mechanical engineering": "Department of Mechanical Engineering"
+    "aerospace": "Department of Aerospace Engineering"
+    "department of aerospace": "Department of Aerospace Engineering"
+    "aerospace engineering": "Department of Aerospace Engineering"
+    "department of aerospace engineering": "Department of Aerospace Engineering"
+    "maths": "Department of Mathematics"
+    "department of maths": "Department of Mathematics"
+    "mathematics": "Department of Mathematics"
+    "department of mathematics": "Department of Mathematics"
+    "mathematics and statistics": "Department of Mathematics and Statistics"
+    "department of mathematics and statistics": "Department of Mathematics and Statistics"
+    "biotech": "Department of Biotechnology"
+    "department of biotech": "Department of Biotechnology"
+    "biotechnology": "Department of Biotechnology"
+    "biotechnology receives tamil nadu women young scientist": "Department of Biotechnology"
+    "department of biotechnology": "Department of Biotechnology"
+    "language": "Department of Language"
+    "languages": "Department of Language"
+    "department of language": "Department of Language"
+    "english": "Department of English"
+    "department of english": "Department of English"
+    "chemistry": "Department of Chemistry"
+    "department of chemistry": "Department of Chemistry"
+    "chemical engineering": "Department of Chemical Engineering"
+    "department of chemical engineering": "Department of Chemical Engineering"
+    "basic sciences": "Department of Basic Sciences"
+    "department of basic sciences": "Department of Basic Sciences"
+    "computer science": "Department of Computer Science"
+    "department of computer science": "Department of Computer Science"
+    "corporate secretaryship and accounting & finance": "Department of Corporate Secretaryship and Accounting & Finance"
+    "department of corporate secretaryship and accounting & finance": "Department of Corporate Secretaryship and Accounting & Finance"
+    "food technology": "Department of Food Technology"
+    "department of food technology": "Department of Food Technology"
+    "pharmaceutics": "Department of Pharmaceutics"
+    "department of pharmaceutics": "Department of Pharmaceutics"
+    "pharmacognosy": "Department of Pharmacognosy"
+    "department of pharmacognosy": "Department of Pharmacognosy"
+    "physics": "Department of Physics"
+    "department of physics": "Department of Physics"
+    "physics and nanotechnology": "Department of Physics and Nanotechnology"
+    "department of physics and nanotechnology": "Department of Physics and Nanotechnology"
+    "livestock and production management": "Department of Livestock and Production Management"
+    "department of biochemistry": "Department of Biochemistry"
+    "department of journalism and mass communication": "Department of Journalism and Mass Communication"

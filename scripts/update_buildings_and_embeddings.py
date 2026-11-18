@@ -114,7 +114,7 @@ CAMPUS_BUILDINGS = [
     },
     {
         "code": "BEL",
-        "name": "Basic Engineering Laboratory Block",
+        "name": "Basic Engineering Lab",
         "floors": 6,  # G+5
         "campus": "Kattankulathur (KTR)",
         "focus": "1st-Year Engineering Practicals, Foundational Labs & Workshops",

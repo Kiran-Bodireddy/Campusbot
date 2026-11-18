@@ -27,7 +27,13 @@ def test_api_lookup_course():
     assert any(c["code"] == "CSE201" for c in data["courses"])
 
 def test_api_verify_prerequisites():
-    payload = {"completed_courses": ["CSE101"], "target_course": "CSE201"}
+    from campus_knowledge_server.database.neo4j_client import get_graph_client
+    gclient = get_graph_client()
+    rows = gclient.query_read(
+        "MATCH (t:Course)-[:REQUIRES_PREREQUISITE]->(p:Course) RETURN t.code AS target, p.code AS prereq LIMIT 1"
+    ) if (gclient.is_connected and gclient.driver) else []
+    assert rows, "Expected at least one prerequisite edge in Neo4j"
+    payload = {"completed_courses": [rows[0]["prereq"]], "target_course": rows[0]["target"]}
     response = client.post("/tools/verify_prerequisites", json=payload)
     assert response.status_code == 200
     data = response.json()

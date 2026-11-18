@@ -12,7 +12,7 @@ CAMPUS BUILDINGS (20 verified buildings at Kattankulathur):
   TP2  = Tech Park 2 (TP-2)                  — G+15 floors, Technical Depts & Central Placement Office (15th floor)
   CVR  = Sir C.V. Raman Research Park        — 7 floors, Scientific Research, Nanotechnology & Clean Energy
   UB   = University Building                 — G+15 floors, Central Administration & Central Library (4 floors)
-  BEL  = Basic Engineering Laboratory Block  — G+5 floors, 1st-Year Engineering Workshops & Foundational Labs
+  BEL  = Basic Engineering Lab               — G+5 floors, 1st-Year Engineering Workshops & Foundational Labs
   CRC  = Classroom Complex                   — G+8 floors, Centralized Lecture Halls & Exam Suites
   HTB  = Hi-Tech Block                       — G+6 floors, ITKM Data Center & Civil Engineering
   MEB  = Mechanical Engineering Block        — G+6 floors, Mechanical, Automobile & Aerospace

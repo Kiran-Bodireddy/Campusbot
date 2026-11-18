@@ -117,34 +117,13 @@ DISCIPLINE_ACRONYM_MAP = {
     "fintech": "Fintech"
 }
 
-# Campus Building Aliases
-BUILDING_ALIAS_MAP = {
-    "tech park": "TP",
-    "techpark": "TP",
-    "tp": "TP",
-    "tp1": "TP",
-    "tp2": "TP",
-    "tp-1": "TP",
-    "tp-2": "TP",
-    "university building": "UB",
-    "univ building": "UB",
-    "ub": "UB",
-    "main building": "UB",
-    "bio engineering": "BEL",
-    "bio-engineering": "BEL",
-    "bio engg": "BEL",
-    "bel": "BEL",
-    "mechanical building": "MEB",
-    "meb": "MEB",
-    "electrical building": "ESB",
-    "esb": "ESB",
-    "civil building": "FMB",
-    "fmb": "FMB",
-    "law building": "SLB",
-    "slb": "SLB",
-    "management building": "MCB",
-    "mcb": "MCB"
-}
+def get_live_building_alias_map() -> Dict[str, str]:
+    """Derives campus building aliases dynamically from live Neo4j Building nodes (no hardcoding)."""
+    try:
+        from campus_knowledge_server.database.neo4j_client import get_graph_client
+        return get_graph_client().get_building_alias_map()
+    except Exception:
+        return {}
 
 def correct_intent_tokens(query: str) -> str:
     """Corrects spelling mistakes in intent keywords (e.g. eligibity -> eligibility)."""
@@ -181,8 +160,8 @@ def expand_acronyms(query: str) -> Tuple[str, Dict[str, Any]]:
     
     q_out = query
     
-    # Building check
-    for alias, code in BUILDING_ALIAS_MAP.items():
+    # Building check (derived dynamically from live Neo4j Building nodes)
+    for alias, code in get_live_building_alias_map().items():
         pattern = r"\b" + re.escape(alias) + r"\b"
         if re.search(pattern, q_out, re.IGNORECASE):
             detected_building = code
@@ -216,17 +195,30 @@ def expand_acronyms(query: str) -> Tuple[str, Dict[str, Any]]:
 def normalize_user_query(raw_query: str) -> Tuple[str, Dict[str, Any]]:
     """
     Main entrypoint:
-    1. Lowercase-aware typo correction of intent tokens
-    2. Acronym and slang expansion
-    3. Intent tag classification
+    1. Live-graph building alias detection (before intent token rewrites like 'lab' -> 'room')
+    2. Lowercase-aware typo correction of intent tokens
+    3. Acronym and slang expansion
+    4. Intent tag classification
     """
     cleaned = raw_query.strip()
-    
+
+    # 0. Pre-detect building alias on raw query so words like 'Lab' or 'Auditorium' aren't rewritten to 'room'
+    pre_building = None
+    pre_cleaned = cleaned
+    for alias, code in get_live_building_alias_map().items():
+        pattern = r"\b" + re.escape(alias) + r"\b"
+        if re.search(pattern, pre_cleaned, re.IGNORECASE):
+            pre_building = code
+            pre_cleaned = re.sub(pattern, code, pre_cleaned, flags=re.IGNORECASE)
+            break
+
     # 1. Spelling correction on intent tokens
-    corrected = correct_intent_tokens(cleaned)
-    
+    corrected = correct_intent_tokens(pre_cleaned)
+
     # 2. Acronym expansion
     expanded, meta = expand_acronyms(corrected)
+    if pre_building and not meta.get("detected_building"):
+        meta["detected_building"] = pre_building
     
     q_lower = expanded.lower()
     

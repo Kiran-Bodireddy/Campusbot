@@ -6,7 +6,7 @@ governance_mode: "least_privilege"
 
 roles:
   student:
-    description: "Enrolled SRMIST student. Read-only access to academic curriculum, schedules, and public faculty cabins."
+    description: "Enrolled SRMIST student. Read-only access to academic curriculum, schedules, and public faculty directory (including official office phone)."
     row_limit: 25
     allowed_tools:
       - lookup_course
@@ -26,7 +26,6 @@ roles:
       - get_faculty_contact
       - detect_prereq_cycles
     hidden_fields:
-      - phone
       - mobile
       - personal_phone
       - contact_number
@@ -52,7 +51,6 @@ roles:
     forbidden_tools:
       - detect_prereq_cycles
     hidden_fields:
-      - phone
       - mobile
       - personal_phone
 

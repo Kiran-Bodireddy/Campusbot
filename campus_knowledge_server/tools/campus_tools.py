@@ -7,6 +7,7 @@ prerequisites, faculty, rooms, and schedules with schema validation and audit lo
 import time
 import math
 import re
+import json
 import difflib
 import logging
 from types import MappingProxyType
@@ -18,7 +19,12 @@ logger = logging.getLogger("campus_tools")
 from campus_knowledge_server.database.neo4j_client import get_graph_client
 from campus_knowledge_server.security.ast_validator import ASTSecurityValidator, SecurityViolationError
 from campus_knowledge_server.security.audit import get_audit_logger
-from campus_knowledge_server.config.matching_config import load_matching_config, strip_honorifics_and_tokenize
+from campus_knowledge_server.config.matching_config import (
+    load_matching_config,
+    strip_honorifics_and_tokenize,
+    get_slot_number_map,
+    normalize_department_name,
+)
 
 # ----------------- Pydantic v2 Request Schemas -----------------
 
@@ -43,37 +49,40 @@ class RoomScheduleRequest(BaseModel):
     room_id: str = Field(..., min_length=2, max_length=20, description="Room ID (e.g., 'TP-101', 'UB-203').")
     day_of_week: Optional[str] = Field(default=None, description="Optional filter by day (e.g., 'Monday').")
 
-SLOT_NUMBER_MAP = {
-    1: "08:45-09:35",
-    2: "09:45-10:35",
-    3: "10:45-11:35",
-    4: "11:45-12:35",
-    5: "13:30-14:20",
-    6: "14:30-15:20",
-    7: "15:30-16:20",
-    8: "16:30-17:20",
-}
+SLOT_NUMBER_MAP = get_slot_number_map()
+
+
+def _build_phone_note(phone: str, shared_count: int) -> Optional[str]:
+    """Code-generated phone_note: None if unique, shared count if >1, or not listed if empty."""
+    if not (phone or "").strip():
+        return "not listed in the directory"
+    if shared_count > 1:
+        return f"shared by {shared_count} faculty (department/office line)"
+    return None
+
 
 class AvailableRoomsRequest(BaseModel):
-    building_code: str = Field(..., min_length=2, max_length=10, description="Building code (e.g. 'TP', 'UB', 'BEL').")
+    building_code: str = Field(..., min_length=2, max_length=60, description="Building code or name (e.g. 'TP', 'UB', 'BEL').")
     min_capacity: int = Field(default=30, ge=10, le=500, description="Minimum room seating capacity.")
     day: str = Field(default="Monday", description="Day of week (Monday-Friday).")
-    slot: Union[str, int] = Field(default="08:45-09:35", description="Timeslot string (e.g. '08:45-09:35') or integer slot number (1-8).")
+    slot: Union[str, int] = Field(default="08:45-09:35", description="Timeslot string (e.g. '08:45-09:35') or integer slot number (1-7).")
 
     @field_validator("slot", mode="before")
     @classmethod
     def normalize_slot(cls, v: Any) -> str:
+        slot_map = get_slot_number_map()
+        valid_min, valid_max = min(slot_map), max(slot_map)
         if isinstance(v, int):
-            if v in SLOT_NUMBER_MAP:
-                return SLOT_NUMBER_MAP[v]
-            raise ValueError(f"Integer slot must be between 1 and 8, got {v}.")
+            if v in slot_map:
+                return slot_map[v]
+            raise ValueError(f"Integer slot must be between {valid_min} and {valid_max}, got {v}.")
         if isinstance(v, str):
             s = v.strip()
             if s.isdigit():
                 n = int(s)
-                if n in SLOT_NUMBER_MAP:
-                    return SLOT_NUMBER_MAP[n]
-                raise ValueError(f"Slot number must be between 1 and 8, got {n}.")
+                if n in slot_map:
+                    return slot_map[n]
+                raise ValueError(f"Slot number must be between {valid_min} and {valid_max}, got {n}.")
             return s
         raise ValueError(f"Invalid slot value: {v}")
 
@@ -96,7 +105,7 @@ class SemesterCurriculumRequest(BaseModel):
     semester: Optional[int] = Field(default=None, ge=1, le=10, description="Optional semester number (1 to 8 for B.Tech, 1 to 10 for Integrated M.Tech). If omitted, returns entire curriculum plan across all semesters.")
 
 class CampusStatisticsRequest(BaseModel):
-    category: str = Field(default="all", description="Category for statistics: 'all', 'courses', 'programs', 'faculty', 'rooms'.")
+    category: str = Field(default="all", description="Category for statistics: 'all', 'departments', 'courses', 'programs', 'faculty', 'rooms'.")
 
 class BuildingLookupRequest(BaseModel):
     query: str = Field(..., min_length=2, max_length=150, description="Building code (e.g. 'TP', 'TP2', 'UB', 'BEL', 'CVR', 'ARCH') or natural language inquiry (e.g. 'tp1 building', 'where is placement office').")
@@ -129,13 +138,55 @@ class CampusKnowledgeTools:
                 cypher = """
                     MATCH (c:Course)
                     WHERE toUpper(c.code) = $q_norm OR toLower(c.name) CONTAINS toLower($q_raw)
+                    WITH c
+                    ORDER BY CASE WHEN toUpper(c.code) = $q_norm THEN 0 ELSE 1 END, c.code ASC
+                    LIMIT 25
+                    OPTIONAL MATCH (c)-[:REQUIRES_PREREQUISITE]->(p:Course)
+                    WITH c, collect(DISTINCT CASE WHEN p IS NOT NULL THEN {code: p.code, name: p.name} END) AS raw_prereqs
+                    OPTIONAL MATCH (prog:Program)-[r:OFFERS_IN_SEMESTER]->(c)
+                    WITH c, raw_prereqs,
+                         collect(DISTINCT CASE WHEN prog IS NOT NULL THEN {program: prog.name, semester: r.semester} END) AS raw_offered
                     RETURN c.id as id, c.code as code, c.name as name, c.credits as credits,
                            c.level as level, c.department as department, c.description as description,
                            c.category as category, c.ltpc as ltpc, c.regulation as regulation,
-                           coalesce(c.is_official, c.provenance = 'official', true) as is_official
-                    LIMIT 10
+                           coalesce(c.is_official, true) as is_official,
+                           coalesce(c.has_detailed_syllabus, false) as has_detailed_syllabus,
+                           coalesce(c.course_rationale, []) as course_rationale,
+                           coalesce(c.course_outcomes, []) as course_outcomes,
+                           c.syllabus_units as syllabus_units,
+                           coalesce(c.textbooks, []) as textbooks,
+                           c.assessment_summary as assessment_summary,
+                           coalesce(c.corequisites_raw, 'Nil') as corequisites_raw,
+                           coalesce(c.progressive_courses_raw, 'Nil') as progressive_courses_raw,
+                           [x IN raw_prereqs WHERE x IS NOT NULL] as prerequisites,
+                           [x IN raw_offered WHERE x IS NOT NULL] as offered_in
                 """
                 results = client.query_read(cypher, {"q_norm": q_norm, "q_raw": req.query.strip()})
+                for item in results:
+                    # Parse JSON-serialized structured fields safely
+                    raw_units = item.get("syllabus_units")
+                    if isinstance(raw_units, str) and raw_units.strip():
+                        try:
+                            item["syllabus_units"] = json.loads(raw_units)
+                        except Exception:
+                            item["syllabus_units"] = []
+                    elif not isinstance(raw_units, list):
+                        item["syllabus_units"] = []
+
+                    raw_assess = item.get("assessment_summary")
+                    if isinstance(raw_assess, str) and raw_assess.strip():
+                        try:
+                            item["assessment_summary"] = json.loads(raw_assess)
+                        except Exception:
+                            item["assessment_summary"] = {}
+                    elif not isinstance(raw_assess, dict):
+                        item["assessment_summary"] = {}
+
+                    offered = item.get("offered_in") or []
+                    item["offered_in"] = sorted(
+                        offered,
+                        key=lambda x: (x.get("semester") if isinstance(x.get("semester"), int) else 99, x.get("program") or "")
+                    )
             except Exception as e:
                 logger.warning(f"Neo4j lookup_course query error ({e}), falling back to in-memory.")
                 results = []
@@ -153,7 +204,7 @@ class CampusKnowledgeTools:
                         c_item = dict(c)
                         c_item.setdefault("is_official", True)
                         results.append(c_item)
-                    if len(results) >= 10:
+                    if len(results) >= 25:
                         break
 
         latency = (time.time() - t0) * 1000
@@ -306,7 +357,10 @@ class CampusKnowledgeTools:
                     MATCH (f:FacultyMember)-[t:TEACHES]->(c:Course)
                     WHERE toUpper(c.code) = $code
                     RETURN f.id as id, f.name as name, f.designation as designation,
-                           f.department as department, f.cabin as cabin, f.email as email,
+                           coalesce(f.normalized_department, f.department) as department,
+                           f.normalized_department as normalized_department,
+                           f.department as raw_department,
+                           f.cabin as cabin, f.email as email,
                            f.specialization as specialization, f.experience as experience,
                            t.role as teaching_role
                 """
@@ -319,11 +373,14 @@ class CampusKnowledgeTools:
             for t in teaching:
                 fac = client._faculty_by_id.get(t["faculty_id"])
                 if fac:
+                    norm_dept = fac.get("normalized_department") or normalize_department_name(fac.get("department", ""))
                     instructors.append({
                         "id": fac["id"],
                         "name": fac["name"],
                         "designation": fac["designation"],
-                        "department": fac["department"],
+                        "department": norm_dept or fac["department"],
+                        "normalized_department": norm_dept,
+                        "raw_department": fac["department"],
                         "cabin": fac.get("cabin", "Staff Room (TBA)"),
                         "email": fac["email"],
                         "specialization": fac["specialization"],
@@ -388,7 +445,16 @@ class CampusKnowledgeTools:
         tier_whole: List[tuple] = []
         tier_partial: List[tuple] = []
 
-        if req_tokens:
+        raw_id_candidate = req.faculty_name.strip().upper()
+        if re.fullmatch(r"FAC-\d+", raw_id_candidate):
+            for fac in faculty_index:
+                fid = str(fac.get("id") or "").strip().upper()
+                if fid == raw_id_candidate:
+                    raw_name = (fac.get("name") or "").strip()
+                    tier_exact.append(((raw_name.lower(), fac.get("id", "")), fac.get("id", ""), "exact", 100.0))
+                    break
+
+        if req_tokens and not tier_exact:
             meaningful_tokens = [t for t in req_tokens if len(t) >= fuzzy_min_len] or req_tokens
 
             for fac in faculty_index:
@@ -415,6 +481,7 @@ class CampusKnowledgeTools:
                     continue
 
                 # Tier 1: partial or fuzzy match — every meaningful token must meet min_similarity
+                # Short tokens (<5 chars) require a word-prefix match (prevents 'add' matching 'vaddi')
                 token_sims: List[float] = []
                 all_met = True
                 for qt in meaningful_tokens:
@@ -424,7 +491,9 @@ class CampusKnowledgeTools:
                             best = 1.0
                             break
                         ratio = difflib.SequenceMatcher(None, qt, w).ratio()
-                        if len(qt) >= fuzzy_min_len and qt in w and (len(qt) / max(len(w), 1)) >= 0.35:
+                        if len(qt) >= fuzzy_min_len and w.startswith(qt) and (len(qt) / max(len(w), 1)) >= 0.4:
+                            ratio = max(ratio, min_sim)
+                        elif len(qt) >= 5 and qt in w and (len(qt) / max(len(w), 1)) >= 0.5:
                             ratio = max(ratio, min_sim)
                         if ratio > best:
                             best = ratio
@@ -469,7 +538,11 @@ class CampusKnowledgeTools:
                     MATCH (f:FacultyMember)
                     WHERE f.id IN $ids
                     RETURN f.id as id, f.name as name, f.designation as designation,
-                           f.department as department, f.cabin as cabin, f.email as email,
+                           f.department as department,
+                           coalesce(f.normalized_department, f.department) as normalized_department,
+                           f.cabin as cabin, f.email as email,
+                           coalesce(f.phone, '') as phone,
+                           coalesce(f.phone_shared_count, 0) as phone_shared_count,
                            f.specialization as specialization, f.experience as experience,
                            f.college as college
                     LIMIT 100
@@ -485,15 +558,25 @@ class CampusKnowledgeTools:
                 if not fac:
                     continue
                 m_tier, m_score = meta_by_id[fid]
+                raw_dept = fac.get("department", "")
+                norm_dept = fac.get("normalized_department") or normalize_department_name(raw_dept)
+                phone_val = (fac.get("phone") or "").strip()
+                shared_cnt = int(fac.get("phone_shared_count") or (1 if phone_val else 0))
+                phone_note = _build_phone_note(phone_val, shared_cnt)
                 top_matches.append({
                     "id": fac.get("id", ""),
                     "name": (fac.get("name") or "").strip(),
                     "designation": fac.get("designation", ""),
-                    "department": fac.get("department", ""),
+                    "department": norm_dept or raw_dept,
+                    "normalized_department": norm_dept,
+                    "raw_department": raw_dept,
                     "cabin": fac.get("cabin", ""),
                     "college": fac.get("college", ""),
                     "specialization": fac.get("specialization", ""),
                     "email": fac.get("email", ""),
+                    "phone": phone_val,
+                    "phone_shared_count": shared_cnt,
+                    "phone_note": phone_note,
                     "experience": fac.get("experience", ""),
                     "match_tier": m_tier,
                     "relevance_score": m_score,
@@ -565,39 +648,100 @@ class CampusKnowledgeTools:
 
     @staticmethod
     def find_available_rooms(req: AvailableRoomsRequest, caller: str = "agent") -> Dict[str, Any]:
-        """Finds unoccupied classrooms in a building during a specified day and slot."""
+        """Finds unoccupied classrooms in a building during a specified day and slot via live Neo4j (fallback offline)."""
         t0 = time.time()
         client = get_graph_client()
         audit = get_audit_logger()
-        b_code = req.building_code.strip().upper()
+        raw_b = req.building_code.strip()
+        b_code = raw_b.upper()
         target_day = req.day.strip().capitalize()
         target_slot = req.slot.strip()
 
-        # Find all rooms in building meeting capacity
-        candidate_rooms = [
-            r for r in client.in_memory_data.get("rooms", [])
-            if r["building_code"] == b_code and r["capacity"] >= req.min_capacity
-        ]
+        # Resolve building code against live Neo4j Building nodes (no silent fallback to TP)
+        bmap = client.get_building_code_map()
+        if b_code not in bmap:
+            alias_map = client.get_building_alias_map()
+            resolved = alias_map.get(raw_b.lower())
+            if resolved:
+                b_code = resolved
+            elif bmap:
+                latency = (time.time() - t0) * 1000
+                audit.log_event(
+                    caller=caller,
+                    tool_name="find_available_rooms",
+                    parameters=req.model_dump(),
+                    status="NOT_FOUND",
+                    latency_ms=latency,
+                    result_count=0,
+                )
+                return {
+                    "status": "NOT_FOUND",
+                    "unknown_building": True,
+                    "building_code": raw_b,
+                    "day": target_day,
+                    "slot": target_slot,
+                    "min_capacity": req.min_capacity,
+                    "available_count": 0,
+                    "available_rooms": [],
+                    "valid_buildings": sorted(bmap.keys()),
+                    "source": "SRMIST Space Allocation Matrix (Neo4j Community)" if client.is_connected else "SRMIST Space Allocation Matrix",
+                }
 
-        # Find occupied rooms at this day and slot
-        occupied_room_ids = {
-            s["room_id"] for s in client.in_memory_data.get("schedules", [])
-            if s.get("day") == target_day and s.get("slot") == target_slot
-        }
+        available = []
+        used_neo4j = False
+        if client.is_connected and client.driver:
+            try:
+                cypher = """
+                    MATCH (r:Room)-[:LOCATED_IN]->(b:Building {code: $b_code})
+                    WHERE r.capacity >= $min_cap
+                    OPTIONAL MATCH (r)-[o:OCCUPIES {day: $day, slot: $slot}]-(:Course)
+                    WITH r, count(o) AS occ
+                    WHERE occ = 0
+                    RETURN r.id AS id, r.room_number AS room_number,
+                           r.building_code AS building_code, r.type AS type,
+                           r.capacity AS capacity
+                    ORDER BY r.id ASC
+                    LIMIT 500
+                """
+                available = client.query_read(
+                    cypher,
+                    {"b_code": b_code, "min_cap": req.min_capacity, "day": target_day, "slot": target_slot},
+                )
+                used_neo4j = True
+            except Exception as e:
+                logger.warning(f"Neo4j find_available_rooms error ({e}), falling back to in-memory.")
+                available = []
 
-        available = [r for r in candidate_rooms if r["id"] not in occupied_room_ids]
+        if not used_neo4j:
+            candidate_rooms = [
+                r for r in client.in_memory_data.get("rooms", [])
+                if r["building_code"] == b_code and r["capacity"] >= req.min_capacity
+            ]
+            occupied_room_ids = {
+                s["room_id"] for s in client.in_memory_data.get("schedules", [])
+                if s.get("day") == target_day and s.get("slot") == target_slot
+            }
+            available = [r for r in candidate_rooms if r["id"] not in occupied_room_ids]
 
         latency = (time.time() - t0) * 1000
-        audit.log_event(caller=caller, tool_name="find_available_rooms", parameters=req.model_dump(), status="SUCCESS", latency_ms=latency, result_count=len(available))
+        audit.log_event(
+            caller=caller,
+            tool_name="find_available_rooms",
+            parameters=req.model_dump(),
+            status="SUCCESS",
+            latency_ms=latency,
+            result_count=len(available),
+        )
 
+        # Return full list; governed_executor enforces role-based row_limit (student=25, faculty=100, admin=500)
         return {
             "building_code": b_code,
             "day": target_day,
             "slot": target_slot,
             "min_capacity": req.min_capacity,
             "available_count": len(available),
-            "available_rooms": available[:20],
-            "source": "SRMIST Space Allocation Matrix"
+            "available_rooms": available,
+            "source": "SRMIST Space Allocation Matrix (Neo4j Community)" if used_neo4j else "SRMIST Space Allocation Matrix",
         }
 
     @staticmethod
@@ -607,22 +751,33 @@ class CampusKnowledgeTools:
         client = get_graph_client()
         audit = get_audit_logger()
 
+        sem_cfg = load_matching_config().get("semantic_search") or {}
+        min_sim = float(sem_cfg.get("min_similarity_score", 0.76))
+        min_lex = float(sem_cfg.get("min_lexical_score", 4))
+
         # Stop-word guardrail: pure stop-word queries produce no results
         STOP_WORDS = {"for", "and", "the", "with", "from", "about", "what", "where", "how", "who", "which", "are", "is", "can", "take", "course", "courses", "study", "want", "related", "to", "in", "on", "at", "by", "all", "of", "a", "an", "i"}
         raw_tokens = re.findall(r"\w+", req.query.lower())
         query_terms = [t for t in raw_tokens if (len(t) > 2 or t in ("ai", "ml", "ds", "it", "cs", "ui")) and t not in STOP_WORDS]
         if not query_terms:
             latency = (time.time() - t0) * 1000
-            audit.log_event(caller=caller, tool_name="search_courses_semantic", parameters=req.model_dump(), status="SUCCESS", latency_ms=latency, result_count=0)
+            audit.log_event(caller=caller, tool_name="search_courses_semantic", parameters=req.model_dump(), status="NO_RELEVANT_MATCH", latency_ms=latency, result_count=0)
             return {
                 "query": req.query,
                 "top_k": req.top_k,
                 "results_found": 0,
                 "courses": [],
+                "top_score": 0.0,
+                "min_similarity_score": min_sim,
+                "below_threshold": True,
+                "status": "NO_RELEVANT_MATCH",
                 "source": "Neo4j Native Vector Index ('course_embeddings')" if client.is_connected else "SRMIST Lexical Fallback"
             }
 
         top_results = []
+        raw_top_score = 0.0
+        vector_executed = False
+        below_threshold = False
         # 1. Native Neo4j Vector Index Search
         if client.is_connected and client.driver:
             try:
@@ -642,15 +797,22 @@ class CampusKnowledgeTools:
                                    node.credits as credits, node.description as description, node.level as level,
                                    score
                         """
-                        top_results = client.query_read(cypher, {"top_k": req.top_k, "vec": q_vec})
+                        raw_hits = client.query_read(cypher, {"top_k": req.top_k, "vec": q_vec})
+                        vector_executed = True
+                        if raw_hits:
+                            raw_top_score = max(float(r.get("score") or 0.0) for r in raw_hits)
+                            top_results = [
+                                {**r, "score": round(float(r.get("score") or 0.0), 4)}
+                                for r in raw_hits
+                                if float(r.get("score") or 0.0) >= min_sim
+                            ]
+                            if not top_results:
+                                below_threshold = True
             except Exception as e:
                 logger.warning(f"Neo4j vector search query error ({e}), falling back to lexical search.")
 
-        # 2. Secondary Lexical & Token Fallback if vector index offline or empty
-        if not top_results:
-            STOP_WORDS = {"for", "and", "the", "with", "from", "about", "what", "where", "how", "who", "which", "are", "is", "can", "take", "course", "courses", "study", "want", "related", "to", "in", "on", "at", "by", "all", "of", "a", "an", "i"}
-            raw_tokens = re.findall(r"\w+", req.query.lower())
-            query_terms = [t for t in raw_tokens if (len(t) > 2 or t in ("ai", "ml", "ds", "it", "cs", "ui")) and t not in STOP_WORDS]
+        # 2. Secondary Lexical & Token Fallback ONLY if vector index was not executed
+        if not vector_executed:
             EXPANSIONS = {
                 "ai": ["ai", "artificial intelligence"],
                 "ml": ["ml", "machine learning"],
@@ -682,21 +844,30 @@ class CampusKnowledgeTools:
                                 score += 2
                         if term in c["name"].lower():
                             score += 6
-                    if score >= 2:
-                        scored_courses.append((score, c))
+                    if score > raw_top_score:
+                        raw_top_score = float(score)
+                    if score >= min_lex:
+                        scored_courses.append((score, {**c, "score": float(score)}))
 
             scored_courses.sort(key=lambda x: x[0], reverse=True)
             top_results = [item[1] for item in scored_courses[:req.top_k]]
+            if not top_results:
+                below_threshold = True
 
         latency = (time.time() - t0) * 1000
-        audit.log_event(caller=caller, tool_name="search_courses_semantic", parameters=req.model_dump(), status="SUCCESS", latency_ms=latency, result_count=len(top_results))
+        status_str = "SUCCESS" if top_results else "NO_RELEVANT_MATCH"
+        audit.log_event(caller=caller, tool_name="search_courses_semantic", parameters=req.model_dump(), status=status_str, latency_ms=latency, result_count=len(top_results))
 
         return {
             "query": req.query,
             "top_k": req.top_k,
             "results_found": len(top_results),
             "courses": top_results,
-            "source": "Neo4j Native Vector Index ('course_embeddings')" if client.is_connected else "SRMIST Lexical Fallback"
+            "top_score": round(raw_top_score, 4),
+            "min_similarity_score": min_sim if vector_executed else min_lex,
+            "below_threshold": below_threshold,
+            "status": status_str,
+            "source": "Neo4j Native Vector Index ('course_embeddings')" if vector_executed else "SRMIST Lexical Fallback"
         }
 
     @staticmethod
@@ -983,6 +1154,38 @@ class CampusKnowledgeTools:
             "statistics": stats,
             "source": "fallback" if used_fallback else "Neo4j Live Graph"
         }
+        if cat in ("departments", "department", "depts", "dept"):
+            dept_rows: List[Dict[str, Any]] = []
+            if client.is_connected and client.driver:
+                try:
+                    raw_depts = client.query_read(
+                        "MATCH (f:FacultyMember) "
+                        "WITH coalesce(f.normalized_department, f.department) AS dept, count(f) AS faculty_count "
+                        "WHERE dept IS NOT NULL AND trim(dept) <> '' "
+                        "RETURN dept AS name, faculty_count "
+                        "ORDER BY faculty_count DESC, dept ASC LIMIT 500"
+                    )
+                    dept_rows = [
+                        {"name": str(r["name"]).strip(), "faculty_count": int(r["faculty_count"])}
+                        for r in raw_depts
+                        if r.get("name")
+                    ]
+                except Exception as e:
+                    logger.warning(f"Neo4j departments list fallback: {e}")
+            if not dept_rows:
+                from collections import Counter
+                counts = Counter(
+                    (f.get("normalized_department") or f.get("department") or "").strip()
+                    for f in client.in_memory_data.get("faculty", [])
+                    if (f.get("normalized_department") or f.get("department") or "").strip()
+                )
+                dept_rows = [
+                    {"name": name, "faculty_count": cnt}
+                    for name, cnt in sorted(counts.items(), key=lambda x: (-x[1], x[0]))
+                ]
+            resp_payload["departments"] = dept_rows
+            resp_payload["total_canonical_departments"] = len(dept_rows)
+            resp_payload["total_department_nodes"] = departments_count or len(dept_rows)
         if used_fallback:
             resp_payload["fallback_reason"] = fallback_reason
         return resp_payload
@@ -1203,32 +1406,8 @@ class CampusKnowledgeTools:
         raw_query = req.query.strip()
         q_norm = raw_query.lower()
 
-        # Normalization mapping for common campus aliases
-        alias_map = {
-            "tp1": "TP", "tp-1": "TP", "tp 1": "TP", "tech park": "TP", "tech park 1": "TP",
-            "tp2": "TP2", "tp-2": "TP2", "tp 2": "TP2", "tech park 2": "TP2", "new tech park": "TP2",
-            "placement": "TP2", "placements": "TP2", "career centre": "TP2", "placement office": "TP2",
-            "ub": "UB", "university building": "UB", "main building": "UB", "admin block": "UB",
-            "library": "UB", "central library": "UB",
-            "bel": "BEL", "bel block": "BEL", "basic engineering lab": "BEL", "workshop": "BEL",
-            "cvr": "CVR", "cv raman": "CVR", "c.v. raman": "CVR", "raman block": "CVR", "research park": "CVR",
-            "nanotechnology": "CVR",
-            "crc": "CRC", "crc block": "CRC", "classroom complex": "CRC",
-            "htb": "HTB", "hi tech": "HTB", "hi-tech": "HTB", "hitech": "HTB", "civil block": "HTB", "itkm": "HTB",
-            "meb": "MEB", "mechanical block": "MEB", "mechanical engineering": "MEB", "automobile": "MEB", "aerospace": "MEB",
-            "esb": "ESB", "electrical block": "ESB", "ece": "ESB", "eee": "ESB",
-            "bio": "BIO", "biotech": "BIO", "biotechnology": "BIO", "bioengineering": "BIO",
-            "fmb": "FMB", "management": "FMB", "mba": "FMB", "school of management": "FMB",
-            "slb": "SLB", "law": "SLB", "law building": "SLB", "moot court": "SLB",
-            "arch": "ARCH", "architecture": "ARCH", "said": "ARCH", "seda": "ARCH", "interior design": "ARCH",
-            "sihm": "SIHM", "hotel management": "SIHM", "hospitality": "SIHM",
-            "mab": "MAB", "medical college": "MAB", "mbbs": "MAB", "anatomy": "MAB",
-            "mcb": "MCB", "hospital": "MCB", "srm hospital": "MCB", "casualty": "MCB",
-            "dcb": "DCB", "dental": "DCB", "dental college": "DCB", "dentistry": "DCB",
-            "cpb": "CPB", "pharmacy": "CPB", "pharm.d": "CPB", "b.pharm": "CPB",
-            "hsb": "HSB", "nursing": "HSB", "physiotherapy": "HSB", "occupational therapy": "HSB",
-            "tpg": "TPG", "auditorium": "TPG", "tp ganesan": "TPG"
-        }
+        # Derive building aliases dynamically from live Neo4j Building nodes (no hardcoded dict)
+        alias_map = client.get_building_alias_map()
 
         matched_code = None
         for k, v in alias_map.items():

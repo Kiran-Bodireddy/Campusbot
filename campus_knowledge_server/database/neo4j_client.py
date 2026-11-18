@@ -31,6 +31,8 @@ class CampusGraphClient:
         self.database = database or os.getenv("NEO4J_DATABASE", "neo4j")
         self.driver: Optional[Driver] = None
         self.is_connected = False
+        self.neo4j_version: Optional[str] = None
+        self.neo4j_edition: Optional[str] = None
 
         # In-memory graph indices for high-speed fallback & test harness
         self.in_memory_data: Dict[str, Any] = {}
@@ -70,9 +72,23 @@ class CampusGraphClient:
             self._course_by_id[c["id"]] = c
             self._course_by_code[c["code"].upper()] = c
 
-        # Index faculty
+        # Index faculty (and compute normalized_department & phone_shared_count at load time)
+        from collections import Counter
+        from campus_knowledge_server.config.matching_config import normalize_department_name
         HONORIFICS = {"dr", "dr.", "prof", "prof.", "mr", "mr.", "mrs", "mrs.", "ms", "ms.", "hod", "dean"}
-        for fac in self.in_memory_data.get("faculty", []):
+        fac_list = self.in_memory_data.get("faculty", [])
+        phone_counts = Counter(
+            (f.get("phone") or "").strip()
+            for f in fac_list
+            if (f.get("phone") or "").strip()
+        )
+        for fac in fac_list:
+            raw_dept = fac.get("department", "")
+            if not fac.get("normalized_department"):
+                fac["normalized_department"] = normalize_department_name(raw_dept)
+            ph = (fac.get("phone") or "").strip()
+            fac["phone"] = ph
+            fac["phone_shared_count"] = phone_counts[ph] if ph else 0
             self._faculty_by_id[fac["id"]] = fac
             norm_name = fac["name"].lower().strip()
             self._faculty_by_name.setdefault(norm_name, []).append(fac)
@@ -152,6 +168,8 @@ class CampusGraphClient:
     def _init_neo4j_connection(self):
         """Attempts connection to Neo4j database and loads graph-derived reference metadata."""
         self._graph_buildings: Dict[str, str] = {}
+        self._graph_buildings: Dict[str, str] = {}
+        self._graph_building_meta: Dict[str, Dict[str, Any]] = {}
         self._graph_departments: List[str] = []
         self._graph_faculty_index: List[Dict[str, str]] = []
         try:
@@ -162,26 +180,108 @@ class CampusGraphClient:
             )
             self.driver.verify_connectivity()
             self.is_connected = True
+            self._detect_neo4j_version()
             logger.info(f"Connected successfully to Neo4j instance at {self.uri}")
             self.refresh_graph_reference_data()
         except Exception as e:
             self.is_connected = False
+            self.neo4j_version = None
+            self.neo4j_edition = None
             self.driver = None
             logger.info(f"Neo4j instance offline or not reachable ({e}). Operating in High-Speed In-Memory Graph Mode.")
 
+    def _detect_neo4j_version(self):
+        """Reads live Neo4j version and edition via dbms.components()."""
+        if not self.driver:
+            return
+        try:
+            with self.driver.session(database=self.database, default_access_mode=READ_ACCESS) as s:
+                rec = s.run(
+                    "CALL dbms.components() YIELD name, versions, edition "
+                    "WHERE toLower(name) CONTAINS 'neo4j' "
+                    "RETURN versions[0] AS version, edition LIMIT 1"
+                ).single()
+                if rec:
+                    self.neo4j_version = str(rec.get("version") or "").strip() or None
+                    ed = str(rec.get("edition") or "Community").strip()
+                    self.neo4j_edition = ed.capitalize() if ed else "Community"
+        except Exception:
+            if not self.neo4j_edition:
+                self.neo4j_edition = "Community"
+
+    def get_engine_status(self, probe: bool = True) -> Dict[str, Any]:
+        """Returns live Neo4j connectivity, edition/version, and display engine badge string."""
+        if probe:
+            if self.driver is not None:
+                try:
+                    self.driver.verify_connectivity()
+                    self.is_connected = True
+                    if not self.neo4j_version:
+                        self._detect_neo4j_version()
+                except Exception:
+                    self.is_connected = False
+                    self.neo4j_version = None
+                    try:
+                        self.driver.close()
+                    except Exception:
+                        pass
+                    self.driver = None
+            else:
+                try:
+                    drv = GraphDatabase.driver(
+                        self.uri,
+                        auth=(self.user, self.password),
+                        connection_timeout=0.5
+                    )
+                    drv.verify_connectivity()
+                    self.driver = drv
+                    self.is_connected = True
+                    self._detect_neo4j_version()
+                    self.refresh_graph_reference_data()
+                except Exception:
+                    self.is_connected = False
+                    self.neo4j_version = None
+                    self.driver = None
+
+        if self.is_connected:
+            ed = self.neo4j_edition or "Community"
+            ver_part = f"{ed} {self.neo4j_version}".strip() if self.neo4j_version else ed
+            engine_label = f"Live Neo4j ({ver_part})"
+        else:
+            engine_label = "Fallback (not graph data)"
+
+        return {
+            "neo4j_connected": self.is_connected,
+            "neo4j_version": self.neo4j_version,
+            "neo4j_edition": self.neo4j_edition or ("Community" if self.is_connected else None),
+            "engine": engine_label,
+        }
+
     def refresh_graph_reference_data(self):
-        """Loads canonical Building codes/names, Department names, and Faculty (id, name) index directly from live Neo4j."""
+        """Loads canonical Building codes/names/metadata, Department names, and Faculty (id, name) index directly from live Neo4j."""
         if not (self.is_connected and self.driver):
             return
         try:
             b_rows = self.query_read(
-                "MATCH (b:Building) WHERE b.code IS NOT NULL RETURN b.code AS code, b.name AS name LIMIT 500"
+                "MATCH (b:Building) WHERE b.code IS NOT NULL "
+                "RETURN b.code AS code, b.name AS name, b.focus AS focus, "
+                "b.floors AS floors, b.aliases AS aliases, b.campus AS campus LIMIT 500"
             )
-            self._graph_buildings = {
-                str(r["code"]).strip(): str(r["name"]).strip()
-                for r in b_rows
-                if r.get("code") and r.get("name")
-            }
+            self._graph_buildings = {}
+            self._graph_building_meta = {}
+            for r in b_rows:
+                code = str(r.get("code") or "").strip()
+                name = str(r.get("name") or "").strip()
+                if code and name:
+                    self._graph_buildings[code] = name
+                    self._graph_building_meta[code] = {
+                        "code": code,
+                        "name": name,
+                        "focus": str(r.get("focus") or "").strip(),
+                        "floors": r.get("floors"),
+                        "aliases": [str(a).strip() for a in (r.get("aliases") or []) if a],
+                        "campus": str(r.get("campus") or "").strip(),
+                    }
             d_rows = self.query_read(
                 "MATCH (d:Department) WHERE d.name IS NOT NULL RETURN DISTINCT d.name AS name LIMIT 1000"
             )
@@ -214,7 +314,53 @@ class CampusGraphClient:
             if not self._graph_buildings:
                 self.refresh_graph_reference_data()
             return dict(self._graph_buildings)
-        return {}
+        # Offline fallback from loaded in-memory buildings
+        return {
+            str(b["code"]).strip(): str(b["name"]).strip()
+            for b in self.in_memory_data.get("buildings", [])
+            if b.get("code") and b.get("name")
+        }
+
+    def get_building_metadata_map(self) -> Dict[str, Dict[str, Any]]:
+        """Returns {building_code: {code, name, focus, floors, aliases, campus}} derived from live Neo4j Building nodes."""
+        if self.is_connected and self.driver:
+            if not self._graph_building_meta:
+                self.refresh_graph_reference_data()
+            return dict(self._graph_building_meta)
+        return {
+            str(b["code"]).strip(): {
+                "code": str(b["code"]).strip(),
+                "name": str(b["name"]).strip(),
+                "focus": str(b.get("focus") or "").strip(),
+                "floors": b.get("floors"),
+                "aliases": [str(a).strip() for a in (b.get("aliases") or []) if a],
+                "campus": str(b.get("campus") or "").strip(),
+            }
+            for b in self.in_memory_data.get("buildings", [])
+            if b.get("code") and b.get("name")
+        }
+
+    def get_building_alias_map(self) -> Dict[str, str]:
+        """
+        Derives {lowercase_alias: building_code} dynamically from live Neo4j Building nodes
+        (code, name, parenthetical-stripped name, and stored aliases). Longest aliases ordered first.
+        """
+        meta_map = self.get_building_metadata_map()
+        raw_aliases: Dict[str, str] = {}
+        for code, info in meta_map.items():
+            raw_aliases[code.lower()] = code
+            name = info.get("name", "")
+            if name:
+                raw_aliases[name.lower()] = code
+                no_paren = re.sub(r"\s*\([^)]*\)", "", name).strip().lower()
+                if no_paren and len(no_paren) >= 3:
+                    raw_aliases.setdefault(no_paren, code)
+            for al in info.get("aliases") or []:
+                al_low = al.strip().lower()
+                if al_low:
+                    raw_aliases[al_low] = code
+        # Return ordered longest-first so multi-word aliases match before shorter substrings
+        return dict(sorted(raw_aliases.items(), key=lambda kv: -len(kv[0])))
 
     def get_department_names(self) -> List[str]:
         """Returns Department names derived from live Neo4j Department nodes."""

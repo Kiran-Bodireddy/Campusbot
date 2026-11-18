@@ -1,19 +1,20 @@
 {
   "dataset_label": "development set (agent-written)",
-  "timestamp": "2026-11-18T06:51:40Z",
+  "hybrid_latency_label": "routing plus tool time, excluding answer generation",
+  "timestamp": "2026-11-18T13:47:52Z",
   "preflight": {
     "neo4j_write_rejection": "ClientError: {neo4j_code: Neo.ClientError.General.WriteOnReadOnlyAccessDatabase} {message: No write operations are allowed on this database. The database is in read-only mode on this Neo4j instance.} {gql_status: 42N18} {gql_status_description: error: syntax error or access rule violation - read-only database. The database is in read-only mode.}",
     "live_campus_statistics_source": "Neo4j Live Graph",
     "live_campus_statistics_counts": {
       "category": "all",
-      "total_programs": 430,
-      "total_program_nodes_in_graph": 430,
-      "total_courses_indexed": 668,
+      "total_programs": 437,
+      "total_program_nodes_in_graph": 437,
+      "total_courses_indexed": 669,
       "total_faculty": 2501,
       "total_classrooms": 264,
       "total_buildings": 20,
       "total_departments": 208,
-      "total_prerequisites": 31,
+      "total_prerequisites": 30,
       "total_scheduled_sessions": 1336,
       "degree_levels": {
         "Diploma / Certificate": 12,
@@ -69,17 +70,17 @@
       "model": "qwen2.5:3b",
       "use_heuristic_router": true,
       "legit_total": 80,
-      "tool_accuracy_count": 74,
-      "tool_accuracy_pct": 92.5,
-      "gold_match_count": 68,
-      "gold_match_pct": 85.0,
+      "tool_accuracy_count": 73,
+      "tool_accuracy_pct": 91.25,
+      "gold_match_count": 75,
+      "gold_match_pct": 93.75,
       "legit_invalid_query_count": 0,
       "legit_invalid_query_rate_pct": 0.0,
       "legit_pydantic_rejects": 0,
       "legit_policy_rejects": 0,
       "legit_no_tool_returned": 0,
-      "median_latency_ms": 49.2,
-      "mean_latency_ms": 267.4,
+      "median_latency_ms": 63.6,
+      "mean_latency_ms": 1257.8,
       "adv_total": 10,
       "adv_blocked": 10,
       "adv_policy_violations": 0,
@@ -149,8 +150,8 @@
           "tool_selected": "search_courses_semantic",
           "top3_returned": [
             "21CSO451T",
-            "21CSC401J",
-            "21AIC301J"
+            "21CSO356T",
+            "21CSC401J"
           ],
           "acceptable_courses": [
             "21AIC202J",
@@ -184,9 +185,9 @@
           "query": "Show subjects covering natural language processing and transformers",
           "tool_selected": "search_courses_semantic",
           "top3_returned": [
-            "21CSC501T",
             "21AIO351T",
-            "21LEH101T"
+            "21CSC501T",
+            "21AIO354T"
           ],
           "acceptable_courses": [
             "21CSC501T"
@@ -198,9 +199,9 @@
           "query": "I want to study cybersecurity cryptography and network defense",
           "tool_selected": "search_courses_semantic",
           "top3_returned": [
-            "21CSO621T",
             "21CSO270T",
-            "21CSC308T"
+            "21CSO621T",
+            "21CSO359T"
           ],
           "acceptable_courses": [
             "21CSO270T",
@@ -235,9 +236,9 @@
           "query": "Courses exploring robotics automation and computer vision",
           "tool_selected": "search_courses_semantic",
           "top3_returned": [
-            "21EIC313T",
             "21MEO106T",
-            "21EIC412J"
+            "21EIC313T",
+            "21AUO112T"
           ],
           "acceptable_courses": [
             "21MEO106T",
@@ -257,75 +258,6 @@
       ],
       "legit_failures": [
         {
-          "id": "SH-16",
-          "exp_tool": "verify_prerequisites",
-          "sel_tool": "verify_prerequisites",
-          "sel_params": {
-            "target_course": "21AIC202J",
-            "completed_courses": [
-              "21AIC301J"
-            ]
-          },
-          "invalid_reason": null
-        },
-        {
-          "id": "SH-17",
-          "exp_tool": "verify_prerequisites",
-          "sel_tool": "verify_prerequisites",
-          "sel_params": {
-            "target_course": "21CSC301J",
-            "completed_courses": [
-              "21CSC401J"
-            ]
-          },
-          "invalid_reason": null
-        },
-        {
-          "id": "SH-27",
-          "exp_tool": "lookup_faculty_profile",
-          "sel_tool": "lookup_faculty_profile",
-          "sel_params": {
-            "faculty_name": "ile"
-          },
-          "invalid_reason": null
-        },
-        {
-          "id": "SH-40",
-          "exp_tool": "find_available_rooms",
-          "sel_tool": "find_available_rooms",
-          "sel_params": {
-            "building_code": "TP",
-            "day": "Monday",
-            "slot": "08:45-09:35",
-            "min_capacity": 30
-          },
-          "invalid_reason": null
-        },
-        {
-          "id": "SH-41",
-          "exp_tool": "find_available_rooms",
-          "sel_tool": "find_available_rooms",
-          "sel_params": {
-            "building_code": "TP",
-            "day": "Monday",
-            "slot": "08:45-09:35",
-            "min_capacity": 60
-          },
-          "invalid_reason": null
-        },
-        {
-          "id": "SH-43",
-          "exp_tool": "find_available_rooms",
-          "sel_tool": "find_available_rooms",
-          "sel_params": {
-            "building_code": "TP",
-            "day": "Monday",
-            "slot": "08:45-09:35",
-            "min_capacity": 30
-          },
-          "invalid_reason": null
-        },
-        {
           "id": "SH-51",
           "exp_tool": "check_admission_eligibility",
           "sel_tool": "check_admission_eligibility",
@@ -338,14 +270,20 @@
           "invalid_reason": null
         },
         {
-          "id": "SH-52",
+          "id": "SH-53",
           "exp_tool": "check_admission_eligibility",
-          "sel_tool": "check_admission_eligibility",
+          "sel_tool": "federated_cross_entity_search",
           "sel_params": {
-            "program_query": "M.Tech",
-            "candidate_percentage": null,
-            "is_reserved_category": false,
-            "candidate_stream": null
+            "query": "Can I get admission into B.Tech with 65% aggregate score?"
+          },
+          "invalid_reason": null
+        },
+        {
+          "id": "SH-59",
+          "exp_tool": "get_campus_statistics",
+          "sel_tool": "federated_cross_entity_search",
+          "sel_params": {
+            "query": "Overview of active curriculum offerings and room assets"
           },
           "invalid_reason": null
         },
@@ -355,15 +293,6 @@
           "sel_tool": "lookup_building",
           "sel_params": {
             "query": "What rooms in Tech Park host classes for 21CSC206T?"
-          },
-          "invalid_reason": null
-        },
-        {
-          "id": "MH-06",
-          "exp_tool": "find_faculty_for_course",
-          "sel_tool": "lookup_faculty_profile",
-          "sel_params": {
-            "faculty_name": "in"
           },
           "invalid_reason": null
         },
@@ -385,15 +314,15 @@
       "legit_total": 80,
       "tool_accuracy_count": 70,
       "tool_accuracy_pct": 87.5,
-      "gold_match_count": 54,
-      "gold_match_pct": 67.5,
-      "legit_invalid_query_count": 21,
-      "legit_invalid_query_rate_pct": 26.25,
-      "legit_pydantic_rejects": 21,
+      "gold_match_count": 64,
+      "gold_match_pct": 80.0,
+      "legit_invalid_query_count": 9,
+      "legit_invalid_query_rate_pct": 11.25,
+      "legit_pydantic_rejects": 9,
       "legit_policy_rejects": 0,
       "legit_no_tool_returned": 0,
-      "median_latency_ms": 12407.6,
-      "mean_latency_ms": 13673.2,
+      "median_latency_ms": 12312.6,
+      "mean_latency_ms": 13904.6,
       "adv_total": 10,
       "adv_blocked": 10,
       "adv_policy_violations": 0,
@@ -451,7 +380,7 @@
       ],
       "pydantic_rejection_counts_b3": {
         "wrong_parameter_name": 1,
-        "wrong_type": 20,
+        "wrong_type": 8,
         "missing_field": 0,
         "other": 0
       },
@@ -489,146 +418,6 @@
           "params": {
             "course_code": "21CSO451T",
             "max_depth": 10
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "course_code",
-            "max_depth"
-          ],
-          "valid_fields": [
-            "course_code",
-            "max_depth"
-          ],
-          "error_types": [
-            "int_type"
-          ],
-          "error_locs": [
-            "max_depth"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "max_depth"
-              ],
-              "type": "int_type",
-              "msg": "Input should be a valid integer"
-            }
-          ],
-          "id": "SH-09",
-          "query": "Show prerequisite tree for 21CSC206T",
-          "expected_tool": "get_prerequisite_tree",
-          "selected_tool": "get_prerequisite_tree",
-          "params": {
-            "course_code": "21CSC206T",
-            "max_depth": null
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "course_code",
-            "max_depth"
-          ],
-          "valid_fields": [
-            "course_code",
-            "max_depth"
-          ],
-          "error_types": [
-            "int_type"
-          ],
-          "error_locs": [
-            "max_depth"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "max_depth"
-              ],
-              "type": "int_type",
-              "msg": "Input should be a valid integer"
-            }
-          ],
-          "id": "SH-10",
-          "query": "Prerequisite dependencies for 21AIC301J",
-          "expected_tool": "get_prerequisite_tree",
-          "selected_tool": "get_prerequisite_tree",
-          "params": {
-            "course_code": "21AIC301J",
-            "max_depth": null
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "course_code",
-            "max_depth"
-          ],
-          "valid_fields": [
-            "course_code",
-            "max_depth"
-          ],
-          "error_types": [
-            "int_type"
-          ],
-          "error_locs": [
-            "max_depth"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "max_depth"
-              ],
-              "type": "int_type",
-              "msg": "Input should be a valid integer"
-            }
-          ],
-          "id": "SH-12",
-          "query": "Display prerequisite hierarchy for 21AIO354T",
-          "expected_tool": "get_prerequisite_tree",
-          "selected_tool": "get_prerequisite_tree",
-          "params": {
-            "course_code": "21AIO354T",
-            "max_depth": null
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "course_code",
-            "max_depth"
-          ],
-          "valid_fields": [
-            "course_code",
-            "max_depth"
-          ],
-          "error_types": [
-            "int_type"
-          ],
-          "error_locs": [
-            "max_depth"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "max_depth"
-              ],
-              "type": "int_type",
-              "msg": "Input should be a valid integer"
-            }
-          ],
-          "id": "SH-13",
-          "query": "Check mandatory prerequisite chain for 21AIO355T",
-          "expected_tool": "get_prerequisite_tree",
-          "selected_tool": "get_prerequisite_tree",
-          "params": {
-            "course_code": "21AIO355T",
-            "max_depth": null
           }
         },
         {
@@ -752,65 +541,6 @@
             "slot"
           ],
           "error_types": [
-            "int_type",
-            "string_type",
-            "value_error"
-          ],
-          "error_locs": [
-            "min_capacity",
-            "day",
-            "slot"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "min_capacity"
-              ],
-              "type": "int_type",
-              "msg": "Input should be a valid integer"
-            },
-            {
-              "loc": [
-                "day"
-              ],
-              "type": "string_type",
-              "msg": "Input should be a valid string"
-            },
-            {
-              "loc": [
-                "slot"
-              ],
-              "type": "value_error",
-              "msg": "Value error, Invalid slot value: None"
-            }
-          ],
-          "id": "SH-38",
-          "query": "Find available rooms in Tech Park",
-          "expected_tool": "find_available_rooms",
-          "selected_tool": "find_available_rooms",
-          "params": {
-            "building_code": "TP",
-            "min_capacity": null,
-            "day": null,
-            "slot": null
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "building_code",
-            "day",
-            "min_capacity",
-            "slot"
-          ],
-          "valid_fields": [
-            "building_code",
-            "day",
-            "min_capacity",
-            "slot"
-          ],
-          "error_types": [
             "greater_than_equal"
           ],
           "error_locs": [
@@ -834,65 +564,6 @@
             "min_capacity": 0,
             "day": "Monday",
             "slot": 1
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "building_code",
-            "day",
-            "min_capacity",
-            "slot"
-          ],
-          "valid_fields": [
-            "building_code",
-            "day",
-            "min_capacity",
-            "slot"
-          ],
-          "error_types": [
-            "int_type",
-            "string_type",
-            "value_error"
-          ],
-          "error_locs": [
-            "min_capacity",
-            "day",
-            "slot"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "min_capacity"
-              ],
-              "type": "int_type",
-              "msg": "Input should be a valid integer"
-            },
-            {
-              "loc": [
-                "day"
-              ],
-              "type": "string_type",
-              "msg": "Input should be a valid string"
-            },
-            {
-              "loc": [
-                "slot"
-              ],
-              "type": "value_error",
-              "msg": "Value error, Invalid slot value: None"
-            }
-          ],
-          "id": "SH-40",
-          "query": "Find available rooms in Basic Engineering Lab",
-          "expected_tool": "find_available_rooms",
-          "selected_tool": "find_available_rooms",
-          "params": {
-            "building_code": "BEL",
-            "min_capacity": null,
-            "day": null,
-            "slot": null
           }
         },
         {
@@ -940,88 +611,6 @@
           "primary_category": "wrong_type",
           "unknown_keys": [],
           "passed_keys": [
-            "candidate_percentage",
-            "candidate_stream",
-            "is_reserved_category",
-            "program_query"
-          ],
-          "valid_fields": [
-            "candidate_percentage",
-            "candidate_stream",
-            "is_reserved_category",
-            "program_query"
-          ],
-          "error_types": [
-            "bool_type"
-          ],
-          "error_locs": [
-            "is_reserved_category"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "is_reserved_category"
-              ],
-              "type": "bool_type",
-              "msg": "Input should be a valid boolean"
-            }
-          ],
-          "id": "SH-51",
-          "query": "What is the cutoff percentage for MBA admission?",
-          "expected_tool": "check_admission_eligibility",
-          "selected_tool": "check_admission_eligibility",
-          "params": {
-            "program_query": "MBA",
-            "candidate_percentage": null,
-            "is_reserved_category": null,
-            "candidate_stream": null
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "candidate_percentage",
-            "candidate_stream",
-            "is_reserved_category",
-            "program_query"
-          ],
-          "valid_fields": [
-            "candidate_percentage",
-            "candidate_stream",
-            "is_reserved_category",
-            "program_query"
-          ],
-          "error_types": [
-            "bool_type"
-          ],
-          "error_locs": [
-            "is_reserved_category"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "is_reserved_category"
-              ],
-              "type": "bool_type",
-              "msg": "Input should be a valid boolean"
-            }
-          ],
-          "id": "SH-52",
-          "query": "Admission criteria for M.Tech Artificial Intelligence",
-          "expected_tool": "check_admission_eligibility",
-          "selected_tool": "check_admission_eligibility",
-          "params": {
-            "program_query": "M.Tech Artificial Intelligence",
-            "candidate_percentage": null,
-            "is_reserved_category": null,
-            "candidate_stream": null
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
             "category"
           ],
           "valid_fields": [
@@ -1052,111 +641,6 @@
               "faculty",
               "rooms"
             ]
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "program_query",
-            "semester"
-          ],
-          "valid_fields": [
-            "program_query",
-            "semester"
-          ],
-          "error_types": [
-            "int_parsing"
-          ],
-          "error_locs": [
-            "semester"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "semester"
-              ],
-              "type": "int_parsing",
-              "msg": "Input should be a valid integer, unable to parse string as an integer"
-            }
-          ],
-          "id": "SH-61",
-          "query": "B.Tech CSE Semester 3 curriculum",
-          "expected_tool": "get_semester_curriculum",
-          "selected_tool": "get_semester_curriculum",
-          "params": {
-            "program_query": "B.Tech CSE",
-            "semester": "Sem 3"
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "program_query",
-            "semester"
-          ],
-          "valid_fields": [
-            "program_query",
-            "semester"
-          ],
-          "error_types": [
-            "int_parsing"
-          ],
-          "error_locs": [
-            "semester"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "semester"
-              ],
-              "type": "int_parsing",
-              "msg": "Input should be a valid integer, unable to parse string as an integer"
-            }
-          ],
-          "id": "SH-62",
-          "query": "What courses are in semester 4 Artificial Intelligence?",
-          "expected_tool": "get_semester_curriculum",
-          "selected_tool": "get_semester_curriculum",
-          "params": {
-            "program_query": "Artificial Intelligence",
-            "semester": "Sem 4"
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "program_query",
-            "semester"
-          ],
-          "valid_fields": [
-            "program_query",
-            "semester"
-          ],
-          "error_types": [
-            "int_parsing"
-          ],
-          "error_locs": [
-            "semester"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "semester"
-              ],
-              "type": "int_parsing",
-              "msg": "Input should be a valid integer, unable to parse string as an integer"
-            }
-          ],
-          "id": "SH-64",
-          "query": "List of subjects offered in semester 5 Mechanical Engineering",
-          "expected_tool": "get_semester_curriculum",
-          "selected_tool": "get_semester_curriculum",
-          "params": {
-            "program_query": "Mechanical Engineering",
-            "semester": "Sem 5"
           }
         },
         {
@@ -1224,56 +708,6 @@
           "params": {
             "course_code": "AI"
           }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "building_code",
-            "day",
-            "min_capacity",
-            "slot"
-          ],
-          "valid_fields": [
-            "building_code",
-            "day",
-            "min_capacity",
-            "slot"
-          ],
-          "error_types": [
-            "string_type",
-            "value_error"
-          ],
-          "error_locs": [
-            "day",
-            "slot"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "day"
-              ],
-              "type": "string_type",
-              "msg": "Input should be a valid string"
-            },
-            {
-              "loc": [
-                "slot"
-              ],
-              "type": "value_error",
-              "msg": "Value error, Invalid slot value: None"
-            }
-          ],
-          "id": "MH-13",
-          "query": "Find vacant rooms in University Building where 21CSC401J laboratory could be hosted",
-          "expected_tool": "find_available_rooms",
-          "selected_tool": "find_available_rooms",
-          "params": {
-            "building_code": "UB",
-            "min_capacity": 21,
-            "day": null,
-            "slot": null
-          }
         }
       ],
       "semantic_top3_details": [
@@ -1319,7 +753,7 @@
           "tool_selected": "search_courses_semantic",
           "top3_returned": [
             "21CSC501T",
-            "21CSO356T",
+            "21AIO355T",
             "21AIO354T"
           ],
           "acceptable_courses": [
@@ -1332,8 +766,8 @@
           "query": "I want to study cybersecurity cryptography and network defense",
           "tool_selected": "search_courses_semantic",
           "top3_returned": [
-            "21CSO621T",
             "21CSO270T",
+            "21CSO621T",
             "21CSC305T"
           ],
           "acceptable_courses": [
@@ -1369,8 +803,8 @@
           "query": "Courses exploring robotics automation and computer vision",
           "tool_selected": "search_courses_semantic",
           "top3_returned": [
+            "21AUO112T",
             "21EIC313T",
-            "21EIC412J",
             "21MEO106T"
           ],
           "acceptable_courses": [
@@ -1397,46 +831,6 @@
           "sel_params": {
             "course_code": "21CSO451T",
             "max_depth": 10
-          },
-          "invalid_reason": "Pydantic:wrong_type"
-        },
-        {
-          "id": "SH-09",
-          "exp_tool": "get_prerequisite_tree",
-          "sel_tool": "get_prerequisite_tree",
-          "sel_params": {
-            "course_code": "21CSC206T",
-            "max_depth": null
-          },
-          "invalid_reason": "Pydantic:wrong_type"
-        },
-        {
-          "id": "SH-10",
-          "exp_tool": "get_prerequisite_tree",
-          "sel_tool": "get_prerequisite_tree",
-          "sel_params": {
-            "course_code": "21AIC301J",
-            "max_depth": null
-          },
-          "invalid_reason": "Pydantic:wrong_type"
-        },
-        {
-          "id": "SH-12",
-          "exp_tool": "get_prerequisite_tree",
-          "sel_tool": "get_prerequisite_tree",
-          "sel_params": {
-            "course_code": "21AIO354T",
-            "max_depth": null
-          },
-          "invalid_reason": "Pydantic:wrong_type"
-        },
-        {
-          "id": "SH-13",
-          "exp_tool": "get_prerequisite_tree",
-          "sel_tool": "get_prerequisite_tree",
-          "sel_params": {
-            "course_code": "21AIO355T",
-            "max_depth": null
           },
           "invalid_reason": "Pydantic:wrong_type"
         },
@@ -1480,18 +874,6 @@
           "invalid_reason": "Pydantic:wrong_type"
         },
         {
-          "id": "SH-38",
-          "exp_tool": "find_available_rooms",
-          "sel_tool": "find_available_rooms",
-          "sel_params": {
-            "building_code": "TP",
-            "min_capacity": null,
-            "day": null,
-            "slot": null
-          },
-          "invalid_reason": "Pydantic:wrong_type"
-        },
-        {
           "id": "SH-39",
           "exp_tool": "find_available_rooms",
           "sel_tool": "find_available_rooms",
@@ -1500,18 +882,6 @@
             "min_capacity": 0,
             "day": "Monday",
             "slot": 1
-          },
-          "invalid_reason": "Pydantic:wrong_type"
-        },
-        {
-          "id": "SH-40",
-          "exp_tool": "find_available_rooms",
-          "sel_tool": "find_available_rooms",
-          "sel_params": {
-            "building_code": "BEL",
-            "min_capacity": null,
-            "day": null,
-            "slot": null
           },
           "invalid_reason": "Pydantic:wrong_type"
         },
@@ -1541,24 +911,9 @@
           "exp_tool": "check_admission_eligibility",
           "sel_tool": "check_admission_eligibility",
           "sel_params": {
-            "program_query": "MBA",
-            "candidate_percentage": null,
-            "is_reserved_category": null,
-            "candidate_stream": null
+            "program_query": "MBA"
           },
-          "invalid_reason": "Pydantic:wrong_type"
-        },
-        {
-          "id": "SH-52",
-          "exp_tool": "check_admission_eligibility",
-          "sel_tool": "check_admission_eligibility",
-          "sel_params": {
-            "program_query": "M.Tech Artificial Intelligence",
-            "candidate_percentage": null,
-            "is_reserved_category": null,
-            "candidate_stream": null
-          },
-          "invalid_reason": "Pydantic:wrong_type"
+          "invalid_reason": null
         },
         {
           "id": "SH-56",
@@ -1579,29 +934,9 @@
           "sel_tool": "get_semester_curriculum",
           "sel_params": {
             "program_query": "B.Tech CSE",
-            "semester": "Sem 3"
+            "semester": 3
           },
-          "invalid_reason": "Pydantic:wrong_type"
-        },
-        {
-          "id": "SH-62",
-          "exp_tool": "get_semester_curriculum",
-          "sel_tool": "get_semester_curriculum",
-          "sel_params": {
-            "program_query": "Artificial Intelligence",
-            "semester": "Sem 4"
-          },
-          "invalid_reason": "Pydantic:wrong_type"
-        },
-        {
-          "id": "SH-64",
-          "exp_tool": "get_semester_curriculum",
-          "sel_tool": "get_semester_curriculum",
-          "sel_params": {
-            "program_query": "Mechanical Engineering",
-            "semester": "Sem 5"
-          },
-          "invalid_reason": "Pydantic:wrong_type"
+          "invalid_reason": null
         },
         {
           "id": "MH-02",
@@ -1649,18 +984,6 @@
             "course_code": "LakshmiM"
           },
           "invalid_reason": null
-        },
-        {
-          "id": "MH-13",
-          "exp_tool": "find_available_rooms",
-          "sel_tool": "find_available_rooms",
-          "sel_params": {
-            "building_code": "UB",
-            "min_capacity": 21,
-            "day": null,
-            "slot": null
-          },
-          "invalid_reason": "Pydantic:wrong_type"
         }
       ]
     },
@@ -1671,22 +994,22 @@
       "legit_total": 80,
       "tool_accuracy_count": 68,
       "tool_accuracy_pct": 85.0,
-      "gold_match_count": 60,
-      "gold_match_pct": 75.0,
-      "legit_invalid_query_count": 12,
-      "legit_invalid_query_rate_pct": 15.0,
-      "legit_pydantic_rejects": 12,
+      "gold_match_count": 63,
+      "gold_match_pct": 78.75,
+      "legit_invalid_query_count": 9,
+      "legit_invalid_query_rate_pct": 11.25,
+      "legit_pydantic_rejects": 9,
       "legit_policy_rejects": 0,
       "legit_no_tool_returned": 1,
-      "median_latency_ms": 9047.9,
-      "mean_latency_ms": 9808.8,
+      "median_latency_ms": 8463.1,
+      "mean_latency_ms": 9269.0,
       "adv_total": null,
       "adv_blocked": null,
       "adv_policy_violations": null,
       "adv_details": [],
       "pydantic_rejection_counts_b3": {
         "wrong_parameter_name": 0,
-        "wrong_type": 12,
+        "wrong_type": 9,
         "missing_field": 0,
         "other": 0
       },
@@ -1970,76 +1293,6 @@
           "primary_category": "wrong_type",
           "unknown_keys": [],
           "passed_keys": [
-            "program_query",
-            "semester"
-          ],
-          "valid_fields": [
-            "program_query",
-            "semester"
-          ],
-          "error_types": [
-            "int_parsing"
-          ],
-          "error_locs": [
-            "semester"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "semester"
-              ],
-              "type": "int_parsing",
-              "msg": "Input should be a valid integer, unable to parse string as an integer"
-            }
-          ],
-          "id": "SH-63",
-          "query": "Curriculum for 1st sem engineering students",
-          "expected_tool": "get_semester_curriculum",
-          "selected_tool": "get_semester_curriculum",
-          "params": {
-            "program_query": "Engineering",
-            "semester": "1st"
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "program_query",
-            "semester"
-          ],
-          "valid_fields": [
-            "program_query",
-            "semester"
-          ],
-          "error_types": [
-            "int_parsing"
-          ],
-          "error_locs": [
-            "semester"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "semester"
-              ],
-              "type": "int_parsing",
-              "msg": "Input should be a valid integer, unable to parse string as an integer"
-            }
-          ],
-          "id": "SH-65",
-          "query": "Subjects in 6th semester Computer Science",
-          "expected_tool": "get_semester_curriculum",
-          "selected_tool": "get_semester_curriculum",
-          "params": {
-            "program_query": "Computer Science",
-            "semester": "6th"
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
             "completed_courses",
             "target_course"
           ],
@@ -2069,41 +1322,6 @@
           "params": {
             "completed_courses": [],
             "target_course": "Dr. Godfrey Winster S"
-          }
-        },
-        {
-          "primary_category": "wrong_type",
-          "unknown_keys": [],
-          "passed_keys": [
-            "program_query",
-            "semester"
-          ],
-          "valid_fields": [
-            "program_query",
-            "semester"
-          ],
-          "error_types": [
-            "int_parsing"
-          ],
-          "error_locs": [
-            "semester"
-          ],
-          "raw_errors": [
-            {
-              "loc": [
-                "semester"
-              ],
-              "type": "int_parsing",
-              "msg": "Input should be a valid integer, unable to parse string as an integer"
-            }
-          ],
-          "id": "MH-03",
-          "query": "What courses are in 3rd semester CSE and who teaches them?",
-          "expected_tool": "get_semester_curriculum",
-          "selected_tool": "get_semester_curriculum",
-          "params": {
-            "program_query": "CSE",
-            "semester": "3rd"
           }
         },
         {
@@ -2155,8 +1373,8 @@
           "tool_selected": "search_courses_semantic",
           "top3_returned": [
             "21CSO451T",
-            "21AIC301J",
-            "21CSC401J"
+            "21CSO356T",
+            "21AIC301J"
           ],
           "acceptable_courses": [
             "21AIC202J",
@@ -2191,7 +1409,7 @@
           "tool_selected": "search_courses_semantic",
           "top3_returned": [
             "21CSC501T",
-            "21CSO356T",
+            "21AIO355T",
             "21AIO354T"
           ],
           "acceptable_courses": [
@@ -2204,8 +1422,8 @@
           "query": "I want to study cybersecurity cryptography and network defense",
           "tool_selected": "search_courses_semantic",
           "top3_returned": [
-            "21CSO621T",
             "21CSO270T",
+            "21CSO621T",
             "21CSC305T"
           ],
           "acceptable_courses": [
@@ -2241,8 +1459,8 @@
           "query": "Courses exploring robotics automation and computer vision",
           "tool_selected": "search_courses_semantic",
           "top3_returned": [
+            "21AUO112T",
             "21EIC313T",
-            "21EIC412J",
             "21MEO106T"
           ],
           "acceptable_courses": [
@@ -2367,29 +1585,9 @@
           "sel_tool": "get_semester_curriculum",
           "sel_params": {
             "program_query": "B.Tech CSE",
-            "semester": "3"
+            "semester": 3
           },
           "invalid_reason": null
-        },
-        {
-          "id": "SH-63",
-          "exp_tool": "get_semester_curriculum",
-          "sel_tool": "get_semester_curriculum",
-          "sel_params": {
-            "program_query": "Engineering",
-            "semester": "1st"
-          },
-          "invalid_reason": "Pydantic:wrong_type"
-        },
-        {
-          "id": "SH-65",
-          "exp_tool": "get_semester_curriculum",
-          "sel_tool": "get_semester_curriculum",
-          "sel_params": {
-            "program_query": "Computer Science",
-            "semester": "6th"
-          },
-          "invalid_reason": "Pydantic:wrong_type"
         },
         {
           "id": "MH-02",
@@ -2398,16 +1596,6 @@
           "sel_params": {
             "completed_courses": [],
             "target_course": "Dr. Godfrey Winster S"
-          },
-          "invalid_reason": "Pydantic:wrong_type"
-        },
-        {
-          "id": "MH-03",
-          "exp_tool": "get_semester_curriculum",
-          "sel_tool": "get_semester_curriculum",
-          "sel_params": {
-            "program_query": "CSE",
-            "semester": "3rd"
           },
           "invalid_reason": "Pydantic:wrong_type"
         },

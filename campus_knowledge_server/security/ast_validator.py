@@ -103,19 +103,36 @@ class ASTSecurityValidator:
 
         q = query.strip()
 
-        # 1. Direct Cypher/SQL Injection & Destructive Clauses
-        for pattern in COMPILED_FORBIDDEN:
-            if pattern.search(q):
-                token = pattern.pattern.replace(r"\b", "").replace(r"\s+", " ")
+        # 1. Direct Cypher/SQL Injection & Destructive Clause Syntax
+        # Match actual query/DB-mutation syntax rather than bare English words like "create" or "delete"
+        USER_INPUT_CLAUSE_PATTERNS = [
+            (r"\bDETACH\s+DELETE\b", "DETACH DELETE"),
+            (r"\bDELETE\s+(?:ALL\b|FROM\b|\*)|\bMATCH\b.*\bDELETE\s+[a-z_]\w*", "DELETE"),
+            (r"\bCREATE\s*(?:\(|NODE\b|TABLE\b|DATABASE\b|INDEX\b|CONSTRAINT\b|USER\b|ROLE\b)", "CREATE"),
+            (r"\bMERGE\s*\(", "MERGE"),
+            (r"\bDROP\s+(?:ALL\b|TABLE\b|DATABASE\b|INDEX\b|CONSTRAINT\b|NODE\b|\()", "DROP"),
+            (r"\bALTER\s+(?:DATABASE\b|TABLE\b|USER\b|ROLE\b|SYSTEM\b)", "ALTER"),
+            (r"\bSET\s+(?:ROLE\b|[a-z_]\w*\.[a-z_]\w*\s*=)", "SET"),
+            (r"\bGRANT\s+(?:ALL\b|PRIVILEGES\b|ACCESS\b|ROLE\b|READ\b|WRITE\b)", "GRANT"),
+            (r"\bREVOKE\s+(?:ALL\b|PRIVILEGES\b|ACCESS\b|ROLE\b)", "REVOKE"),
+            (r"\bREMOVE\s+[a-z_]\w*(?:\.[a-z_]\w*|:[A-Za-z_]\w*)", "REMOVE"),
+            (r"\bLOAD\s+CSV\b", "LOAD CSV"),
+            (r"\bPERIODIC\s+COMMIT\b", "PERIODIC COMMIT"),
+            (r"\bCALL\s+apoc\.(?:system|trigger|cypher\.runMany)\b", "CALL apoc"),
+            (r"\bCALL\s+dbms\b", "CALL dbms"),
+            (r"\bCALL\s+db\.(?:create|drop)\b", "CALL db.admin"),
+        ]
+        for pat, token in USER_INPUT_CLAUSE_PATTERNS:
+            if re.search(pat, q, re.IGNORECASE):
                 return True, f"Forbidden database operation token '{token}' detected."
 
         # 2. Query Chaining Delimiter (prevent stacked queries)
         if SEMICOLON_CHECK.search(q):
             return True, "Stacked query chaining (';') detected."
 
-        # 3. Natural Language Destructive Commands (e.g. 'delete database', 'drop table', 'delete databse')
-        DESTRUCTIVE_VERBS = r"(?:delete|del|drop|destroy|wipe|truncate|erase|purge|remove|clear|kill|format)"
-        TARGET_ENTITIES = r"(?:all\s+)?(?:db|databases?|databse|tables?|collections?|nodes?|relationships?|graph|records?|schema|faculty|courses?|programs?|rooms?|campus|data|everything)"
+        # 3. Natural Language Destructive Commands targeting database/graph/bulk data (e.g. 'delete database', 'drop table', 'wipe all courses')
+        DESTRUCTIVE_VERBS = r"(?:delete|del|drop|destroy|wipe|truncate|erase|purge|clear|kill|format)"
+        TARGET_ENTITIES = r"(?:(?:all\s+)?(?:db|databases?|databse|tables?|collections?|nodes?|relationships?|graph|records?|schema|everything)|all\s+(?:faculty|courses?|programs?|rooms?|campus|data))"
         comb_pattern = re.compile(rf"\b{DESTRUCTIVE_VERBS}\b.*?\b{TARGET_ENTITIES}\b|\b{TARGET_ENTITIES}\b.*?\b{DESTRUCTIVE_VERBS}\b", re.IGNORECASE)
         if comb_pattern.search(q):
             return True, "Destructive database mutation operation requested."

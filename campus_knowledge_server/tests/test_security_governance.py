@@ -186,19 +186,22 @@ def test_prompt_injection_in_user_message_blocked():
     assert res["tool_selected"] == "ast_security_interception"
 
 def test_student_asking_for_admin_data_blocked_and_masked():
-    """Verifies student role is blocked from admin tools and sensitive fields (phone) are masked."""
+    """Verifies student role is blocked from admin tools, private fields remain masked, and public directory phone is visible."""
     from campus_knowledge_server.security.auth import Principal
     from campus_knowledge_server.tools.governed_executor import execute_tool
     student = Principal(user_id="student_01", role="student", caller_type="jwt")
     # 1. Admin/faculty-only tool rejected
     with pytest.raises(SecurityViolationError):
         execute_tool("run_governed_query", {"template_id": "courses_by_department", "parameters": {"department": "Computing"}}, principal=student)
-    # 2. Phone fields stripped from faculty lookup response
+    # 2. Private phone fields stripped; official public directory phone + phone_note visible, row cap <= 25
     fac_res = execute_tool("lookup_faculty_profile", {"faculty_name": "Lakshmi"}, principal=student)
+    assert len(fac_res.get("faculty", [])) <= 25
     for f in fac_res.get("faculty", []):
-        assert "phone" not in f
+        assert "phone" in f
+        assert "phone_note" in f
         assert "mobile" not in f
         assert "personal_phone" not in f
+        assert "contact_number" not in f
 
 def test_deep_recursion_prerequisite_depth_rejected():
     """Verifies Pydantic rejects deep prerequisite traversal (max_depth > 4)."""

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SRMIST Campus Assistant — Admin Audit Ledger</title>
+  <style>
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "Cascadia Code", "Consolas", "SFMono-Regular", Menlo, Monaco, monospace;
+
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #f0f3f9;
+      --surface-3: #e6ecf5;
+      --border: #d8e0ec;
+      --text: #162033;
+      --text-muted: #55647d;
+      --accent: #1d4ed8;
+      --accent-hover: #1e40af;
+
+      --green-bg: #e7f8ef;
+      --green-border: #86d9ab;
+      --green-text: #0f6b3e;
+
+      --amber-bg: #fff5e0;
+      --amber-border: #f0c05a;
+      --amber-text: #8a5200;
+
+      --red-bg: #fef0f0;
+      --red-border: #f2a2a2;
+      --red-text: #991b1b;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #0c1220;
+      --surface: #131c2e;
+      --surface-2: #1a253b;
+      --surface-3: #22304c;
+      --border: #2a3a57;
+      --text: #edf2fb;
+      --text-muted: #98a9c4;
+      --accent: #4f86ff;
+      --accent-hover: #3b72eb;
+
+      --green-bg: rgba(22, 163, 74, 0.16);
+      --green-border: rgba(74, 222, 128, 0.45);
+      --green-text: #7ef0a6;
+
+      --amber-bg: rgba(245, 158, 11, 0.16);
+      --amber-border: rgba(251, 191, 36, 0.5);
+      --amber-text: #fcd36a;
+
+      --red-bg: rgba(220, 38, 38, 0.16);
+      --red-border: rgba(248, 113, 113, 0.5);
+      --red-text: #fca5a5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .btn {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 8px 12px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover { background: var(--surface-3); }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 18px 16px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 15px;
+    }
+
+    .muted {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin: 0 0 12px;
+      line-height: 1.45;
+    }
+
+    .token-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .token-input {
+      flex: 1;
+      min-width: 220px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      padding: 9px 11px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      outline: none;
+    }
+
+    .token-input:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+
+    .banner {
+      border-radius: 9px;
+      padding: 10px 13px;
+      font-size: 13px;
+      font-weight: 600;
+      display: none;
+      margin-top: 12px;
+      line-height: 1.45;
+    }
+
+    .banner.show { display: block; }
+
+    .banner-green {
+      background: var(--green-bg);
+      border: 1px solid var(--green-border);
+      color: var(--green-text);
+    }
+
+    .banner-red {
+      background: var(--red-bg);
+      border: 1px solid var(--red-border);
+      color: var(--red-text);
+    }
+
+    .banner-amber {
+      background: var(--amber-bg);
+      border: 1px solid var(--amber-border);
+      color: var(--amber-text);
+    }
+
+    .table-head-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      min-width: 620px;
+    }
+
+    th, td {
+      padding: 9px 11px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--surface-2);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .mono { font-family: var(--font-mono); font-size: 12px; }
+
+    .status-pill {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .status-ok {
+      background: var(--green-bg);
+      border-color: var(--green-border);
+      color: var(--green-text);
+    }
+
+    .status-bad {
+      background: var(--red-bg);
+      border-color: var(--red-border);
+      color: var(--red-text);
+    }
+
+    .status-warn {
+      background: var(--amber-bg);
+      border-color: var(--amber-border);
+      color: var(--amber-text);
+    }
+
+    @media (max-width: 640px) {
+      .topbar { padding: 10px 12px; }
+      .container { padding: 12px 10px 24px; }
+      .card { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <a class="btn" href="/">&larr; Back to Assistant</a>
+      <h1>Admin Audit Ledger</h1>
+    </div>
+    <button class="btn" id="themeBtn" type="button">Theme: Light</button>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Admin Authentication (Memory Only)</h2>
+      <p class="muted">
+        Paste an admin JWT generated offline via <code>python scripts/make_demo_tokens.py</code>.
+        The token is kept strictly in JavaScript memory and is never written to localStorage, sessionStorage, or cookies.
+      </p>
+      <div class="token-row">
+        <input
+          type="password"
+          id="tokenInput"
+          class="token-input"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Paste admin Bearer token..."
+          aria-label="Admin token"
+        />
+        <button class="btn" id="toggleVisBtn" type="button">Show</button>
+        <button class="btn btn-primary" id="loadLogsBtn" type="button">Load Audit Logs</button>
+        <button class="btn" id="clearTokenBtn" type="button">Clear Token</button>
+        <button class="btn" id="verifyChainBtn" type="button">Verify chain</button>
+      </div>
+      <div class="banner" id="authBanner" role="alert"></div>
+      <div class="banner" id="verifyBanner" role="status"></div>
+    </section>
+
+    <section class="card">
+      <div class="table-head-row">
+        <h2 style="margin:0;">Audit Events (/admin/audit-logs)</h2>
+        <span class="muted" id="countMeta" style="margin:0;">No logs loaded yet.</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Role</th>
+              <th>Tool</th>
+              <th>Status</th>
+              <th>Rows</th>
+              <th>Latency</th>
+            </tr>
+          </thead>
+          <tbody id="auditBody">
+            <tr>
+              <td colspan="6" style="color:var(--text-muted);text-align:center;padding:18px;">
+                Paste an admin token and click &ldquo;Load Audit Logs&rdquo;.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const API_BASE = window.location.protocol.startsWith("http")
+        ? window.location.origin
+        : "http://localhost:8000";
+
+      // Strictly in-memory token (NEVER saved to localStorage/sessionStorage/cookies)
+      let adminTokenInMemory = "";
+
+      const tokenInput = document.getElementById("tokenInput");
+      const toggleVisBtn = document.getElementById("toggleVisBtn");
+      const loadLogsBtn = document.getElementById("loadLogsBtn");
+      const clearTokenBtn = document.getElementById("clearTokenBtn");
+      const verifyChainBtn = document.getElementById("verifyChainBtn");
+      const authBanner = document.getElementById("authBanner");
+      const verifyBanner = document.getElementById("verifyBanner");
+      const auditBody = document.getElementById("auditBody");
+      const countMeta = document.getElementById("countMeta");
+      const themeBtn = document.getElementById("themeBtn");
+
+      function escapeHtml(val) {
+        if (val === null || val === undefined) return "";
+        return String(val)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function applyTheme(t) {
+        const theme = t === "dark" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", theme);
+        themeBtn.textContent = theme === "dark" ? "Theme: Dark" : "Theme: Light";
+      }
+
+      function showBanner(el, kind, msg) {
+        el.className = "banner show banner-" + kind;
+        el.textContent = msg;
+      }
+
+      function hideBanner(el) {
+        el.className = "banner";
+        el.textContent = "";
+      }
+
+      function statusClass(st) {
+        const u = String(st || "").toUpperCase();
+        if (u === "SUCCESS" || u === "OK" || u === "VALID") return "status-ok";
+        if (u.indexOf("POLICY") !== -1 || u.indexOf("BLOCK") !== -1 || u.indexOf("FORBIDDEN") !== -1 || u.indexOf("ERROR") !== -1 || u.indexOf("VIOLATION") !== -1) {
+          return "status-bad";
+        }
+        return "status-warn";
+      }
+
+      tokenInput.addEventListener("input", function () {
+        adminTokenInMemory = tokenInput.value.trim();
+      });
+
+      toggleVisBtn.addEventListener("click", function () {
+        const hidden = tokenInput.type === "password";
+        tokenInput.type = hidden ? "text" : "password";
+        toggleVisBtn.textContent = hidden ? "Hide" : "Show";
+      });
+
+      clearTokenBtn.addEventListener("click", function () {
+        adminTokenInMemory = "";
+        tokenInput.value = "";
+        hideBanner(authBanner);
+        auditBody.innerHTML = '<tr><td colspan="6" style="color:var(--text-muted);text-align:center;padding:18px;">Token cleared from memory.</td></tr>';
+        countMeta.textContent = "Cleared.";
+      });
+
+      loadLogsBtn.addEventListener("click", async function () {
+        adminTokenInMemory = tokenInput.value.trim();
+        hideBanner(authBanner);
+        if (!adminTokenInMemory) {
+          showBanner(authBanner, "amber", "Paste an admin token first before loading audit logs.");
+          return;
+        }
+        loadLogsBtn.disabled = true;
+        try {
+          const resp = await fetch(API_BASE + "/admin/audit-logs?limit=100", {
+            headers: { "Authorization": "Bearer " + adminTokenInMemory },
+            cache: "no-store"
+          });
+          let data = {};
+          try { data = await resp.json(); } catch (_) {}
+
+          if (resp.status === 401) {
+            showBanner(authBanner, "red", "Authentication failed (HTTP 401): " + (data.detail || "Invalid or expired admin token."));
+            return;
+          }
+          if (resp.status === 403) {
+            showBanner(authBanner, "red", "Access denied (HTTP 403): " + (data.detail || "An admin role token is required."));
+            return;
+          }
+          if (!resp.ok) {
+            showBanner(authBanner, "red", "Failed to load logs (HTTP " + resp.status + "): " + (data.detail || "Unexpected server error."));
+            return;
+          }
+
+          const events = Array.isArray(data.events) ? data.events : [];
+          countMeta.textContent = "Showing " + events.length + " of " + (data.total_logs !== undefined ? data.total_logs : events.length) + " total entries";
+          if (events.length === 0) {
+            auditBody.innerHTML = '<tr><td colspan="6" style="color:var(--text-muted);text-align:center;padding:18px;">No audit events recorded yet.</td></tr>';
+          } else {
+            auditBody.innerHTML = events.map(function (ev) {
+              const ts = ev.timestamp || ev.time || "—";
+              const role = ev.role || "—";
+              const tool = ev.tool || ev.tool_name || "—";
+              const st = ev.status || "—";
+              const rows = ev.result_count !== undefined ? ev.result_count : (ev.rows !== undefined ? ev.rows : 0);
+              const lat = ev.latency_ms !== undefined ? (ev.latency_ms + " ms") : "—";
+              return (
+                "<tr>" +
+                  '<td class="mono">' + escapeHtml(ts) + "</td>" +
+                  "<td>" + escapeHtml(role) + "</td>" +
+                  '<td class="mono">' + escapeHtml(tool) + "</td>" +
+                  '<td><span class="status-pill ' + statusClass(st) + '">' + escapeHtml(st) + "</span></td>" +
+                  '<td class="mono">' + escapeHtml(rows) + "</td>" +
+                  '<td class="mono">' + escapeHtml(lat) + "</td>" +
+                "</tr>"
+              );
+            }).join("");
+          }
+          showBanner(authBanner, "green", "Loaded " + events.length + " audit entries as authenticated admin.");
+        } catch (_) {
+          showBanner(authBanner, "red", "Network error: could not reach /admin/audit-logs.");
+        } finally {
+          loadLogsBtn.disabled = false;
+        }
+      });
+
+      verifyChainBtn.addEventListener("click", async function () {
+        hideBanner(verifyBanner);
+        verifyChainBtn.disabled = true;
+        try {
+          const resp = await fetch(API_BASE + "/audit/verify", { cache: "no-store" });
+          const data = await resp.json();
+          if (resp.ok && data.chain_intact) {
+            showBanner(
+              verifyBanner,
+              "green",
+              "SHA-256 Chain Intact (" + (data.status || "VALID") + ") — verified " +
+              (data.verified_entries_count !== undefined ? data.verified_entries_count : 0) +
+              " entries. " + (data.detail || "")
+            );
+          } else {
+            showBanner(
+              verifyBanner,
+              "red",
+              "Chain Verification Failed (" + (data.status || "TAMPERED") + "): " + (data.detail || "Hash mismatch detected.")
+            );
+          }
+        } catch (_) {
+          showBanner(verifyBanner, "red", "Network error: could not reach /audit/verify.");
+        } finally {
+          verifyChainBtn.disabled = false;
+        }
+      });
+
+      themeBtn.addEventListener("click", function () {
+        const cur = document.documentElement.getAttribute("data-theme");
+        applyTheme(cur === "dark" ? "light" : "dark");
+      });
+
+      applyTheme("light");
+    })();
+  </script>
+</body>
+</html>

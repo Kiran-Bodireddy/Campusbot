@@ -1,2133 +1,2143 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="bright">
+<html lang="en" data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Campus Knowledge Base - SRMIST</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SRMIST Campus Knowledge Assistant</title>
   <style>
-    /* ==========================================================================
-       LANDO NORRIS INSPIRED MINIMALIST DESIGN SYSTEM
-       - High-contrast, editorial typography
-       - Smooth, gradual dynamic color transitions (1.8s cubic-bezier)
-       - Context-aware mood palette based on question topic
-       ========================================================================== */
-
     :root {
-      --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
-      --transition-mood: 1.8s var(--ease-smooth);
-      --transition-quick: 0.25s ease;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "Cascadia Code", "Consolas", "SFMono-Regular", Menlo, Monaco, monospace;
+
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #f0f3f9;
+      --surface-3: #e6ecf5;
+      --border: #d8e0ec;
+      --text: #162033;
+      --text-muted: #55647d;
+      --accent: #1d4ed8;
+      --accent-hover: #1e40af;
+      --accent-soft: #e8f0fe;
+      --user-bubble: #1d4ed8;
+      --user-text: #ffffff;
+
+      --green-bg: #e7f8ef;
+      --green-border: #86d9ab;
+      --green-text: #0f6b3e;
+
+      --amber-bg: #fff5e0;
+      --amber-border: #f0c05a;
+      --amber-text: #8a5200;
+
+      --red-bg: #fef0f0;
+      --red-border: #f2a2a2;
+      --red-text: #991b1b;
+
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.08);
+      --radius: 12px;
+      --sidebar-w: 272px;
     }
 
-    /* --------------------------------------------------------------------------
-       BRIGHT THEME (Lando Norris Off-White Paper / Cream Studio Aesthetic)
-       -------------------------------------------------------------------------- */
-    [data-theme="bright"] {
-      --bg-base: #f5f5ee;
-      --card-bg: rgba(255, 255, 255, 0.88);
-      --card-border: rgba(210, 215, 200, 0.85);
-      --card-shadow: 0 10px 32px -6px rgba(17, 17, 18, 0.05);
+    html[data-theme="dark"] {
+      --bg: #0c1220;
+      --surface: #131c2e;
+      --surface-2: #1a253b;
+      --surface-3: #22304c;
+      --border: #2a3a57;
+      --text: #edf2fb;
+      --text-muted: #98a9c4;
+      --accent: #4f86ff;
+      --accent-hover: #3b72eb;
+      --accent-soft: rgba(79, 134, 255, 0.16);
+      --user-bubble: #2563eb;
+      --user-text: #ffffff;
 
-      --text-heading: #111112;
-      --text-main: #242721;
-      --text-muted: #62665a;
-      --text-dim: #949989;
+      --green-bg: rgba(22, 163, 74, 0.16);
+      --green-border: rgba(74, 222, 128, 0.45);
+      --green-text: #7ef0a6;
 
-      --header-bg: rgba(245, 245, 238, 0.88);
-      --header-border: rgba(215, 218, 205, 0.7);
+      --amber-bg: rgba(245, 158, 11, 0.16);
+      --amber-border: rgba(251, 191, 36, 0.5);
+      --amber-text: #fcd36a;
 
-      --search-bg: rgba(255, 255, 255, 0.95);
-      --search-border: rgba(200, 205, 192, 0.9);
-      --search-btn-bg: #111112;
-      --search-btn-text: #f5f5ee;
+      --red-bg: rgba(220, 38, 38, 0.16);
+      --red-border: rgba(248, 113, 113, 0.5);
+      --red-text: #fca5a5;
 
-      --chip-bg: rgba(255, 255, 255, 0.75);
-      --chip-border: rgba(210, 215, 200, 0.8);
-      --chip-text: #2f332a;
-      --chip-hover-bg: #ffffff;
-      --chip-hover-border: #111112;
-
-      --raw-box-bg: #ebeee0;
-      --raw-box-border: #d4d8c6;
-      --raw-box-text: #22251e;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
     }
 
-    /* --------------------------------------------------------------------------
-       DARK THEME (Lando Norris Deep Carbon & Matte Stealth Racing Canvas)
-       -------------------------------------------------------------------------- */
-    [data-theme="dark"] {
-      --bg-base: #0e0f0c;
-      --card-bg: rgba(22, 24, 19, 0.85);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --card-shadow: 0 14px 40px rgba(0, 0, 0, 0.75);
+    * { box-sizing: border-box; }
 
-      --text-heading: #f4f4ed;
-      --text-main: #e2e4d8;
-      --text-muted: #9fa393;
-      --text-dim: #676a5c;
-
-      --header-bg: rgba(14, 15, 12, 0.88);
-      --header-border: rgba(255, 255, 255, 0.06);
-
-      --search-bg: rgba(24, 26, 21, 0.9);
-      --search-border: rgba(255, 255, 255, 0.12);
-      --search-btn-bg: #f4f4ed;
-      --search-btn-text: #0e0f0c;
-
-      --chip-bg: rgba(24, 26, 21, 0.75);
-      --chip-border: rgba(255, 255, 255, 0.08);
-      --chip-text: #a8aca0;
-      --chip-hover-bg: #22261d;
-      --chip-hover-border: #f4f4ed;
-
-      --raw-box-bg: #050604;
-      --raw-box-border: #1b1e17;
-      --raw-box-text: #a8aca0;
-    }
-
-    /* --------------------------------------------------------------------------
-       CONTEXTUAL DYNAMIC MOOD PALETTES (Gradual, Liquid 1.8s Transition)
-       -------------------------------------------------------------------------- */
-    /* 1. Default Neutral Mood */
-    body[data-mood="default"] {
-      --mood-accent: #6366f1;
-      --mood-glow-1: rgba(99, 102, 241, 0.18);
-      --mood-glow-2: rgba(199, 210, 254, 0.35);
-      --mood-badge-bg: rgba(99, 102, 241, 0.1);
-      --mood-badge-color: #4f46e5;
-      --mood-tag-color: #4f46e5;
-    }
-    [data-theme="dark"] body[data-mood="default"] {
-      --mood-accent: #818cf8;
-      --mood-glow-1: rgba(99, 102, 241, 0.15);
-      --mood-glow-2: rgba(129, 140, 248, 0.10);
-      --mood-badge-bg: rgba(99, 102, 241, 0.15);
-      --mood-badge-color: #a5b4fc;
-      --mood-tag-color: #a5b4fc;
-    }
-
-    /* 2. Faculty & Professors Mood (Electric Cyan & Ice Azure) */
-    body[data-mood="faculty"] {
-      --mood-accent: #0284c7;
-      --mood-glow-1: rgba(6, 182, 212, 0.35);
-      --mood-glow-2: rgba(56, 189, 248, 0.40);
-      --mood-badge-bg: rgba(6, 182, 212, 0.12);
-      --mood-badge-color: #0284c7;
-      --mood-tag-color: #0284c7;
-    }
-    [data-theme="dark"] body[data-mood="faculty"] {
-      --mood-accent: #00f0ff;
-      --mood-glow-1: rgba(0, 240, 255, 0.22);
-      --mood-glow-2: rgba(14, 165, 233, 0.16);
-      --mood-badge-bg: rgba(0, 240, 255, 0.15);
-      --mood-badge-color: #38bdf8;
-      --mood-tag-color: #38bdf8;
-    }
-
-    /* 3. Admissions & Cutoffs Mood (McLaren Papaya Orange & Warm Amber) */
-    body[data-mood="admission"] {
-      --mood-accent: #d95800;
-      --mood-glow-1: rgba(255, 107, 0, 0.32);
-      --mood-glow-2: rgba(251, 191, 36, 0.40);
-      --mood-badge-bg: rgba(255, 107, 0, 0.12);
-      --mood-badge-color: #c2410c;
-      --mood-tag-color: #c2410c;
-    }
-    [data-theme="dark"] body[data-mood="admission"] {
-      --mood-accent: #ff6b00;
-      --mood-glow-1: rgba(255, 107, 0, 0.22);
-      --mood-glow-2: rgba(245, 158, 11, 0.16);
-      --mood-badge-bg: rgba(255, 107, 0, 0.16);
-      --mood-badge-color: #fb923c;
-      --mood-tag-color: #fb923c;
-    }
-
-    /* 4. Courses & Curriculum Mood (Lando Norris Signature Electric Lime) */
-    body[data-mood="course"] {
-      --mood-accent: #65a30d;
-      --mood-glow-1: rgba(210, 255, 0, 0.38);
-      --mood-glow-2: rgba(163, 230, 53, 0.42);
-      --mood-badge-bg: rgba(132, 204, 22, 0.14);
-      --mood-badge-color: #4d7c0f;
-      --mood-tag-color: #4d7c0f;
-    }
-    [data-theme="dark"] body[data-mood="course"] {
-      --mood-accent: #d2ff00; /* LN4 fluorescent lime */
-      --mood-glow-1: rgba(210, 255, 0, 0.22);
-      --mood-glow-2: rgba(163, 230, 53, 0.15);
-      --mood-badge-bg: rgba(210, 255, 0, 0.15);
-      --mood-badge-color: #d2ff00;
-      --mood-tag-color: #bef264;
-    }
-
-    /* 5. Classrooms & Venues Mood (Cyber Orchid & Electric Violet) */
-    body[data-mood="room"] {
-      --mood-accent: #7c3aed;
-      --mood-glow-1: rgba(168, 85, 247, 0.32);
-      --mood-glow-2: rgba(217, 70, 239, 0.32);
-      --mood-badge-bg: rgba(168, 85, 247, 0.12);
-      --mood-badge-color: #7c3aed;
-      --mood-tag-color: #7c3aed;
-    }
-    [data-theme="dark"] body[data-mood="room"] {
-      --mood-accent: #c084fc;
-      --mood-glow-1: rgba(168, 85, 247, 0.20);
-      --mood-glow-2: rgba(236, 72, 153, 0.14);
-      --mood-badge-bg: rgba(168, 85, 247, 0.16);
-      --mood-badge-color: #d8b4fe;
-      --mood-tag-color: #d8b4fe;
-    }
-
-    /* ==========================================================================
-       GLOBAL RESETS & TRANSITIONS
-       ========================================================================== */
-    * {
-      box-sizing: border-box;
+    html, body {
       margin: 0;
       padding: 0;
+      height: 100%;
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
     }
 
-    body {
-      background-color: var(--bg-base);
-      color: var(--text-main);
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      min-height: 100vh;
+    .app-shell {
       display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-      line-height: 1.6;
-      position: relative;
-      /* Smooth, non-sudden transition across themes and question moods */
-      transition: background-color var(--transition-mood), color 0.6s ease;
-    }
-
-    /* Ambient Liquid Mesh Glow (Smooth 1.8s interpolation) */
-    .ambient-bg {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
+      height: 100dvh;
+      width: 100%;
       overflow: hidden;
     }
 
-    .ambient-gradient {
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 12% 38%, var(--mood-glow-1) 0%, transparent 60%),
-        radial-gradient(circle at 88% 25%, var(--mood-glow-2) 0%, transparent 65%);
-      filter: blur(55px);
-      opacity: 0.95;
-      transition: all var(--transition-mood);
-    }
-
-    /* Subtle Hairline Vector Geometry */
-    .ambient-vector {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0.65;
-      transition: opacity var(--transition-mood);
-    }
-
-    .app-wrapper {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    /* ==========================================================================
-       FLOATING MINIMALIST CONTROLS (Header-Free Clean Experience)
-       ========================================================================== */
-    .theme-toggle-btn {
-      position: fixed;
-      top: 1.5rem;
-      right: 1.5rem;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--chip-bg);
-      border: 1px solid var(--chip-border);
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 60;
-      transition: all var(--transition-quick);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-    }
-
-    .theme-toggle-btn:hover {
-      border-color: var(--text-heading);
-      color: var(--text-heading);
-      transform: rotate(15deg);
-    }
-
-    .search-home-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      margin-right: 0.5rem;
-      padding: 0.25rem;
-      border-radius: 50%;
-      transition: color var(--transition-quick), transform var(--transition-quick);
-    }
-
-    .search-home-btn:hover {
-      color: var(--text-heading);
-      transform: scale(1.1);
-    }
-
-    /* ==========================================================================
-       MAIN CONTENT CONTAINER
-       ========================================================================== */
-    main {
-      flex: 1;
-      max-width: 840px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 3.5rem 1.5rem 7.5rem 1.5rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Hero / Empty State */
-    .hero {
-      text-align: center;
-      margin: auto 0;
-      padding: 2rem 1rem 3rem 1rem;
-      transition: all 0.3s ease;
-    }
-
-    .hero.hidden {
-      display: none;
-    }
-
-    .hero h1 {
-      font-size: 2.75rem;
-      font-weight: 700;
-      letter-spacing: -0.035em;
-      margin-bottom: 0.65rem;
-      color: var(--text-heading);
-      line-height: 1.15;
-    }
-
-    .hero p {
-      font-size: 1.05rem;
-      color: var(--text-muted);
-      max-width: 480px;
-      margin: 0 auto 2.25rem auto;
-      font-weight: 400;
-    }
-
-    /* ==========================================================================
-       PILL SEARCH BAR (Minimalist, Elevated, Fluid Border)
-       ========================================================================== */
-    .hero-search-wrap {
-      max-width: 660px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    .search-bar-form {
-      display: flex;
-      align-items: center;
-      background: var(--search-bg);
-      border: 1px solid var(--search-border);
-      border-radius: 9999px;
-      padding: 0.45rem 0.5rem 0.45rem 1.25rem;
-      box-shadow: var(--card-shadow);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      transition: border-color var(--transition-mood), box-shadow var(--transition-mood), background-color 0.5s ease;
-    }
-
-    .search-bar-form:focus-within {
-      border-color: var(--mood-accent);
-      box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--mood-accent);
-    }
-
-    .search-icon-left {
-      color: var(--text-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 0.75rem;
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-w);
       flex-shrink: 0;
-      transition: color var(--transition-mood);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+      transition: transform 0.2s ease;
     }
 
-    .search-bar-form:focus-within .search-icon-left {
-      color: var(--mood-accent);
-    }
-
-    .search-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text-heading);
-      font-size: 1rem;
-      font-family: inherit;
-      font-weight: 400;
-    }
-
-    .search-input::placeholder {
-      color: var(--text-dim);
-    }
-
-    .search-submit-btn {
-      background: var(--search-btn-bg);
-      border: none;
-      color: var(--search-btn-text);
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
+    .sidebar-header {
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all var(--transition-quick);
-      flex-shrink: 0;
-    }
-
-    .search-submit-btn:hover {
-      transform: scale(1.05);
-      background: var(--mood-accent);
-      color: #ffffff;
-    }
-
-    .search-submit-btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    /* Sticky Bottom Search Bar (Activated during chat) */
-    .search-wrapper-bottom {
-      position: fixed;
-      bottom: 1.5rem;
-      left: 0;
-      right: 0;
-      max-width: 840px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 0 1.5rem;
-      z-index: 40;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(14px);
-      transition: all 0.3s ease;
-    }
-
-    .search-wrapper-bottom.visible {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0);
-    }
-
-    /* ==========================================================================
-       SUGGESTION CHIPS
-       ========================================================================== */
-    .suggestions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.55rem;
-      justify-content: center;
-      margin-top: 1.75rem;
-    }
-
-    .suggestion-chip {
-      background: var(--chip-bg);
-      border: 1px solid var(--chip-border);
-      color: var(--chip-text);
-      font-size: 0.85rem;
-      font-weight: 500;
-      padding: 0.45rem 1rem;
-      border-radius: 9999px;
-      cursor: pointer;
-      transition: all var(--transition-quick);
-      backdrop-filter: blur(8px);
-      font-family: inherit;
-    }
-
-    .suggestion-chip:hover {
-      background: var(--chip-hover-bg);
-      border-color: var(--mood-accent);
-      color: var(--text-heading);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-
-    /* ==========================================================================
-       CONVERSATION STREAM & ASSISTANT CARDS
-       ========================================================================== */
-    .stream {
-      display: flex;
-      flex-direction: column;
-      gap: 2.25rem;
-      margin-bottom: 2rem;
-    }
-
-    .query-item {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      animation: fadeIn 0.3s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .user-query {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--text-heading);
-      letter-spacing: -0.015em;
-      padding-bottom: 0.6rem;
-      border-bottom: 1px solid var(--card-border);
-    }
-
-    .assistant-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 1.65rem;
-      color: var(--text-main);
-      font-size: 0.98rem;
-      line-height: 1.75;
-      box-shadow: var(--card-shadow);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      transition: border-color var(--transition-mood), box-shadow var(--transition-mood);
-    }
-
-    .assistant-card strong {
-      color: var(--text-heading);
-      font-weight: 600;
-    }
-
-    .assistant-card ul, .assistant-card ol {
-      margin: 0.85rem 0 0.85rem 1.5rem;
-    }
-
-    .assistant-card li {
-      margin-bottom: 0.5rem;
-    }
-
-    /* Entity Tags */
-    .entity-tag {
-      display: inline-block;
-      font-weight: 600;
-      color: var(--mood-tag-color);
-      background: var(--mood-badge-bg);
-      padding: 0.1rem 0.45rem;
-      border-radius: 4px;
-      transition: all var(--transition-mood);
-    }
-
-    /* Metadata Footer */
-    .meta-footer {
-      display: flex;
       justify-content: space-between;
+      gap: 8px;
+    }
+
+    .brand {
+      display: flex;
       align-items: center;
-      margin-top: 1.25rem;
-      padding-top: 0.85rem;
-      border-top: 1px solid var(--card-border);
-      font-size: 0.75rem;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--text-dim);
+      gap: 10px;
+      min-width: 0;
     }
 
-    .tool-badge {
-      color: var(--mood-badge-color);
-      background: var(--mood-badge-bg);
-      padding: 0.25rem 0.65rem;
-      border-radius: 6px;
-      border: 1px solid var(--mood-badge-bg);
-      font-weight: 500;
-      transition: all var(--transition-mood);
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      letter-spacing: 0.4px;
     }
 
-    .latency-badge {
-      color: #10b981;
-      font-weight: 500;
+    .brand-text {
+      min-width: 0;
     }
 
-    /* Qwen Generative AI Indicator Badge */
-    .gen-badge {
+    .brand-title {
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .btn {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 7px 11px;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
-      color: #8b5cf6;
-      background: rgba(139, 92, 246, 0.1);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      padding: 0.2rem 0.6rem;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 0.72rem;
-      letter-spacing: 0.01em;
-    }
-
-    .gen-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #8b5cf6;
-      box-shadow: 0 0 8px rgba(139, 92, 246, 0.8);
-      animation: pulseDot 2s infinite ease-in-out;
-    }
-
-    @keyframes pulseDot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.45; transform: scale(0.85); }
-    }
-
-    /* Structured Markdown Typography */
-    .assistant-answer {
-      font-size: 0.98rem;
-      line-height: 1.75;
-      color: var(--text-main);
-    }
-
-    .stream-cursor {
-      display: inline-block;
-      width: 7px;
-      height: 16px;
-      margin-left: 3px;
-      background: var(--mood-accent, #6366f1);
-      vertical-align: middle;
-      border-radius: 2px;
-      animation: blinkCursor 0.8s infinite;
-    }
-
-    @keyframes blinkCursor {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-
-    .md-h3 {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--text-heading);
-      margin: 0.85rem 0 0.4rem 0;
-      letter-spacing: -0.01em;
-    }
-
-    .md-h4 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-heading);
-      margin: 0.65rem 0 0.25rem 0;
-    }
-
-    .md-code {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.84em;
-      background: rgba(125, 125, 125, 0.12);
-      padding: 0.15rem 0.38rem;
-      border-radius: 4px;
-      border: 1px solid var(--card-border);
-      color: var(--text-heading);
-    }
-
-    .md-list {
-      margin: 0.45rem 0 0.65rem 0;
-      padding-left: 1.35rem;
-      list-style-type: disc;
-    }
-
-    .md-list li {
-      margin: 0.25rem 0;
-      line-height: 1.6;
-    }
-
-    .md-list li::marker {
-      color: var(--mood-accent);
-    }
-
-    .md-para {
-      margin: 0 0 0.55rem 0;
-    }
-
-    .md-para:last-child,
-    .md-list:last-child {
-      margin-bottom: 0;
-    }
-
-    /* Loading Pulse */
-    .loading-shimmer {
-      display: flex;
-      gap: 7px;
-      align-items: center;
-      padding: 0.75rem 0;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-
-    .dot {
-      width: 7px;
-      height: 7px;
-      background: var(--mood-accent);
-      border-radius: 50%;
-      animation: pulse 1s infinite alternate;
-      transition: background-color var(--transition-mood);
-    }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes pulse {
-      from { opacity: 0.3; transform: scale(0.8); }
-      to { opacity: 1; transform: scale(1.25); }
-    }
-
-    /* Raw JSON Accordion */
-    .details-toggle {
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      font-size: 0.75rem;
-      cursor: pointer;
-      font-family: inherit;
-      padding: 0;
-      text-decoration: underline;
-    }
-
-    .details-toggle:hover {
-      color: var(--text-muted);
-    }
-
-    .raw-box {
-      display: none;
-      margin-top: 0.75rem;
-      background: var(--raw-box-bg);
-      border: 1px solid var(--raw-box-border);
-      border-radius: 10px;
-      padding: 0.85rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      color: var(--raw-box-text);
-      white-space: pre-wrap;
-      overflow-x: auto;
-    }
-
-    .raw-box.open {
-      display: block;
-    }
-
-    /* Discreet Bottom-Right Knowledge Engine Switcher */
-    .engine-toggle-btn {
-      position: fixed;
-      bottom: 1.25rem;
-      right: 1.25rem;
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      background: var(--chip-bg);
-      border: 1px solid var(--chip-border);
-      color: var(--text-dim);
-      display: flex;
-      align-items: center;
       justify-content: center;
-      cursor: pointer;
-      z-index: 60;
-      transition: all var(--transition-quick);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-      backdrop-filter: blur(10px);
+      gap: 6px;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
     }
 
-    .engine-toggle-btn:hover {
-      border-color: var(--text-heading);
-      color: var(--text-heading);
-      transform: translateY(-2px);
+    .btn:hover { background: var(--surface-3); }
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-icon {
+      padding: 6px 8px;
+      font-size: 14px;
     }
 
-    .engine-dot {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #06b6d4;
-      box-shadow: 0 0 6px #06b6d4;
-      transition: all 0.25s ease;
+    .new-chat-wrap {
+      padding: 12px 14px 8px;
     }
 
-    .engine-dot.backup {
-      background: #10b981;
-      box-shadow: 0 0 6px #10b981;
+    .new-chat-wrap .btn {
+      width: 100%;
     }
 
-    .engine-toast {
-      position: fixed;
-      bottom: 4.25rem;
-      right: 1.25rem;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 0.45rem 0.85rem;
-      font-size: 0.75rem;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--text-heading);
-      pointer-events: none;
-      opacity: 0;
-      transform: translateY(6px);
-      transition: all 0.25s ease;
-      z-index: 60;
-      backdrop-filter: blur(12px);
-      box-shadow: var(--card-shadow);
+    .session-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
 
-    .engine-toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    @media (max-width: 768px) {
-      header {
-        padding: 0.9rem 1.25rem;
-      }
-      .hero h1 {
-        font-size: 2rem;
-      }
-      main {
-        padding: 2rem 1rem 6rem 1rem;
-      }
-    }
-    /* Dashboard & Floating Brand Styles */
-    .dashboard-btn {
-      position: fixed;
-      top: 1.5rem;
-      right: 4.5rem;
-      height: 40px;
-      padding: 0 1rem;
-      border-radius: 20px;
-      background: var(--chip-bg);
-      border: 1px solid var(--chip-border);
-      color: var(--text-heading);
+    .session-item {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.82rem;
-      font-weight: 600;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 8px;
       cursor: pointer;
-      z-index: 60;
-      transition: all var(--transition-quick);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      font-size: 13px;
+      color: var(--text);
+      border: 1px solid transparent;
     }
-    .dashboard-btn:hover {
-      border-color: #10b981;
-      box-shadow: 0 6px 18px rgba(16, 185, 129, 0.15);
-      transform: translateY(-1px);
+
+    .session-item:hover {
+      background: var(--surface-2);
     }
-    .telemetry-dot {
+
+    .session-item.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .session-title {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .session-del {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 5px;
+      border-radius: 5px;
+      line-height: 1;
+    }
+
+    .session-del:hover {
+      background: var(--red-bg);
+      color: var(--red-text);
+    }
+
+    .sidebar-footer {
+      padding: 10px 14px 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sidebar-footer-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .sidebar-footer-row .btn {
+      flex: 1;
+      font-size: 12px;
+      padding: 6px 8px;
+    }
+
+    /* Main Workspace */
+    .main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .menu-btn {
+      display: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .badge .dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #10b981;
-      box-shadow: 0 0 8px #10b981;
-      animation: pulse 1.5s infinite alternate;
-    }
-    .brand-badge-pill {
-      position: fixed;
-      top: 1.5rem;
-      left: 1.5rem;
-      height: 40px;
-      padding: 0 0.9rem;
-      border-radius: 20px;
-      background: var(--chip-bg);
-      border: 1px solid var(--chip-border);
-      display: flex;
-      align-items: center;
-      gap: 0.45rem;
-      cursor: pointer;
-      z-index: 60;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      transition: all var(--transition-quick);
-    }
-    .brand-badge-pill:hover {
-      border-color: var(--text-heading);
-    }
-    .brand-tag {
-      font-weight: 800;
-      font-size: 0.72rem;
-      letter-spacing: 0.05em;
-      background: #111112;
-      color: #f5f5ee;
-      padding: 0.15rem 0.45rem;
-      border-radius: 6px;
-    }
-    [data-theme="dark"] .brand-tag {
-      background: #f5f5ee;
-      color: #111112;
-    }
-    .brand-sub {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-heading);
-    }
-
-    /* Dashboard Modal Overlay */
-    .dashboard-modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 14, 23, 0.75);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      z-index: 100;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    .dashboard-modal-overlay.open {
-      display: flex;
-      opacity: 1;
-    }
-    .dashboard-modal-content {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 24px;
-      width: 100%;
-      max-width: 1160px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4);
-      display: flex;
-      flex-direction: column;
-      color: var(--text-main);
-    }
-    .dash-header {
-      padding: 1.5rem 2rem;
-      border-bottom: 1px solid var(--card-border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      z-index: 10;
-    }
-    .dash-header h2 {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: var(--text-heading);
-      margin-bottom: 0.2rem;
-    }
-    .dash-header p {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-    }
-    .dash-close-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: transparent;
-      border: 1px solid var(--card-border);
-      color: var(--text-heading);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 1.1rem;
-      transition: all 0.2s ease;
-    }
-    .dash-close-btn:hover {
-      background: var(--chip-hover-bg);
-      border-color: var(--text-heading);
-    }
-    .dash-body {
-      padding: 1.75rem 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.75rem;
-    }
-    .dash-metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
-    }
-    .dash-metric-card {
-      background: rgba(255, 255, 255, 0.5);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 1.1rem 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-    }
-    [data-theme="dark"] .dash-metric-card {
-      background: rgba(255, 255, 255, 0.03);
-    }
-    .dash-metric-title {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-dim);
-      font-weight: 700;
-    }
-    .dash-metric-val {
-      font-size: 1.45rem;
-      font-weight: 800;
-      color: var(--text-heading);
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .dash-metric-sub {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-    .pipeline-section {
-      background: rgba(255, 255, 255, 0.4);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 1.25rem 1.5rem;
-    }
-    [data-theme="dark"] .pipeline-section {
-      background: rgba(255, 255, 255, 0.02);
-    }
-    .section-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text-heading);
-      margin-bottom: 0.9rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .pipeline-flow-wrap {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      overflow-x: auto;
-      padding-bottom: 0.5rem;
-    }
-    .pipeline-step {
-      flex: 1;
-      min-width: 145px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 0.85rem 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-    .pipeline-step.active {
-      border-color: #10b981;
-      box-shadow: 0 0 14px rgba(16, 185, 129, 0.2);
-    }
-    .pipeline-step-num {
-      font-size: 0.68rem;
-      font-weight: 700;
-      color: #10b981;
-      text-transform: uppercase;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .pipeline-step-name {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: var(--text-heading);
-    }
-    .pipeline-step-desc {
-      font-size: 0.72rem;
-      color: var(--text-dim);
-    }
-    .pipeline-arrow {
-      color: var(--text-dim);
-      font-size: 1.1rem;
+      background: currentColor;
       flex-shrink: 0;
     }
-    .live-trace-box {
-      margin-top: 1rem;
-      background: var(--raw-box-bg);
-      border: 1px solid var(--raw-box-border);
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.78rem;
-      color: var(--raw-box-text);
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
+
+    .badge-green {
+      background: var(--green-bg);
+      border-color: var(--green-border);
+      color: var(--green-text);
     }
-    .audit-controls {
+
+    .badge-amber {
+      background: var(--amber-bg);
+      border-color: var(--amber-border);
+      color: var(--amber-text);
+    }
+
+    .badge-role {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .topbar-right {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.75rem;
-      gap: 0.75rem;
+      gap: 8px;
       flex-wrap: wrap;
     }
-    .audit-filter-pills {
-      display: flex;
-      gap: 0.4rem;
+
+    .mode-switch {
+      display: inline-flex;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
     }
-    .audit-filter-btn {
-      background: var(--chip-bg);
-      border: 1px solid var(--chip-border);
-      border-radius: 16px;
-      padding: 0.3rem 0.75rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .audit-filter-btn.active, .audit-filter-btn:hover {
-      background: var(--text-heading);
-      color: var(--bg-base);
-      border-color: var(--text-heading);
-    }
-    .verify-btn {
-      background: #10b981;
-      color: #ffffff;
+
+    .mode-btn {
       border: none;
-      border-radius: 16px;
-      padding: 0.4rem 1rem;
-      font-size: 0.78rem;
-      font-weight: 700;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 9px;
+      border-radius: 6px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      transition: all 0.2s ease;
     }
-    .verify-btn:hover {
-      background: #059669;
+
+    .mode-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Chat area */
+    .chat-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px 24px;
+    }
+
+    .chat-inner {
+      max-width: 880px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Welcome & dynamic starter chips */
+    .welcome {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .welcome h1 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .welcome p {
+      margin: 0 0 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .starter-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .starter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+    }
+
+    .starter-chip {
+      text-align: left;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: var(--font-sans);
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    }
+
+    .starter-chip:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
       transform: translateY(-1px);
     }
-    .audit-table-wrap {
-      max-height: 320px;
-      overflow-y: auto;
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      background: var(--card-bg);
+
+    .starter-chip-tool {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 5px;
+      margin-bottom: 5px;
     }
-    .audit-table {
+
+    .starter-chip-q {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    /* Message rows */
+    .msg-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .msg-row.user {
+      align-items: flex-end;
+    }
+
+    .msg-row.assistant {
+      align-items: flex-start;
+    }
+
+    .msg-bubble {
+      max-width: 100%;
+      border-radius: 14px;
+      padding: 13px 16px;
+      font-size: 14px;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+
+    .msg-row.user .msg-bubble {
+      background: var(--user-bubble);
+      color: var(--user-text);
+      max-width: 82%;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-row.assistant .msg-bubble {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      width: 100%;
+      box-shadow: var(--shadow-sm);
+      border-bottom-left-radius: 4px;
+    }
+
+    /* Progress Steps (stream-driven) */
+    .progress-steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .step-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .step-pill.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .step-pill.done {
+      background: var(--green-bg);
+      color: var(--green-text);
+      border-color: var(--green-border);
+    }
+
+    /* Blocked by policy & error cards */
+    .policy-card {
+      background: var(--red-bg);
+      border: 1.5px solid var(--red-border);
+      color: var(--red-text);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .policy-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .policy-code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid var(--red-border);
+      background: var(--surface);
+      color: var(--red-text);
+    }
+
+    .policy-reason {
+      margin: 0;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    .warn-card {
+      background: var(--amber-bg);
+      border: 1.5px solid var(--amber-border);
+      color: var(--amber-text);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+
+    .warn-card strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    /* Structured Response Templates */
+    .answer-prose h3,
+    .answer-prose h4 {
+      margin: 10px 0 6px;
+      line-height: 1.3;
+      color: var(--text);
+    }
+    .answer-prose h3 { font-size: 15px; }
+    .answer-prose h4 { font-size: 13.5px; color: var(--accent); }
+    .answer-prose p {
+      margin: 0 0 8px;
+    }
+    .answer-prose p:last-child { margin-bottom: 0; }
+    .answer-prose ul {
+      margin: 4px 0 8px;
+      padding-left: 20px;
+    }
+    .answer-prose li {
+      margin-bottom: 4px;
+    }
+    .answer-prose code {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      background: var(--surface-2);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .tpl-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+      padding: 13px 14px;
+      margin-top: 6px;
+    }
+
+    .tpl-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .tpl-title {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .tpl-code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .kv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 8px 14px;
+      margin-top: 6px;
+    }
+
+    .kv-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .kv-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .kv-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .phone-note {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--amber-text);
+      background: var(--amber-bg);
+      border: 1px solid var(--amber-border);
+      border-radius: 6px;
+      padding: 2px 7px;
+      width: fit-content;
+    }
+
+    .tpl-summary {
+      font-size: 13.5px;
+      color: var(--text);
+      margin: 6px 0 8px;
+      line-height: 1.5;
+    }
+
+    .sub-details {
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .sub-details summary {
+      cursor: pointer;
+      padding: 8px 11px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sub-details summary::-webkit-details-marker { display: none; }
+    .sub-details summary::after {
+      content: "▸";
+      color: var(--text-muted);
+    }
+    .sub-details[open] summary::after { content: "▾"; }
+
+    .sub-details-body {
+      padding: 8px 12px 10px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .unit-item {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .unit-item:last-child { border-bottom: none; }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    table.data-tbl {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.78rem;
-      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      min-width: 420px;
     }
-    .audit-table th {
-      background: rgba(0, 0, 0, 0.04);
-      color: var(--text-muted);
-      font-weight: 600;
-      padding: 0.65rem 0.85rem;
+
+    table.data-tbl th,
+    table.data-tbl td {
+      padding: 7px 10px;
       text-align: left;
-      position: sticky;
-      top: 0;
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--card-border);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
     }
-    [data-theme="dark"] .audit-table th {
-      background: rgba(255, 255, 255, 0.05);
-    }
-    .audit-table td {
-      padding: 0.65rem 0.85rem;
-      border-bottom: 1px solid var(--card-border);
-      color: var(--text-main);
-    }
-    .status-pill {
-      display: inline-block;
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
+
+    table.data-tbl th {
+      background: var(--surface-2);
       font-weight: 700;
-      font-size: 0.7rem;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-muted);
     }
-    .status-pill.success {
-      background: rgba(16, 185, 129, 0.15);
-      color: #10b981;
+
+    table.data-tbl tr:last-child td { border-bottom: none; }
+
+    /* Choice chips for duplicate names/titles */
+    .choice-wrap {
+      margin-top: 10px;
     }
-    .status-pill.violation {
-      background: rgba(239, 68, 68, 0.15);
-      color: #ef4444;
+
+    .choice-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
     }
-    .trace-drawer {
-      margin-top: 0.75rem;
-      background: var(--raw-box-bg);
-      border: 1px solid var(--raw-box-border);
+
+    .choice-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .choice-chip {
+      text-align: left;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 0.85rem 1rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.76rem;
-      color: var(--raw-box-text);
-      display: none;
+      padding: 8px 11px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: var(--font-sans);
+      transition: border-color 0.15s, background 0.15s;
+      max-width: 100%;
     }
-    .trace-drawer.show {
+
+    .choice-chip:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .choice-chip-name {
       display: block;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .choice-chip-meta {
+      display: block;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Evidence drawer (collapsed by default) */
+    details.evidence-drawer {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface-2);
+      font-size: 12px;
+    }
+
+    details.evidence-drawer summary {
+      cursor: pointer;
+      padding: 7px 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      list-style: none;
+    }
+
+    details.evidence-drawer summary::-webkit-details-marker { display: none; }
+    details.evidence-drawer summary::after { content: "Show details ▸"; font-size: 11px; }
+    details.evidence-drawer[open] summary::after { content: "Hide details ▾"; }
+
+    .evidence-grid {
+      border-top: 1px solid var(--border);
+      padding: 10px 11px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 8px 12px;
+      background: var(--surface);
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+
+    .ev-cell-label {
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .ev-cell-val {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text);
+      margin-top: 2px;
+      word-break: break-word;
+    }
+
+    .ev-span-2 {
+      grid-column: 1 / -1;
+    }
+
+    .ev-pass { color: var(--green-text); font-weight: 700; }
+    .ev-sub { color: var(--amber-text); font-weight: 700; }
+
+    /* Composer */
+    .composer-wrap {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 10px 14px 12px;
+    }
+
+    .composer-inner {
+      max-width: 880px;
+      margin: 0 auto;
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .composer-input {
+      flex: 1;
+      min-height: 44px;
+      max-height: 140px;
+      resize: none;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      padding: 10px 12px;
+      line-height: 1.4;
+      outline: none;
+    }
+
+    .composer-input:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+
+    .send-btn {
+      height: 44px;
+      padding: 0 18px;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .composer-hint {
+      max-width: 880px;
+      margin: 6px auto 0;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Mobile drawer backdrop */
+    .backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 25;
+    }
+
+    @media (max-width: 760px) {
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        box-shadow: var(--shadow-md);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .backdrop.open {
+        display: block;
+      }
+      .menu-btn {
+        display: inline-flex;
+      }
+      .topbar {
+        padding: 8px 10px;
+      }
+      .chat-scroll {
+        padding: 12px 10px 18px;
+      }
+      .msg-row.user .msg-bubble {
+        max-width: 92%;
+      }
+      .starter-grid {
+        grid-template-columns: 1fr;
+      }
+      .composer-wrap {
+        padding: 8px 10px 10px;
+      }
+      .send-btn {
+        padding: 0 13px;
+      }
     }
   </style>
 </head>
-<body data-mood="default">
-
-  <!-- Ambient Fluid Gradient (Morphs colors smoothly across questions) -->
-  <div class="ambient-bg">
-    <div class="ambient-gradient"></div>
-    <svg class="ambient-vector" viewBox="0 0 1440 900" fill="none" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="1180" cy="180" r="280" stroke="currentColor" stroke-width="1.0" stroke-dasharray="4 4" opacity="0.12"/>
-      <circle cx="1180" cy="180" r="420" stroke="currentColor" stroke-width="0.8" opacity="0.08"/>
-      <path d="M700 900C900 720 1150 780 1440 600" stroke="currentColor" stroke-width="1.0" opacity="0.1"/>
-    </svg>
-  </div>
-
-  <div class="app-wrapper">
-    <!-- Brand Badge (Top Left) -->
-    <div class="brand-badge-pill" onclick="resetToHome(event)" title="Return to SRMIST Home">
-      <span class="brand-tag">SRMIST</span>
-      <span class="brand-sub">Campus Graph</span>
-    </div>
-
-    <!-- Live Architecture & Audit Dashboard Button (Top Right) -->
-    <button type="button" class="dashboard-btn" id="dashboardBtn" onclick="openDashboard()" title="Live Architecture & Audit Telemetry Dashboard">
-      <span class="telemetry-dot"></span>
-      <span>Architecture & Logs</span>
-    </button>
-
-    <!-- Real-Time Architecture & Cryptographic Audit Dashboard Modal -->
-    <div class="dashboard-modal-overlay" id="dashboardModal" onclick="handleModalOverlayClick(event)">
-      <div class="dashboard-modal-content">
-        <div class="dash-header">
-          <div>
-            <h2>Architecture Telemetry & Cryptographic Audit Ledger</h2>
-            <p>Live offline trace from natural language query through Cypher AST security to Neo4j graph execution.</p>
-          </div>
-          <button type="button" class="dash-close-btn" onclick="closeDashboard()" title="Close Dashboard">&times;</button>
-        </div>
-
-        <div class="dash-body">
-          <!-- Live Metrics Grid -->
-          <div class="dash-metrics-grid">
-            <div class="dash-metric-card">
-              <span class="dash-metric-title">SHA-256 Hash Chain</span>
-              <span class="dash-metric-val" style="color:#10b981;" id="metricChainStatus">VALID</span>
-              <span class="dash-metric-sub" id="metricChainDetail">Zero tampering detected</span>
-            </div>
-            <div class="dash-metric-card">
-              <span class="dash-metric-title">Logged Invocations</span>
-              <span class="dash-metric-val" id="metricTotalLogs">1,350+</span>
-              <span class="dash-metric-sub">Append-only JSONL ledger</span>
-            </div>
-            <div class="dash-metric-card">
-              <span class="dash-metric-title">Target Graph Database</span>
-              <span class="dash-metric-val" style="color:#0284c7; font-size:1.15rem;">bolt://127.0.0.1:7687</span>
-              <span class="dash-metric-sub">Neo4j Community (Active)</span>
-            </div>
-            <div class="dash-metric-card">
-              <span class="dash-metric-title">Avg Engine Latency</span>
-              <span class="dash-metric-val" style="color:#10b981;" id="metricAvgLatency">2.4 ms</span>
-              <span class="dash-metric-sub">Sub-5ms Graph Execution</span>
-            </div>
-          </div>
-
-          <!-- End-to-End Architecture Pipeline Visualizer -->
-          <div class="pipeline-section">
-            <div class="section-title">
-              <span>Live End-to-End Architecture Flow</span>
-              <span style="font-size:0.75rem; font-weight:600; color:#10b981;">● Online & Offline Ready</span>
-            </div>
-            <div class="pipeline-flow-wrap">
-              <div class="pipeline-step active">
-                <span class="pipeline-step-num">Step 1</span>
-                <span class="pipeline-step-name">User Query</span>
-                <span class="pipeline-step-desc">Natural language input</span>
-              </div>
-              <span class="pipeline-arrow">&rarr;</span>
-              <div class="pipeline-step active">
-                <span class="pipeline-step-num">Step 2</span>
-                <span class="pipeline-step-name">Intent Router</span>
-                <span class="pipeline-step-desc">Fast-Path & normalizer</span>
-              </div>
-              <span class="pipeline-arrow">&rarr;</span>
-              <div class="pipeline-step active">
-                <span class="pipeline-step-num">Step 3</span>
-                <span class="pipeline-step-name">RBAC Security Guard</span>
-                <span class="pipeline-step-desc">policy.yaml whitelist</span>
-              </div>
-              <span class="pipeline-arrow">&rarr;</span>
-              <div class="pipeline-step active">
-                <span class="pipeline-step-num">Step 4</span>
-                <span class="pipeline-step-name">Neo4j Engine</span>
-                <span class="pipeline-step-desc">Cypher graph traversal</span>
-              </div>
-              <span class="pipeline-arrow">&rarr;</span>
-              <div class="pipeline-step active">
-                <span class="pipeline-step-num">Step 5</span>
-                <span class="pipeline-step-name">SHA-256 Ledger</span>
-                <span class="pipeline-step-desc">Cryptographic chaining</span>
-              </div>
-              <span class="pipeline-arrow">&rarr;</span>
-              <div class="pipeline-step active">
-                <span class="pipeline-step-num">Step 6</span>
-                <span class="pipeline-step-name">Grounded Output</span>
-                <span class="pipeline-step-desc">Official citation answer</span>
-              </div>
-            </div>
-
-            <!-- Real-Time Trace of Most Recent Query -->
-            <div class="live-trace-box" id="latestTraceBox">
-              <div style="font-weight:700; color:var(--text-heading); display:flex; justify-content:space-between;">
-                <span>LATEST LIVE EXECUTION TRACE</span>
-                <span id="traceTimestamp" style="color:var(--text-dim); font-size:0.72rem;">Waiting for query...</span>
-              </div>
-              <div><strong>Raw Input:</strong> <span id="traceInput">Run any query to see live execution trace</span></div>
-              <div><strong>Tool Dispatched:</strong> <span id="traceTool" style="color:#0284c7;">--</span></div>
-              <div><strong>Executed Cypher Pattern:</strong> <code id="traceCypher" style="color:#10b981;">MATCH (p:Program)-[:OFFERS_IN_SEMESTER]->(c:Course) RETURN c</code></div>
-              <div><strong>Cryptographic Hash:</strong> <span id="traceHash" style="color:var(--text-dim); font-size:0.7rem;">--</span></div>
-            </div>
-          </div>
-
-          <!-- Cryptographic Audit Event Stream -->
-          <div class="pipeline-section">
-            <div class="audit-controls">
-              <div class="audit-filter-pills">
-                <button type="button" class="audit-filter-btn active" onclick="filterAuditLogs('all', this)">All Events</button>
-                <button type="button" class="audit-filter-btn" onclick="filterAuditLogs('SUCCESS', this)">Success</button>
-                <button type="button" class="audit-filter-btn" onclick="filterAuditLogs('POLICY_VIOLATION', this)">Policy Violations</button>
-                <button type="button" class="audit-filter-btn" onclick="filterAuditLogs('curriculum', this)">Curriculum</button>
-              </div>
-              <button type="button" class="verify-btn" onclick="verifyAuditChainLive()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Verify Hash Chain Now
-              </button>
-            </div>
-            <div class="audit-table-wrap">
-              <table class="audit-table">
-                <thead>
-                  <tr>
-                    <th>Timestamp</th>
-                    <th>Caller</th>
-                    <th>Tool Executed</th>
-                    <th>Status</th>
-                    <th>Latency</th>
-                    <th>Parameters</th>
-                  </tr>
-                </thead>
-                <tbody id="auditTableBody">
-                  <tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--text-dim);">Loading audit events...</td></tr>
-                </tbody>
-              </table>
-            </div>
+<body>
+  <div class="backdrop" id="backdrop"></div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Chat sessions">
+      <div class="sidebar-header">
+        <div class="brand">
+          <div class="brand-mark">SRM</div>
+          <div class="brand-text">
+            <div class="brand-title">Campus Assistant</div>
+            <div class="brand-sub">Governed Knowledge Graph</div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Floating Theme Toggle (Light / Dark) -->
-    <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Switch Light/Dark Theme">
-      <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="5"></circle>
-        <line x1="12" y1="1" x2="12" y2="3"></line>
-        <line x1="12" y1="21" x2="12" y2="23"></line>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-        <line x1="1" y1="12" x2="3" y2="12"></line>
-        <line x1="21" y1="12" x2="23" y2="12"></line>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-      </svg>
-    </button>
-
-    <!-- Main Content Area -->
-    <main>
-      <!-- Hero Center -->
-      <div class="hero" id="heroSection">
-        <h1>Ask anything about campus...</h1>
-        <p>Explore resources, policies and more</p>
-
-        <div class="hero-search-wrap">
-          <form class="search-bar-form" onsubmit="handleSearch(event, 'heroInput')">
-            <div class="search-icon-left">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-            </div>
-            <input 
-              type="text" 
-              class="search-input" 
-              id="heroInput" 
-              placeholder="Search for policies, courses, events..." 
-              autocomplete="off"
-              autofocus
-            />
-            <button type="submit" class="search-submit-btn" title="Search">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-              </svg>
-            </button>
-          </form>
-        </div>
-
-        <!-- Topic Suggestion Chips -->
-        <div class="suggestions">
-          <button type="button" class="suggestion-chip" onmouseenter="previewMood('course')" onmouseleave="restoreMood()" onclick="askQuestion('What are the 3rd semester subjects for CSE?')">B.Tech CSE Semester 3</button>
-          <button type="button" class="suggestion-chip" onmouseenter="previewMood('course')" onmouseleave="restoreMood()" onclick="askQuestion('What courses do I take in Semester 4 of AI?')">AI Semester 4 Courses</button>
-          <button type="button" class="suggestion-chip" onmouseenter="previewMood('admission')" onmouseleave="restoreMood()" onclick="askQuestion('eligibility for btech')">Eligibility for B.Tech</button>
-          <button type="button" class="suggestion-chip" onmouseenter="previewMood('course')" onmouseleave="restoreMood()" onclick="askQuestion('Prerequisites for 21CSO451T')">Prerequisites for 21CSO451T</button>
-          <button type="button" class="suggestion-chip" onmouseenter="previewMood('course')" onmouseleave="restoreMood()" onclick="askQuestion('What is 21CSC206T and who teaches it?')">21CSC206T (AI Course)</button>
-          <button type="button" class="suggestion-chip" onmouseenter="previewMood('room')" onmouseleave="restoreMood()" onclick="askQuestion('Find available rooms in Tech Park')">Vacant rooms in Tech Park</button>
-        </div>
+        <button class="btn btn-icon menu-btn" id="closeSidebarBtn" type="button" aria-label="Close menu">&times;</button>
       </div>
 
-      <!-- Live Stream of Conversation Cards -->
-      <div class="stream" id="stream"></div>
+      <div class="new-chat-wrap">
+        <button class="btn btn-primary" id="newChatBtn" type="button">+ New Chat</button>
+      </div>
+
+      <div class="session-list" id="sessionList"></div>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-footer-row">
+          <button class="btn" id="themeBtn" type="button">Theme: Light</button>
+          <a class="btn" href="/audit.html">Admin Audit</a>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="btn btn-icon menu-btn" id="openSidebarBtn" type="button" aria-label="Open sessions">&#9776;</button>
+          <span class="badge badge-amber" id="engineBadge" title="Refreshed from /health every 30 seconds">
+            <span class="dot"></span>
+            <span id="engineBadgeText">Checking engine...</span>
+          </span>
+          <span class="badge badge-role" id="roleBadge">Role: Student</span>
+        </div>
+
+        <div class="topbar-right">
+          <div class="mode-switch" role="group" aria-label="Routing mode">
+            <button class="mode-btn active" id="modeHybridBtn" type="button" title="Default router-first: heuristic router -> Qwen fallback -> clarification">Router-First</button>
+            <button class="mode-btn" id="modeIntentBtn" type="button" title="Optional experimental mode: Qwen intent classification first">LLM Intent (Experimental)</button>
+          </div>
+          <button class="btn" id="proseToggleBtn" type="button" style="font-size:12px;padding:5px 9px;" title="Toggle Qwen 2.5 conversational prose writing">Prose: Off</button>
+        </div>
+      </header>
+
+      <section class="chat-scroll" id="chatScroll">
+        <div class="chat-inner" id="chatInner"></div>
+      </section>
+
+      <footer class="composer-wrap">
+        <form class="composer-inner" id="chatForm">
+          <textarea
+            id="queryInput"
+            class="composer-input"
+            rows="1"
+            placeholder="Ask about courses, prerequisites, faculty, rooms, curriculum, or admissions..."
+            aria-label="Campus question"
+          ></textarea>
+          <button class="btn btn-primary send-btn" id="sendBtn" type="submit">Send</button>
+        </form>
+        <div class="composer-hint">
+          <span>Anonymous access runs under least-privilege Student policy (25-row cap, private fields masked).</span>
+          <span id="modeHint">Mode: Instant (~65 ms structured)</span>
+        </div>
+      </footer>
     </main>
-
-    <!-- Sticky Bottom Search Bar (Activated during conversation) -->
-    <div class="search-wrapper-bottom" id="bottomSearchBar">
-      <form class="search-bar-form" onsubmit="handleSearch(event, 'bottomInput')">
-        <button type="button" class="search-home-btn" onclick="resetToHome(event)" title="Return to Home / Clear">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-        <div class="search-icon-left">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-        </div>
-        <input 
-          type="text" 
-          class="search-input" 
-          id="bottomInput" 
-          placeholder="Search for policies, courses, events..." 
-          autocomplete="off"
-        />
-        <button type="submit" class="search-submit-btn" id="bottomSubmitBtn" title="Send question">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-            <polyline points="12 5 19 12 12 19"></polyline>
-          </svg>
-        </button>
-      </form>
-    </div>
-
-    <!-- Discreet Bottom-Right Knowledge Engine Switcher -->
-    <button class="engine-toggle-btn" id="engineToggleBtn" onclick="toggleEngineMode()" title="Knowledge Engine Mode">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
-        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
-        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
-      </svg>
-      <span class="engine-dot" id="engineDot"></span>
-    </button>
-    <div class="engine-toast" id="engineToast"></div>
   </div>
 
   <script>
-    const API_BASE = window.location.protocol.startsWith("http") ? window.location.origin : "http://localhost:8000";
-    let currentEngineMode = "neo4j";
-    let activeMood = "default";
-    let clientSessionId = sessionStorage.getItem("srm_session_id");
-    if (!clientSessionId) {
-      clientSessionId = "srm_sess_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now();
-      sessionStorage.setItem("srm_session_id", clientSessionId);
-    }
+    (function () {
+      "use strict";
 
-    // =========================================================================
-    // DYNAMIC CONTEXTUAL MOOD SYSTEM (Smooth, gradual 1.8s transitions)
-    // =========================================================================
-    const MOOD_MAP = {
-      default: { label: "Ready", name: "default" },
-      faculty: { label: "Faculty & Staff", name: "faculty" },
-      admission: { label: "Admissions & Fees", name: "admission" },
-      course: { label: "Curriculum & Courses", name: "course" },
-      room: { label: "Classrooms & Venues", name: "room" }
-    };
+      const API_BASE = window.location.protocol.startsWith("http")
+        ? window.location.origin
+        : "http://localhost:8000";
 
-    function setMood(moodKey) {
-      if (!MOOD_MAP[moodKey]) moodKey = "default";
-      activeMood = moodKey;
-      document.body.setAttribute("data-mood", moodKey);
-      const labelEl = document.getElementById("moodLabel");
-      if (labelEl) labelEl.innerText = MOOD_MAP[moodKey].label;
-    }
+      const STORAGE_SESSIONS_KEY = "srmist_assistant_sessions_v2";
+      const STORAGE_THEME_KEY = "srmist_assistant_theme_v2";
+      const STORAGE_ROUTING_KEY = "srmist_assistant_routing_v3";
+      const STORAGE_PROSE_KEY = "srmist_assistant_prose_v3";
+      const REQUEST_TIMEOUT_MS = 45000;
+      const HEALTH_POLL_MS = 30000;
 
-    function previewMood(moodKey) {
-      document.body.setAttribute("data-mood", moodKey);
-      const labelEl = document.getElementById("moodLabel");
-      if (labelEl) labelEl.innerText = MOOD_MAP[moodKey].label;
-    }
+      let sessions = [];
+      let activeSessionId = null;
+      let isSending = false;
+      let routingMode = "hybrid";
+      let useQwenProse = false;
+      let dynamicStarters = [];
+      let currentEngineLabel = "Fallback (not graph data)";
 
-    function restoreMood() {
-      document.body.setAttribute("data-mood", activeMood);
-      const labelEl = document.getElementById("moodLabel");
-      if (labelEl) labelEl.innerText = MOOD_MAP[activeMood].label;
-    }
+      // DOM refs
+      const sidebarEl = document.getElementById("sidebar");
+      const backdropEl = document.getElementById("backdrop");
+      const openSidebarBtn = document.getElementById("openSidebarBtn");
+      const closeSidebarBtn = document.getElementById("closeSidebarBtn");
+      const newChatBtn = document.getElementById("newChatBtn");
+      const sessionListEl = document.getElementById("sessionList");
+      const themeBtn = document.getElementById("themeBtn");
+      const engineBadgeEl = document.getElementById("engineBadge");
+      const engineBadgeTextEl = document.getElementById("engineBadgeText");
+      const modeHybridBtn = document.getElementById("modeHybridBtn");
+      const modeIntentBtn = document.getElementById("modeIntentBtn");
+      const proseToggleBtn = document.getElementById("proseToggleBtn");
+      const modeHintEl = document.getElementById("modeHint");
+      const chatScrollEl = document.getElementById("chatScroll");
+      const chatInnerEl = document.getElementById("chatInner");
+      const chatForm = document.getElementById("chatForm");
+      const queryInput = document.getElementById("queryInput");
+      const sendBtn = document.getElementById("sendBtn");
 
-    // Predictive instant intent detection to start smooth transition immediately
-    function predictMood(query) {
-      const q = query.toLowerCase();
-      if (q.includes("dr.") || q.includes("prof") || q.includes("cabin") || q.includes("faculty") || q.includes("dean") || q.includes("hod")) {
-        return "faculty";
-      }
-      if (q.includes("b.tech") || q.includes("eligib") || q.includes("cutoff") || q.includes("fee") || q.includes("admission") || q.includes("m.tech") || q.includes("mba") || q.includes("mbbs")) {
-        return "admission";
-      }
-      if (q.includes("cse") || q.includes("course") || q.includes("couse") || q.includes("syllabus") || q.includes("prereq") || q.includes("subject") || q.includes("credits") || q.includes("how many") || q.includes("number of") || q.includes("statistics") || q.includes("total")) {
-        return "course";
-      }
-      if (q.includes("room") || q.includes("tp-") || q.includes("ub-") || /\b(?:tp|ub|bel|meb|esb|fmb|slb|mcb)\d{3}\b/i.test(q) || q.includes("tech park") || q.includes("vacant") || q.includes("schedule") || q.includes("building")) {
-        return "room";
-      }
-      return "default";
-    }
-
-    // Server Tool to Mood mapping for verified ground truth
-    function toolToMood(toolName) {
-      switch (toolName) {
-        case "lookup_faculty_profile":
-        case "find_faculty_for_course":
-          return "faculty";
-        case "check_admission_eligibility":
-          return "admission";
-        case "lookup_course":
-        case "get_prerequisite_tree":
-        case "verify_prerequisites":
-        case "search_courses_semantic":
-        case "get_campus_statistics":
-        case "get_semester_curriculum":
-          return "course";
-        case "find_room_schedule":
-        case "find_available_rooms":
-          return "room";
-        default:
-          return "default";
-      }
-    }
-
-    // =========================================================================
-    // THEME MANAGEMENT (Bright Theme default, Dark Theme support)
-    // =========================================================================
-    function initTheme() {
-      const currentAttr = document.documentElement.getAttribute("data-theme");
-      const savedTheme = localStorage.getItem("srm_theme") || currentAttr || "bright";
-      setTheme(savedTheme);
-    }
-
-    function toggleTheme() {
-      const current = document.documentElement.getAttribute("data-theme") || "bright";
-      const next = current === "bright" ? "dark" : "bright";
-      setTheme(next);
-    }
-
-    function setTheme(theme) {
-      document.documentElement.setAttribute("data-theme", theme);
-      localStorage.setItem("srm_theme", theme);
-      const icon = document.getElementById("themeIcon");
-      if (theme === "dark") {
-        icon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
-      } else {
-        icon.innerHTML = `
-          <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="1" x2="12" y2="3"></line>
-          <line x1="12" y1="21" x2="12" y2="23"></line>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-          <line x1="1" y1="12" x2="3" y2="12"></line>
-          <line x1="21" y1="12" x2="23" y2="12"></line>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-        `;
-      }
-    }
-
-    // =========================================================================
-    // KNOWLEDGE ENGINE TOGGLE (Neo4j Community vs In-Memory Cache)
-    // =========================================================================
-    function toggleEngineMode() {
-      currentEngineMode = (currentEngineMode === "neo4j") ? "backup" : "neo4j";
-      const dot = document.getElementById("engineDot");
-      const toast = document.getElementById("engineToast");
-
-      if (currentEngineMode === "neo4j") {
-        dot.classList.remove("backup");
-        toast.innerHTML = `<span style="color:#06b6d4">●</span> Neo4j Community (Vector Index)`;
-      } else {
-        dot.classList.add("backup");
-        toast.innerHTML = `<span style="color:#10b981">●</span> Governed In-Memory Cache`;
+      // Strict HTML escaping: prevents any injected tags/scripts from executing
+      function escapeHtml(val) {
+        if (val === null || val === undefined) return "";
+        return String(val)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
       }
 
-      toast.classList.add("show");
-      setTimeout(() => { toast.classList.remove("show"); }, 2000);
-    }
+      // Safe markdown formatting AFTER escaping every character of raw text
+      function renderSafeMarkdown(rawText) {
+        const escaped = escapeHtml(rawText || "");
+        const lines = escaped.split(/\r?\n/);
+        const html = [];
+        let inList = false;
 
-    // =========================================================================
-    // SEARCH & INTERACTION FLOW
-    // =========================================================================
-    function resetToHome(e) {
-      if (e) e.preventDefault();
-      clientSessionId = "srm_sess_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now();
-      sessionStorage.setItem("srm_session_id", clientSessionId);
-      document.getElementById("heroSection").classList.remove("hidden");
-      document.getElementById("bottomSearchBar").classList.remove("visible");
-      document.getElementById("stream").innerHTML = "";
-      setMood("default");
-      const heroInput = document.getElementById("heroInput");
-      if (heroInput) {
-        heroInput.value = "";
-        heroInput.focus();
-      }
-    }
-
-    function formatText(raw) {
-      if (!raw) return "";
-      let text = escapeHtml(raw);
-      // Inline formatting & entity tags
-      text = text
-        .replace(/\[Course:\s*([^\]]+)\]/g, '<span class="entity-tag">[Course: $1]</span>')
-        .replace(/\[Faculty:\s*([^\]]+)\]/g, '<span class="entity-tag">[Faculty: $1]</span>')
-        .replace(/\[Room:\s*([^\]]+)\]/g, '<span class="entity-tag">[Room: $1]</span>')
-        .replace(/\[Program:\s*([^\]]+)\]/g, '<span class="entity-tag">[Program: $1]</span>')
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-        .replace(/`([^`]+)`/g, '<code class="md-code">$1</code>');
-
-      // Block-level rendering: proper <ul><li> lists, headings, and paragraphs with no stray bullets or <br> gaps
-      const lines = text.split(/\r?\n/);
-      const blocks = [];
-      let listItems = [];
-      let paraLines = [];
-
-      const flushList = () => {
-        if (listItems.length) {
-          blocks.push(`<ul class="md-list">${listItems.map(item => `<li>${item}</li>`).join('')}</ul>`);
-          listItems = [];
-        }
-      };
-
-      const flushPara = () => {
-        if (paraLines.length) {
-          blocks.push(`<p class="md-para">${paraLines.join('<br>')}</p>`);
-          paraLines = [];
-        }
-      };
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const trimmed = line.trim();
-
-        if (!trimmed) {
-          flushList();
-          flushPara();
-          continue;
+        function inlineFmt(s) {
+          return s
+            .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+            .replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
+            .replace(/`([^`\n]+)`/g, "<code>$1</code>");
         }
 
-        const h4Match = trimmed.match(/^####\s+(.*)$/);
-        if (h4Match) {
-          flushList();
-          flushPara();
-          blocks.push(`<div class="md-h4">${h4Match[1]}</div>`);
-          continue;
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) {
+            if (inList) {
+              html.push("</ul>");
+              inList = false;
+            }
+            continue;
+          }
+          if (/^####\s+/.test(line)) {
+            if (inList) { html.push("</ul>"); inList = false; }
+            html.push("<h4>" + inlineFmt(line.replace(/^####\s+/, "")) + "</h4>");
+          } else if (/^#{1,3}\s+/.test(line)) {
+            if (inList) { html.push("</ul>"); inList = false; }
+            html.push("<h3>" + inlineFmt(line.replace(/^#{1,3}\s+/, "")) + "</h3>");
+          } else if (/^[-*]\s+/.test(line)) {
+            if (!inList) {
+              html.push("<ul>");
+              inList = true;
+            }
+            html.push("<li>" + inlineFmt(line.replace(/^[-*]\s+/, "")) + "</li>");
+          } else {
+            if (inList) {
+              html.push("</ul>");
+              inList = false;
+            }
+            html.push("<p>" + inlineFmt(line) + "</p>");
+          }
         }
-
-        const h3Match = trimmed.match(/^###\s+(.*)$/);
-        if (h3Match) {
-          flushList();
-          flushPara();
-          blocks.push(`<div class="md-h3">${h3Match[1]}</div>`);
-          continue;
-        }
-
-        const liMatch = line.match(/^\s*[-*]\s+(.*)$/);
-        if (liMatch) {
-          flushPara();
-          listItems.push(liMatch[1]);
-          continue;
-        }
-
-        flushList();
-        paraLines.push(trimmed);
+        if (inList) html.push("</ul>");
+        return '<div class="answer-prose">' + html.join("") + "</div>";
       }
 
-      flushList();
-      flushPara();
-      return blocks.join('');
-    }
+      // Theme persistence
+      function applyTheme(theme) {
+        const t = theme === "dark" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", t);
+        themeBtn.textContent = t === "dark" ? "Theme: Dark" : "Theme: Light";
+        try { localStorage.setItem(STORAGE_THEME_KEY, t); } catch (_) {}
+      }
 
-    function askQuestion(q) {
-      const heroInput = document.getElementById("heroInput");
-      const bottomInput = document.getElementById("bottomInput");
-      if (heroInput) heroInput.value = q;
-      if (bottomInput) bottomInput.value = q;
-      handleSearch(null, "heroInput", q);
-    }
+      function applyModeUI() {
+        const isIntent = routingMode === "llm_intent";
+        modeHybridBtn.classList.toggle("active", !isIntent);
+        modeIntentBtn.classList.toggle("active", isIntent);
+        proseToggleBtn.textContent = useQwenProse ? "Prose: On" : "Prose: Off";
+        proseToggleBtn.style.borderColor = useQwenProse ? "var(--accent)" : "";
+        proseToggleBtn.style.color = useQwenProse ? "var(--accent)" : "";
+        modeHintEl.textContent = isIntent
+          ? ("Mode: LLM Intent (Experimental — Qwen intent first" + (useQwenProse ? " + Qwen prose)" : ")"))
+          : ("Mode: Router-First (Default — heuristic -> Qwen fallback -> clarify" + (useQwenProse ? " + Qwen prose)" : ")"));
+        try {
+          localStorage.setItem(STORAGE_ROUTING_KEY, routingMode);
+          localStorage.setItem(STORAGE_PROSE_KEY, useQwenProse ? "1" : "0");
+        } catch (_) {}
+      }
 
-    async function handleSearch(e, sourceInputId, overrideText) {
-      if (e) e.preventDefault();
-      const input = document.getElementById(sourceInputId);
-      const query = (overrideText || (input ? input.value : "")).trim();
-      if (!query) return;
+      // Sessions
+      function uid() {
+        return "sess_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+      }
 
-      if (input) input.value = "";
-      const otherId = (sourceInputId === "heroInput") ? "bottomInput" : "heroInput";
-      const otherInput = document.getElementById(otherId);
-      if (otherInput) otherInput.value = "";
+      function saveSessions() {
+        try { localStorage.setItem(STORAGE_SESSIONS_KEY, JSON.stringify(sessions)); } catch (_) {}
+      }
 
-      // Smoothly start shifting mood right away based on query
-      const predicted = predictMood(query);
-      setMood(predicted);
+      function loadSessions() {
+        try {
+          const raw = localStorage.getItem(STORAGE_SESSIONS_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              sessions = parsed;
+              activeSessionId = sessions[0].id;
+              return;
+            }
+          }
+        } catch (_) {}
+        const fresh = { id: uid(), title: "New Chat", messages: [] };
+        sessions = [fresh];
+        activeSessionId = fresh.id;
+      }
 
-      document.getElementById("heroSection").classList.add("hidden");
-      document.getElementById("bottomSearchBar").classList.add("visible");
+      function getActiveSession() {
+        let s = sessions.find(function (x) { return x.id === activeSessionId; });
+        if (!s) {
+          s = { id: uid(), title: "New Chat", messages: [] };
+          sessions.unshift(s);
+          activeSessionId = s.id;
+        }
+        return s;
+      }
 
-      const stream = document.getElementById("stream");
-      const queryId = "q_" + Date.now();
+      function createSession() {
+        const s = { id: uid(), title: "New Chat", messages: [] };
+        sessions.unshift(s);
+        activeSessionId = s.id;
+        saveSessions();
+        renderSessions();
+        renderChat();
+        closeSidebar();
+      }
 
-      // Render User Query Card
-      const queryItem = document.createElement("div");
-      queryItem.className = "query-item";
-      queryItem.id = queryId;
-      queryItem.innerHTML = `
-        <div class="user-query">${escapeHtml(query)}</div>
-        <div class="assistant-card" id="card_${queryId}">
-          <div class="loading-shimmer">
-            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-            <span>Querying campus knowledge graph...</span>
-          </div>
-        </div>
-      `;
-      stream.appendChild(queryItem);
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      function deleteSession(id) {
+        sessions = sessions.filter(function (x) { return x.id !== id; });
+        if (sessions.length === 0) {
+          const s = { id: uid(), title: "New Chat", messages: [] };
+          sessions.push(s);
+        }
+        if (activeSessionId === id) {
+          activeSessionId = sessions[0].id;
+        }
+        saveSessions();
+        renderSessions();
+        renderChat();
+      }
 
-      const bottomSubmitBtn = document.getElementById("bottomSubmitBtn");
-      if (bottomSubmitBtn) bottomSubmitBtn.disabled = true;
+      function renderSessions() {
+        sessionListEl.innerHTML = "";
+        sessions.forEach(function (s) {
+          const row = document.createElement("div");
+          row.className = "session-item" + (s.id === activeSessionId ? " active" : "");
+          row.addEventListener("click", function () {
+            activeSessionId = s.id;
+            renderSessions();
+            renderChat();
+            closeSidebar();
+          });
 
-      const t0 = performance.now();
-      try {
-        const streamUrl = `${API_BASE}/agent/ask/stream`;
-        const payload = {
-          query: query,
-          use_qwen: true,
-          role: "student",
-          engine_mode: currentEngineMode,
-          session_id: clientSessionId
+          const titleSpan = document.createElement("span");
+          titleSpan.className = "session-title";
+          titleSpan.textContent = s.title || "New Chat";
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "session-del";
+          delBtn.type = "button";
+          delBtn.title = "Delete chat";
+          delBtn.textContent = "\u00d7";
+          delBtn.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            deleteSession(s.id);
+          });
+
+          row.appendChild(titleSpan);
+          row.appendChild(delBtn);
+          sessionListEl.appendChild(row);
+        });
+      }
+
+      // Health badge (refreshed every 30s)
+      async function refreshHealth() {
+        try {
+          const ctrl = new AbortController();
+          const tid = setTimeout(function () { ctrl.abort(); }, 5000);
+          const resp = await fetch(API_BASE + "/health", { signal: ctrl.signal, cache: "no-store" });
+          clearTimeout(tid);
+          if (!resp.ok) throw new Error("Health status " + resp.status);
+          const data = await resp.json();
+          if (data.neo4j_connected) {
+            const ver = data.neo4j_version ? ("Community " + data.neo4j_version) : "Community";
+            const label = data.engine || ("Live Neo4j (" + ver + ")");
+            currentEngineLabel = label;
+            engineBadgeEl.className = "badge badge-green";
+            engineBadgeTextEl.textContent = label;
+          } else {
+            currentEngineLabel = "Fallback (not graph data)";
+            engineBadgeEl.className = "badge badge-amber";
+            engineBadgeTextEl.textContent = "Fallback (not graph data)";
+          }
+        } catch (_) {
+          currentEngineLabel = "Fallback (not graph data)";
+          engineBadgeEl.className = "badge badge-amber";
+          engineBadgeTextEl.textContent = "Fallback (not graph data)";
+        }
+      }
+
+      // Build 6 starter chips dynamically from /tools/registry (not hardcoded!)
+      async function loadStarterChipsFromRegistry() {
+        try {
+          const resp = await fetch(API_BASE + "/tools/registry", { cache: "no-store" });
+          if (!resp.ok) return;
+          const reg = await resp.json();
+          const tools = Array.isArray(reg.tools) ? reg.tools : [];
+          const samples = reg.samples || {};
+          const available = new Set(tools.map(function (t) { return t.name; }));
+
+          const builders = [
+            {
+              tool: "lookup_course",
+              build: function () {
+                return samples.course_code ? ("Course details and syllabus for " + samples.course_code) : null;
+              }
+            },
+            {
+              tool: "get_prerequisite_tree",
+              build: function () {
+                return samples.prereq_course_code ? ("Show prerequisite tree for " + samples.prereq_course_code) : null;
+              }
+            },
+            {
+              tool: "find_faculty_for_course",
+              build: function () {
+                const code = samples.taught_course_code || samples.course_code;
+                return code ? ("Who teaches " + code + "?") : null;
+              }
+            },
+            {
+              tool: "lookup_faculty_profile",
+              build: function () {
+                return samples.faculty_name ? ("Profile and cabin for " + samples.faculty_name) : null;
+              }
+            },
+            {
+              tool: "find_available_rooms",
+              build: function () {
+                return samples.building_name ? ("Find available rooms in " + samples.building_name) : null;
+              }
+            },
+            {
+              tool: "get_semester_curriculum",
+              build: function () {
+                if (samples.program_name && samples.semester) {
+                  return samples.program_name + " Semester " + samples.semester + " curriculum";
+                }
+                return null;
+              }
+            },
+            {
+              tool: "find_room_schedule",
+              build: function () {
+                return samples.room_id ? ("Show timetable for room " + samples.room_id) : null;
+              }
+            },
+            {
+              tool: "get_campus_statistics",
+              build: function () {
+                return "Campus graph summary statistics";
+              }
+            },
+            {
+              tool: "lookup_building",
+              build: function () {
+                return samples.building_name ? ("Tell me about " + samples.building_name) : null;
+              }
+            }
+          ];
+
+          const chosen = [];
+          for (let i = 0; i < builders.length && chosen.length < 6; i++) {
+            const b = builders[i];
+            if (!available.has(b.tool)) continue;
+            const q = b.build();
+            if (q) {
+              chosen.push({ tool: b.tool, query: q });
+            }
+          }
+          dynamicStarters = chosen;
+          const active = getActiveSession();
+          if (active.messages.length === 0) {
+            renderChat();
+          }
+        } catch (_) {}
+      }
+
+      // Structured response templates (strictly escaped)
+      function renderStructuredBody(msg) {
+        // Blocked by policy card
+        const blockedStatuses = {
+          POLICY_VIOLATION: true,
+          VALIDATION_ERROR: true,
+          ROLE_SPOOFING_BLOCKED: true,
+          FORBIDDEN_TOOL_FOR_ROLE: true
+        };
+        if (blockedStatuses[msg.status]) {
+          const reason = msg.detail || msg.answer || "This request was blocked by security policy.";
+          return (
+            '<div class="policy-card">' +
+              '<div class="policy-card-head">' +
+                '<span>Blocked by policy</span>' +
+                '<span class="policy-code">' + escapeHtml(msg.status) + '</span>' +
+              '</div>' +
+              '<p class="policy-reason">' + escapeHtml(reason) + '</p>' +
+            '</div>'
+          );
+        }
+
+        // Write-request refusal card (distinct status WRITE_REQUEST_REFUSED — never a greeting)
+        if (msg.status === "WRITE_REQUEST_REFUSED") {
+          return (
+            '<div class="warn-card">' +
+              '<strong>Read-only assistant (WRITE_REQUEST_REFUSED)</strong>' +
+              '<span>' + escapeHtml(msg.answer || "I can only read campus data; I can\u2019t add, change or delete records") + '</span>' +
+            '</div>'
+          );
+        }
+
+        // Plain HTTP / rate-limit / timeout warning card
+        if (msg.errorType === "HTTP_WARNING") {
+          return (
+            '<div class="warn-card">' +
+              '<strong>' + escapeHtml(msg.errorTitle || "Notice") + '</strong>' +
+              '<span>' + escapeHtml(msg.answer || "") + '</span>' +
+            '</div>'
+          );
+        }
+
+        const tool = msg.tool || "";
+        const tr = msg.toolResult;
+
+        // If Qwen Prose mode produced streamed prose, show escaped prose + verbatim phone_note if any
+        if (msg.useQwen && msg.answer) {
+          let extra = "";
+          if (tool === "lookup_faculty_profile" && tr && Array.isArray(tr.faculty) && tr.faculty.length === 1) {
+            const note = tr.faculty[0].phone_note;
+            if (note) {
+              extra = '<div style="margin-top:8px;"><span class="phone-note">Phone note: ' + escapeHtml(note) + '</span></div>';
+            }
+          }
+          return renderSafeMarkdown(msg.answer) + extra;
+        }
+
+        // Process 004 projected / filtered follow-up: render the clean ChatGPT-style grounded markdown directly
+        // so include/exclude filters ("remove credits and course outcomes", "what is her area of research") are honored verbatim
+        if (tr && tr.projection && msg.answer) {
+          let extra = "";
+          if (tool === "lookup_faculty_profile" && Array.isArray(tr.faculty) && tr.faculty.length === 1) {
+            const excl = (tr.projection.excluded_fields || []);
+            const inc = tr.projection.mode === "include" ? (tr.projection.fields || []) : null;
+            const phoneAllowed = excl.indexOf("phone") === -1 && (inc === null || inc.indexOf("phone") !== -1);
+            if (phoneAllowed && tr.faculty[0].phone_note) {
+              extra = '<div style="margin-top:8px;"><span class="phone-note">Phone note: ' + escapeHtml(tr.faculty[0].phone_note) + '</span></div>';
+            }
+          }
+          return renderSafeMarkdown(msg.answer) + extra;
+        }
+
+        // Structured Course Card (single course)
+        if (tool === "lookup_course" && tr && Array.isArray(tr.courses) && tr.courses.length === 1) {
+          const c = tr.courses[0];
+          const pills = [];
+          if (c.credits !== undefined && c.credits !== null) pills.push("Credits: " + c.credits);
+          if (c.ltpc) pills.push("L-T-P-C: " + c.ltpc);
+          if (c.category) pills.push(c.category);
+          if (c.level) pills.push(c.level);
+          if (c.department) pills.push(c.department);
+
+          let html = '<div class="tpl-card">';
+          html += '<div class="tpl-head">' +
+            '<span class="tpl-title">' + escapeHtml(c.name || c.code) + '</span>' +
+            '<span class="tpl-code">' + escapeHtml(c.code || "") + '</span>' +
+          '</div>';
+
+          if (pills.length) {
+            html += '<div class="pill-row">' + pills.map(function (p) {
+              return '<span class="pill">' + escapeHtml(p) + '</span>';
+            }).join("") + '</div>';
+          }
+
+          const ratArr = Array.isArray(c.course_rationale) ? c.course_rationale : [];
+          const summaryText = ratArr.length ? ratArr.join(" ") : (c.description || "");
+          if (summaryText) {
+            html += '<div class="tpl-summary">' + escapeHtml(summaryText) + '</div>';
+          }
+
+          if (Array.isArray(c.course_outcomes) && c.course_outcomes.length) {
+            html += '<details class="sub-details"><summary>Course Outcomes (' + c.course_outcomes.length + ')</summary><div class="sub-details-body"><ul>';
+            c.course_outcomes.forEach(function (co) {
+              const label = typeof co === "object" && co !== null
+                ? ((co.id ? co.id + ": " : "") + (co.description || co.text || JSON.stringify(co)))
+                : String(co);
+              html += '<li>' + escapeHtml(label) + '</li>';
+            });
+            html += '</ul></div></details>';
+          }
+
+          if (Array.isArray(c.syllabus_units) && c.syllabus_units.length) {
+            html += '<details class="sub-details"><summary>Syllabus Units (' + c.syllabus_units.length + ')</summary><div class="sub-details-body">';
+            c.syllabus_units.forEach(function (u) {
+              const uTitle = (u.unit ? ("Unit " + u.unit + ": ") : "") + (u.title || "");
+              const hrs = u.hours ? (" (" + u.hours + " hrs)") : "";
+              html += '<div class="unit-item"><strong>' + escapeHtml(uTitle + hrs) + '</strong>';
+              if (u.topics) html += '<div style="margin-top:3px;color:var(--text-muted);">' + escapeHtml(u.topics) + '</div>';
+              html += '</div>';
+            });
+            html += '</div></details>';
+          }
+
+          if (Array.isArray(c.textbooks) && c.textbooks.length) {
+            html += '<details class="sub-details"><summary>Textbooks &amp; References (' + c.textbooks.length + ')</summary><div class="sub-details-body"><ul>';
+            c.textbooks.forEach(function (tb) {
+              html += '<li>' + escapeHtml(tb) + '</li>';
+            });
+            html += '</ul></div></details>';
+          }
+
+          if (Array.isArray(c.prerequisites) && c.prerequisites.length) {
+            html += '<details class="sub-details"><summary>Prerequisites (' + c.prerequisites.length + ')</summary><div class="sub-details-body"><ul>';
+            c.prerequisites.forEach(function (pr) {
+              const txt = typeof pr === "object" && pr !== null
+                ? ((pr.code || pr.prerequisite_code || "") + (pr.name ? (" — " + pr.name) : ""))
+                : String(pr);
+              html += '<li>' + escapeHtml(txt) + '</li>';
+            });
+            html += '</ul></div></details>';
+          }
+
+          if (Array.isArray(c.offered_in) && c.offered_in.length) {
+            html += '<details class="sub-details"><summary>Offered In (' + c.offered_in.length + ' program allocations)</summary><div class="sub-details-body"><ul>';
+            c.offered_in.slice(0, 15).forEach(function (o) {
+              const txt = typeof o === "object" && o !== null
+                ? ("Semester " + (o.semester !== undefined ? o.semester : "?") + " — " + (o.program || ""))
+                : String(o);
+              html += '<li>' + escapeHtml(txt) + '</li>';
+            });
+            if (c.offered_in.length > 15) {
+              html += '<li><em>...and ' + escapeHtml(c.offered_in.length - 15) + ' more allocations</em></li>';
+            }
+            html += '</ul></div></details>';
+          }
+
+          if (!c.has_detailed_syllabus) {
+            html += '<div style="margin-top:10px;font-size:12px;color:var(--text-muted);font-style:italic;">' +
+              'Detailed unit-by-unit syllabus chapters &amp; textbooks are not present in the indexed Regulations-2021 syllabus PDF for this course (190 of 669 courses include full chapter syllabi).' +
+            '</div>';
+          }
+
+          html += '</div>';
+          return html;
+        }
+
+        // Multi-name faculty lookup: render all per-name sections cleanly
+        if (tr && Array.isArray(tr.multi_name_queries) && tr.multi_name_queries.length >= 2 && msg.answer) {
+          return renderSafeMarkdown(msg.answer);
+        }
+
+        // Structured Single Faculty Profile Card (with verbatim phone_note!)
+        if (tool === "lookup_faculty_profile" && tr && Array.isArray(tr.faculty) && tr.faculty.length === 1) {
+          const f = tr.faculty[0];
+          const dept = f.normalized_department || f.department || "Not listed";
+          const phoneVal = (f.phone && String(f.phone).trim()) ? String(f.phone).trim() : "—";
+          const phoneNoteHtml = f.phone_note
+            ? '<span class="phone-note">' + escapeHtml(f.phone_note) + '</span>'
+            : '';
+
+          let html = '<div class="tpl-card">';
+          html += '<div class="tpl-head">' +
+            '<span class="tpl-title">' + escapeHtml(f.name || "Faculty Member") + '</span>' +
+            (f.id ? '<span class="tpl-code">' + escapeHtml(f.id) + '</span>' : '') +
+          '</div>';
+          if (f.designation) {
+            html += '<div class="pill-row"><span class="pill">' + escapeHtml(f.designation) + '</span></div>';
+          }
+          html += '<div class="kv-grid">';
+          html += '<div class="kv-item"><div class="kv-label">Department</div><div class="kv-val">' + escapeHtml(dept) + '</div></div>';
+          html += '<div class="kv-item"><div class="kv-label">Cabin</div><div class="kv-val">' + escapeHtml(f.cabin || "Not listed") + '</div></div>';
+          html += '<div class="kv-item"><div class="kv-label">Email</div><div class="kv-val">' + escapeHtml(f.email || "Not listed") + '</div></div>';
+          html += '<div class="kv-item"><div class="kv-label">Official Directory Phone</div><div class="kv-val">' + escapeHtml(phoneVal) + phoneNoteHtml + '</div></div>';
+          if (f.specialization) {
+            html += '<div class="kv-item ev-span-2"><div class="kv-label">Specialization</div><div class="kv-val">' + escapeHtml(f.specialization) + '</div></div>';
+          }
+          if (f.experience) {
+            html += '<div class="kv-item"><div class="kv-label">Experience</div><div class="kv-val">' + escapeHtml(f.experience) + '</div></div>';
+          }
+          html += '</div></div>';
+          return html;
+        }
+
+        // Structured Course Instructors Table
+        if (tool === "find_faculty_for_course" && tr && Array.isArray(tr.instructors) && tr.instructors.length > 0) {
+          let html = '<div class="tpl-card">';
+          html += '<div class="tpl-head"><span class="tpl-title">Instructors for ' + escapeHtml(tr.course_code || "") + '</span>' +
+            '<span class="pill">' + escapeHtml(tr.instructors.length) + ' listed</span></div>';
+          html += '<div class="table-wrap"><table class="data-tbl"><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Cabin</th></tr></thead><tbody>';
+          tr.instructors.forEach(function (ins) {
+            html += '<tr>' +
+              '<td><code>' + escapeHtml(ins.id || "—") + '</code></td>' +
+              '<td><strong>' + escapeHtml(ins.name || "") + '</strong>' + (ins.designation ? ('<br><span style="color:var(--text-muted);font-size:11.5px;">' + escapeHtml(ins.designation) + '</span>') : '') + '</td>' +
+              '<td>' + escapeHtml(ins.normalized_department || ins.department || "—") + '</td>' +
+              '<td>' + escapeHtml(ins.cabin || "—") + '</td>' +
+            '</tr>';
+          });
+          html += '</tbody></table></div></div>';
+          return html;
+        }
+
+        // Structured Available Rooms Table
+        if (tool === "find_available_rooms" && tr && Array.isArray(tr.available_rooms) && tr.available_rooms.length > 0) {
+          let html = renderSafeMarkdown(msg.answer || "");
+          html += '<div class="table-wrap"><table class="data-tbl"><thead><tr><th>Room</th><th>Type</th><th>Capacity</th><th>Floor</th></tr></thead><tbody>';
+          tr.available_rooms.forEach(function (rm) {
+            html += '<tr>' +
+              '<td><code>' + escapeHtml(rm.room_id || rm.id || "") + '</code></td>' +
+              '<td>' + escapeHtml(rm.room_type || rm.type || "Classroom") + '</td>' +
+              '<td>' + escapeHtml(rm.capacity !== undefined ? rm.capacity : "—") + '</td>' +
+              '<td>' + escapeHtml(rm.floor !== undefined ? rm.floor : "—") + '</td>' +
+            '</tr>';
+          });
+          html += '</tbody></table></div>';
+          return html;
+        }
+
+        // Default safe escaped markdown
+        return renderSafeMarkdown(msg.answer || "");
+      }
+
+      // Render choice chips for duplicate names / shared titles
+      function renderChoiceChipsEl(options) {
+        if (!Array.isArray(options) || options.length === 0) return null;
+        const wrap = document.createElement("div");
+        wrap.className = "choice-wrap";
+
+        const lbl = document.createElement("div");
+        lbl.className = "choice-label";
+        lbl.textContent = "Multiple matches found — select one:";
+        wrap.appendChild(lbl);
+
+        const list = document.createElement("div");
+        list.className = "choice-chips";
+        options.forEach(function (opt) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "choice-chip";
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "choice-chip-name";
+          nameSpan.textContent = opt.name || opt.label || "";
+          const metaSpan = document.createElement("span");
+          metaSpan.className = "choice-chip-meta";
+          const parts = [];
+          if (opt.department) parts.push(opt.department);
+          if (opt.cabin) parts.push("Cabin: " + opt.cabin);
+          metaSpan.textContent = parts.join(" \u2022 ");
+          btn.appendChild(nameSpan);
+          btn.appendChild(metaSpan);
+          btn.addEventListener("click", function () {
+            if (!isSending) {
+              sendMessage(opt.query || opt.name || "");
+            }
+          });
+          list.appendChild(btn);
+        });
+        wrap.appendChild(list);
+        return wrap;
+      }
+
+      // Render collapsed-by-default Evidence Drawer
+      function renderEvidenceDrawerHtml(msg) {
+        if (!msg.evidence) return "";
+        const ev = msg.evidence;
+        const g = ev.grounding || { passed: true, substituted: false, reason: null };
+        let gHtml = '<span class="ev-pass">Passed</span>';
+        if (g.substituted) {
+          gHtml = '<span class="ev-sub">Substituted</span> — ' + escapeHtml(g.reason || "Grounded fallback used");
+        } else if (g.passed === false) {
+          gHtml = '<span class="ev-sub">Not passed</span>' + (g.reason ? (" — " + escapeHtml(g.reason)) : "");
+        }
+
+        const argsStr = ev.args && Object.keys(ev.args).length > 0
+          ? JSON.stringify(ev.args)
+          : "{}";
+
+        const summaryLeft =
+          "Evidence \u00b7 " +
+          escapeHtml(ev.tool || "n/a") +
+          " \u00b7 " +
+          escapeHtml(ev.result_count !== undefined ? ev.result_count : 0) + " rows" +
+          " \u00b7 " +
+          escapeHtml(ev.latency_ms !== undefined ? ev.latency_ms : 0) + " ms";
+
+        const st = ev.stage_timings_ms || {};
+        const stageStr =
+          "Routing: " + escapeHtml(st.routing_ms !== undefined ? st.routing_ms : 0) + " ms · " +
+          "Tool: " + escapeHtml(st.tool_ms !== undefined ? st.tool_ms : 0) + " ms · " +
+          "Generation: " + escapeHtml(st.generation_ms !== undefined ? st.generation_ms : 0) + " ms";
+
+        let relHtml = "";
+        if (ev.relevance_score && ev.relevance_score.top_score !== undefined) {
+          const rs = ev.relevance_score;
+          const relCls = rs.below_threshold ? "ev-sub" : "ev-pass";
+          relHtml =
+            '<div class="ev-span-2"><div class="ev-cell-label">Relevance Score</div><div class="ev-cell-val">' +
+              '<span class="' + relCls + '">' + escapeHtml(rs.top_score) + '</span>' +
+              ' (min threshold: ' + escapeHtml(rs.min_similarity_score) +
+              (rs.below_threshold ? ' — below threshold' : ' — passed') + ')' +
+            '</div></div>';
+        }
+
+        return (
+          '<details class="evidence-drawer">' +
+            '<summary><span>' + summaryLeft + '</span></summary>' +
+            '<div class="evidence-grid">' +
+              '<div><div class="ev-cell-label">Tool</div><div class="ev-cell-val">' + escapeHtml(ev.tool || "—") + '</div></div>' +
+              '<div><div class="ev-cell-label">Intent</div><div class="ev-cell-val">' + escapeHtml(ev.intent || "campus_tool") + '</div></div>' +
+              '<div><div class="ev-cell-label">Role</div><div class="ev-cell-val">' + escapeHtml(ev.role || "student") + '</div></div>' +
+              '<div><div class="ev-cell-label">Row Count</div><div class="ev-cell-val">' + escapeHtml(ev.result_count !== undefined ? ev.result_count : 0) + '</div></div>' +
+              '<div><div class="ev-cell-label">Latency</div><div class="ev-cell-val">' + escapeHtml(ev.latency_ms !== undefined ? ev.latency_ms : 0) + ' ms</div></div>' +
+              '<div><div class="ev-cell-label">Status</div><div class="ev-cell-val">' + escapeHtml(ev.status || "—") + '</div></div>' +
+              '<div><div class="ev-cell-label">Engine</div><div class="ev-cell-val">' + escapeHtml(ev.engine || currentEngineLabel) + '</div></div>' +
+              '<div class="ev-span-2"><div class="ev-cell-label">Stage Timings</div><div class="ev-cell-val">' + stageStr + '</div></div>' +
+              relHtml +
+              '<div class="ev-span-2"><div class="ev-cell-label">Grounding</div><div class="ev-cell-val">' + gHtml + '</div></div>' +
+              '<div class="ev-span-2"><div class="ev-cell-label">Arguments</div><div class="ev-cell-val">' + escapeHtml(argsStr) + '</div></div>' +
+            '</div>' +
+          '</details>'
+        );
+      }
+
+      // Render progress indicator driven strictly by SSE stage events
+      function renderStepsHtml(activeStage, completedStages, stageLabels) {
+        const labels = stageLabels || {};
+        const defs = [
+          { key: "choosing_tool", label: labels["choosing_tool"] || (routingMode === "llm_intent" ? "Understanding intent (Qwen)" : "Choosing tool") },
+          { key: "retrieving_data", label: labels["retrieving_data"] || "Retrieving data" },
+          { key: "writing_answer", label: labels["writing_answer"] || "Writing answer" }
+        ];
+        return '<div class="progress-steps">' + defs.map(function (d) {
+          let cls = "step-pill";
+          let icon = "\u25cb";
+          if (completedStages[d.key]) {
+            cls += " done";
+            icon = "\u2713";
+          } else if (activeStage === d.key) {
+            cls += " active";
+            icon = "\u25cf";
+          }
+          return '<span class="' + cls + '">' + icon + ' ' + escapeHtml(d.label) + '</span>';
+        }).join("") + '</div>';
+      }
+
+      function renderWelcome() {
+        const box = document.createElement("div");
+        box.className = "welcome";
+
+        const h1 = document.createElement("h1");
+        h1.textContent = "SRMIST Campus Knowledge Assistant";
+        const p = document.createElement("p");
+        p.textContent = "Ask grounded questions across courses, Regulations-2021 syllabi, prerequisites, faculty profiles, classroom availability, and admissions. Every answer includes an expandable evidence drawer.";
+        box.appendChild(h1);
+        box.appendChild(p);
+
+        const lbl = document.createElement("div");
+        lbl.className = "starter-label";
+        lbl.textContent = "Starter Prompts (built live from tool registry)";
+        box.appendChild(lbl);
+
+        const grid = document.createElement("div");
+        grid.className = "starter-grid";
+        if (dynamicStarters.length === 0) {
+          const loading = document.createElement("div");
+          loading.style.fontSize = "13px";
+          loading.style.color = "var(--text-muted)";
+          loading.textContent = "Loading tools from registry...";
+          grid.appendChild(loading);
+        } else {
+          dynamicStarters.forEach(function (st) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "starter-chip";
+            const tSpan = document.createElement("span");
+            tSpan.className = "starter-chip-tool";
+            tSpan.textContent = st.tool;
+            const qSpan = document.createElement("span");
+            qSpan.className = "starter-chip-q";
+            qSpan.textContent = st.query;
+            btn.appendChild(tSpan);
+            btn.appendChild(qSpan);
+            btn.addEventListener("click", function () {
+              if (!isSending) sendMessage(st.query);
+            });
+            grid.appendChild(btn);
+          });
+        }
+        box.appendChild(grid);
+        return box;
+      }
+
+      function renderMessageElement(msg) {
+        const row = document.createElement("div");
+        row.className = "msg-row " + (msg.role === "user" ? "user" : "assistant");
+
+        const bubble = document.createElement("div");
+        bubble.className = "msg-bubble";
+
+        if (msg.role === "user") {
+          bubble.textContent = msg.text || "";
+        } else {
+          bubble.innerHTML = renderStructuredBody(msg) + renderEvidenceDrawerHtml(msg);
+          const chipsEl = renderChoiceChipsEl(msg.options);
+          if (chipsEl) {
+            const drawer = bubble.querySelector("details.evidence-drawer");
+            if (drawer) bubble.insertBefore(chipsEl, drawer);
+            else bubble.appendChild(chipsEl);
+          }
+        }
+        row.appendChild(bubble);
+        return row;
+      }
+
+      function renderChat() {
+        const s = getActiveSession();
+        chatInnerEl.innerHTML = "";
+        if (!s.messages || s.messages.length === 0) {
+          chatInnerEl.appendChild(renderWelcome());
+        } else {
+          s.messages.forEach(function (m) {
+            chatInnerEl.appendChild(renderMessageElement(m));
+          });
+        }
+        chatScrollEl.scrollTop = chatScrollEl.scrollHeight;
+      }
+
+      // Send query over SSE stream
+      async function sendMessage(rawText) {
+        const text = (rawText || "").trim();
+        if (!text || isSending) return;
+
+        isSending = true;
+        sendBtn.disabled = true;
+        queryInput.value = "";
+        autoResizeInput();
+
+        const session = getActiveSession();
+        if (session.messages.length === 0) {
+          session.title = text.length > 36 ? text.slice(0, 36) + "..." : text;
+          renderSessions();
+        }
+        session.messages.push({ role: "user", text: text });
+        saveSessions();
+        renderChat();
+
+        // Create live assistant placeholder with stream-driven progress steps
+        const liveRow = document.createElement("div");
+        liveRow.className = "msg-row assistant";
+        const liveBubble = document.createElement("div");
+        liveBubble.className = "msg-bubble";
+        const stepsContainer = document.createElement("div");
+        const streamBody = document.createElement("div");
+        liveBubble.appendChild(stepsContainer);
+        liveBubble.appendChild(streamBody);
+        liveRow.appendChild(liveBubble);
+        chatInnerEl.appendChild(liveRow);
+        chatScrollEl.scrollTop = chatScrollEl.scrollHeight;
+
+        let activeStage = null;
+        const completedStages = {};
+        const stageLabels = {};
+        function updateStage(stageName, stageLabel) {
+          if (stageLabel) stageLabels[stageName] = stageLabel;
+          if (activeStage && activeStage !== stageName) {
+            completedStages[activeStage] = true;
+          }
+          if (stageName === "retrieving_data") completedStages["choosing_tool"] = true;
+          if (stageName === "writing_answer") {
+            completedStages["choosing_tool"] = true;
+            completedStages["retrieving_data"] = true;
+          }
+          activeStage = stageName;
+          stepsContainer.innerHTML = renderStepsHtml(activeStage, completedStages, stageLabels);
+        }
+
+        const ctrl = new AbortController();
+        const timeoutHandle = setTimeout(function () { ctrl.abort(); }, REQUEST_TIMEOUT_MS);
+
+        const assistantMsg = {
+          role: "assistant",
+          answer: "",
+          detail: "",
+          status: "SUCCESS",
+          tool: "",
+          toolResult: null,
+          options: [],
+          useQwen: useQwenProse,
+          evidence: null,
+          errorType: null,
+          errorTitle: null
         };
 
-        const response = await fetch(streamUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        try {
+          const resp = await fetch(API_BASE + "/agent/ask/stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query: text,
+              use_qwen: useQwenProse,
+              routing_mode: routingMode,
+              session_id: session.id
+            }),
+            signal: ctrl.signal
+          });
 
-        const card = document.getElementById(`card_${queryId}`);
+          if (!resp.ok) {
+            let errJson = {};
+            try { errJson = await resp.json(); } catch (_) {}
 
-        if (response.ok && response.body) {
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-          let buffer = "";
-          let meta = null;
-          let streamedText = "";
-
-          // Switch card to streaming view
-          card.innerHTML = `
-            <div class="assistant-answer" id="ans_${queryId}">
-              <span class="stream-cursor"></span>
-            </div>
-          `;
-          const ansEl = document.getElementById(`ans_${queryId}`);
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const parts = buffer.split("\n\n");
-            buffer = parts.pop();
-
-            for (const part of parts) {
-              if (!part.trim()) continue;
-              let eventType = "message";
-              let dataStr = "";
-              for (const line of part.split("\n")) {
-                if (line.startsWith("event: ")) eventType = line.slice(7).trim();
-                else if (line.startsWith("data: ")) dataStr = line.slice(6).trim();
+            if (resp.status === 429) {
+              const retrySec = errJson.retry_after_seconds || resp.headers.get("Retry-After") || 60;
+              assistantMsg.status = "RATE_LIMITED";
+              assistantMsg.errorType = "HTTP_WARNING";
+              assistantMsg.errorTitle = "Rate limit reached (HTTP 429)";
+              assistantMsg.answer = "Too many requests — please try again in " + retrySec + " seconds.";
+            } else if (resp.status === 401) {
+              assistantMsg.status = errJson.status || "AUTHENTICATION_FAILED";
+              assistantMsg.errorType = "HTTP_WARNING";
+              assistantMsg.errorTitle = "Authentication required (HTTP 401)";
+              assistantMsg.answer = errJson.detail || "Your credentials could not be verified. Anonymous requests run as a Student without a token.";
+            } else if (resp.status === 403) {
+              const st = errJson.status || "POLICY_VIOLATION";
+              if (st === "POLICY_VIOLATION" || st === "ROLE_SPOOFING_BLOCKED" || st === "VALIDATION_ERROR" || st === "FORBIDDEN_TOOL_FOR_ROLE") {
+                assistantMsg.status = st;
+                assistantMsg.detail = errJson.detail || "This request is not permitted under the active security policy.";
+              } else {
+                assistantMsg.status = "FORBIDDEN";
+                assistantMsg.errorType = "HTTP_WARNING";
+                assistantMsg.errorTitle = "Access denied (HTTP 403)";
+                assistantMsg.answer = errJson.detail || "Your current role is not permitted to perform this action.";
               }
-              if (!dataStr) continue;
-
-              try {
-                const data = JSON.parse(dataStr);
-                if (eventType === "meta") {
-                  meta = data;
-                  const toolName = data.tool_selected || "governed_tool";
-                  setMood(toolToMood(toolName));
-                } else if (eventType === "delta") {
-                  streamedText += (data.token || "");
-                  if (ansEl) {
-                    ansEl.innerHTML = formatText(streamedText) + `<span class="stream-cursor"></span>`;
-                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-                  }
-                } else if (eventType === "done") {
-                  if (data.answer) streamedText = data.answer;
-                } else if (eventType === "error") {
-                  throw new Error(data.detail || "Access Policy Interception");
-                }
-              } catch (pErr) {
-                console.warn("SSE frame error:", pErr);
-              }
+            } else {
+              assistantMsg.status = errJson.status || ("HTTP_" + resp.status);
+              assistantMsg.errorType = "HTTP_WARNING";
+              assistantMsg.errorTitle = "Request failed (HTTP " + resp.status + ")";
+              assistantMsg.answer = errJson.detail || "The server could not complete this request. Please try again.";
             }
-          }
 
-          const latency = Math.round(performance.now() - t0);
-          const toolName = (meta && meta.tool_selected) || "governed_tool";
-          recordLatestArchitectureTrace(query, meta || { answer: streamedText }, latency);
-
-          const answerHtml = formatText(streamedText || (meta && meta.answer) || "No response received.");
-          const rawBoxId = `raw_${queryId}`;
-          const traceBoxId = `trace_${queryId}`;
-          const cypherQuery = getCypherForTool(toolName, meta ? meta.parameters : {});
-
-          let suggestionsHtml = "";
-          const suggestions = (meta && meta.suggestions) || [];
-          if (suggestions && suggestions.length) {
-            suggestionsHtml = `
-              <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.1rem;">
-                ${suggestions.map(s => `
-                  <button type="button" class="suggestion-chip" onmouseenter="previewMood(predictMood('${escapeHtml(s)}'))" onmouseleave="restoreMood()" onclick="askQuestion('${escapeHtml(s)}')">${escapeHtml(s)}</button>
-                `).join('')}
-              </div>
-            `;
-          }
-
-          const badgeColorStyle = (currentEngineMode === "neo4j")
-            ? 'style="border-color: rgba(6,182,212,0.3); color: #0284c7;"'
-            : '';
-          const toolLabel = (currentEngineMode === "neo4j")
-            ? `Neo4j: ${escapeHtml(toolName)}`
-            : escapeHtml(toolName);
-
-          const isQwen = meta && meta.synthesizer && meta.synthesizer.includes("Qwen");
-
-          card.innerHTML = `
-            <div class="assistant-answer">${answerHtml}</div>
-            ${suggestionsHtml}
-            <div class="meta-footer">
-              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                <span class="tool-badge" ${badgeColorStyle}>${toolLabel}</span>
-                ${isQwen ? `
-                  <span class="gen-badge" title="Grounded synthesis generated live by local Qwen 2.5">
-                    <span class="gen-dot"></span>
-                    Qwen 2.5 Generative AI
-                  </span>
-                ` : ''}
-              </div>
-              <span class="latency-badge">${latency}ms</span>
-            </div>
-            <div style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
-              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                ${(meta && meta.tool_result) ? `<button class="details-toggle" onclick="toggleRaw('${rawBoxId}')">View verified record</button>` : ''}
-                <button class="details-toggle" onclick="toggleRaw('${traceBoxId}')">View architecture trace</button>
-              </div>
-              ${(meta && meta.tool_result) ? `<div class="raw-box" id="${rawBoxId}">${escapeHtml(JSON.stringify(meta.tool_result, null, 2))}</div>` : ''}
-              <div class="trace-drawer" id="${traceBoxId}">
-                <div style="font-weight:700; color:var(--text-heading); margin-bottom:0.4rem; font-size:0.8rem;">OFFLINE ARCHITECTURE EXECUTION PIPELINE:</div>
-                <div><strong style="color:#10b981;">Step 1 (Input):</strong> "${escapeHtml(query)}"</div>
-                <div><strong style="color:#10b981;">Step 2 (Router):</strong> ${escapeHtml((meta && meta.intent_source) || 'High-Speed Normalized Router (~8ms)')}</div>
-                <div><strong style="color:#10b981;">Step 3 (RBAC Guard):</strong> Role 'student' &rarr; APPROVED (policy.yaml AST whitelist)</div>
-                <div><strong style="color:#10b981;">Step 4 (Database):</strong> ${currentEngineMode === 'neo4j' ? 'Neo4j Community (bolt://127.0.0.1:7687)' : 'In-Memory Mirror'}</div>
-                <div style="margin: 0.4rem 0;"><strong>Executed Cypher:</strong><pre style="margin:0.25rem 0 0 0; color:#0284c7; white-space:pre-wrap; word-break:break-all; font-family:'JetBrains Mono', monospace; font-size:0.75rem;">${escapeHtml(cypherQuery)}</pre></div>
-                <div><strong style="color:#10b981;">Step 5 (Audit Ledger):</strong> Appended to audit_telemetry.jsonl (SHA-256 Chained)</div>
-                <div><strong style="color:#10b981;">Step 6 (Synthesis):</strong> Zero-Hallucination Grounded Citation (${latency}ms)</div>
-              </div>
-            </div>
-          `;
-        } else if (response.status === 403) {
-          const err = await response.json();
-          recordLatestArchitectureTrace(query, {
-            tool_selected: "ast_security_interception",
-            status: "POLICY_VIOLATION",
-            intent_source: "AST Security Guardrail (~1ms)",
-            parameters: { query: query }
-          }, latency);
-          card.innerHTML = `
-            <div style="color: #ef4444; font-weight: 600;">Access Policy Interception</div>
-            <p style="margin-top: 0.5rem; color: var(--text-muted);">${escapeHtml(err.detail || "Query rejected by AST Security Guardrail.")}</p>
-            <div class="meta-footer">
-              <span class="tool-badge" style="color:#ef4444; border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1)">AST Sanitizer</span>
-              <span class="latency-badge" style="color: #ef4444;">Blocked in ${latency}ms</span>
-            </div>
-          `;
-        } else {
-          card.innerHTML = `<div style="color: #ef4444;">Server error: ${response.statusText}</div>`;
-        }
-      } catch (err) {
-        document.getElementById(`card_${queryId}`).innerHTML = `
-          <div style="color: #ef4444;">Failed to connect to tool server: ${escapeHtml(err.message)}</div>
-        `;
-      } finally {
-        if (bottomSubmitBtn) bottomSubmitBtn.disabled = false;
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-      }
-    }
-
-    function toggleRaw(id) {
-      const el = document.getElementById(id);
-      if (el) el.classList.toggle("open");
-    }
-
-    function escapeHtml(str) {
-      if (!str) return "";
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
-
-    // =========================================================================
-    // CYPHER QUERY GENERATOR FOR ARCHITECTURE TRACES
-    // =========================================================================
-    function getCypherForTool(toolName, params) {
-      params = params || {};
-      switch (toolName) {
-        case "get_semester_curriculum": {
-          const prog = params.program_query || "CSE";
-          const semClause = params.semester ? ` {semester: ${params.semester}}` : "";
-          return `MATCH (p:Program)-[r:OFFERS_IN_SEMESTER${semClause}]->(c:Course)\nWHERE toLower(p.program_name) CONTAINS toLower('${prog}')\nRETURN c.course_code, c.course_name, c.credits, r.semester ORDER BY c.course_code;`;
-        }
-        case "lookup_course": {
-          const code = params.course_code || params.query || "21CSC206T";
-          return `MATCH (c:Course)\nWHERE c.course_code = '${code}' OR toLower(c.course_name) CONTAINS toLower('${code}')\nRETURN c.course_code, c.course_name, c.credits, c.department, c.prerequisites LIMIT 10;`;
-        }
-        case "get_prerequisite_tree": {
-          const code = params.course_code || "21CSC206T";
-          return `MATCH (c:Course {course_code: '${code}'})-[:REQUIRES_PREREQUISITE*1..3]->(p:Course)\nRETURN c.course_code, p.course_code, p.course_name;`;
-        }
-        case "verify_prerequisites": {
-          const target = params.target_course || "21CSO451T";
-          return `MATCH (target:Course {course_code: '${target}'})-[:REQUIRES_PREREQUISITE]->(req:Course)\nRETURN req.course_code, req.course_name;`;
-        }
-        case "lookup_faculty_profile": {
-          const name = params.name || params.query || "Faculty Member";
-          return `MATCH (f:FacultyMember)\nWHERE toLower(f.name) CONTAINS toLower('${name}')\nRETURN f.name, f.designation, f.department, f.cabin, f.email LIMIT 5;`;
-        }
-        case "find_faculty_for_course": {
-          const query = params.course_code || params.program_query || "CSE";
-          return `MATCH (f:FacultyMember)-[:TEACHES]->(p:Program)\nWHERE toLower(p.program_name) CONTAINS toLower('${query}')\nRETURN f.name, f.designation, p.program_name LIMIT 10;`;
-        }
-        case "find_available_rooms": {
-          const bldg = params.building || "Tech Park";
-          return `MATCH (r:Classroom)\nWHERE toLower(r.building) CONTAINS toLower('${bldg}')\n  AND NOT EXISTS { MATCH (r)<-[:ASSIGNED_TO]-(cl:ClassSchedule {day: 'Monday', slot: '09:00-10:00'}) }\nRETURN r.room_id, r.building, r.capacity, r.room_type LIMIT 20;`;
-        }
-        case "find_room_schedule": {
-          const room = params.room_id || "TP-101";
-          return `MATCH (r:Classroom {room_id: '${room}'})<-[:ASSIGNED_TO]-(cl:ClassSchedule)-[:FOR_COURSE]->(c:Course)\nRETURN cl.day, cl.time_slot, c.course_name, cl.section ORDER BY cl.day, cl.time_slot;`;
-        }
-        case "check_admission_eligibility": {
-          const prog = params.program_name || params.degree || "B.Tech";
-          return `MATCH (p:Program)\nWHERE toLower(p.program_name) CONTAINS toLower('${prog}') OR toLower(p.degree) CONTAINS toLower('${prog}')\nRETURN p.program_name, p.min_eligibility, p.tuition_fee_per_year, p.intake, p.duration_years LIMIT 5;`;
-        }
-        case "get_campus_statistics": {
-          return `MATCH (n)\nRETURN labels(n)[0] AS node_type, count(n) AS total_count\nORDER BY total_count DESC;`;
-        }
-        case "ast_security_interception": {
-          return `// BLOCKED BY AST SECURITY FIREWALL:\n// Execution aborted before database dispatch.\n// Violation logged to audit_telemetry.jsonl with SHA-256 hash.`;
-        }
-        default:
-          return `MATCH (n)-[r]->(m) WHERE labels(n)[0] = 'Program' RETURN n, r, m LIMIT 25;`;
-      }
-    }
-
-    // =========================================================================
-    // REAL-TIME ARCHITECTURE & CRYPTOGRAPHIC AUDIT DASHBOARD
-    // =========================================================================
-    let cachedAuditLogs = [];
-    let currentFilter = "all";
-
-    function openDashboard() {
-      const modal = document.getElementById("dashboardModal");
-      if (modal) {
-        modal.classList.add("open");
-        loadAuditLogs("all");
-        verifyAuditChainLive();
-      }
-    }
-
-    function closeDashboard() {
-      const modal = document.getElementById("dashboardModal");
-      if (modal) {
-        modal.classList.remove("open");
-      }
-    }
-
-    function handleModalOverlayClick(e) {
-      if (e.target && e.target.id === "dashboardModal") {
-        closeDashboard();
-      }
-    }
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeDashboard();
-      }
-    });
-
-    async function loadAuditLogs(filter) {
-      if (filter) currentFilter = filter;
-      const tbody = document.getElementById("auditTableBody");
-      if (!cachedAuditLogs.length && tbody) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--text-dim);">Loading cryptographic audit ledger...</td></tr>`;
-      }
-      try {
-        const res = await fetch(`${API_BASE}/audit/logs?limit=80`);
-        if (res.ok) {
-          const data = await res.json();
-          cachedAuditLogs = data.events || [];
-          const totalEl = document.getElementById("metricTotalLogs");
-          if (totalEl) totalEl.innerText = (data.total_logs || cachedAuditLogs.length).toLocaleString();
-
-          if (cachedAuditLogs.length) {
-            const avgLat = cachedAuditLogs.reduce((acc, cur) => acc + (cur.latency_ms || 0), 0) / cachedAuditLogs.length;
-            const avgEl = document.getElementById("metricAvgLatency");
-            if (avgEl) avgEl.innerText = `${avgLat.toFixed(1)} ms`;
-          }
-
-          renderAuditTable();
-        }
-      } catch (err) {
-        if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:#ef4444;">Failed to load audit logs: ${escapeHtml(err.message)}</td></tr>`;
-        }
-      }
-    }
-
-    function filterAuditLogs(filter, btn) {
-      currentFilter = filter;
-      document.querySelectorAll(".audit-filter-btn").forEach(b => b.classList.remove("active"));
-      if (btn) btn.classList.add("active");
-      renderAuditTable();
-    }
-
-    function renderAuditTable() {
-      const tbody = document.getElementById("auditTableBody");
-      if (!tbody) return;
-
-      let filtered = cachedAuditLogs;
-      if (currentFilter === "SUCCESS") {
-        filtered = cachedAuditLogs.filter(e => e.status === "SUCCESS");
-      } else if (currentFilter === "POLICY_VIOLATION") {
-        filtered = cachedAuditLogs.filter(e => e.status === "POLICY_VIOLATION" || e.status === "FORBIDDEN_TOOL_FOR_ROLE");
-      } else if (currentFilter === "curriculum") {
-        filtered = cachedAuditLogs.filter(e => (e.tool_name || "").includes("curriculum") || (e.tool_name || "").includes("course"));
-      }
-
-      if (!filtered.length) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--text-dim);">No audit records found matching '${escapeHtml(currentFilter)}'.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filtered.slice(0, 50).map(e => {
-        const timeStr = e.timestamp ? e.timestamp.replace("T", " ").split(".")[0] : "--";
-        const statusClass = e.status === "SUCCESS" ? "success" : "violation";
-        const paramStr = e.parameters ? JSON.stringify(e.parameters) : "{}";
-        const hashPreview = e.entry_hash ? `<span title="SHA-256: ${e.entry_hash}" style="color:var(--text-dim); cursor:help;">#${e.entry_hash.slice(0, 8)}</span>` : "";
-        return `
-          <tr>
-            <td style="color:var(--text-dim); white-space:nowrap;">${timeStr}</td>
-            <td><span style="font-size:0.7rem; background:rgba(0,0,0,0.06); padding:2px 6px; border-radius:4px;">${escapeHtml(e.role || "student")}</span></td>
-            <td style="color:#0284c7; font-weight:600;">${escapeHtml(e.tool_name || "--")}</td>
-            <td><span class="status-pill ${statusClass}">${escapeHtml(e.status || "--")}</span></td>
-            <td style="font-family:'JetBrains Mono', monospace;">${e.latency_ms !== undefined ? e.latency_ms + "ms" : "--"}</td>
-            <td style="max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(paramStr)}">
-              <code>${escapeHtml(paramStr)}</code> ${hashPreview}
-            </td>
-          </tr>
-        `;
-      }).join("");
-    }
-
-    async function verifyAuditChainLive() {
-      const statusEl = document.getElementById("metricChainStatus");
-      const detailEl = document.getElementById("metricChainDetail");
-      if (statusEl) {
-        statusEl.innerText = "VERIFYING...";
-        statusEl.style.color = "#0284c7";
-      }
-      try {
-        const res = await fetch(`${API_BASE}/audit/verify`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.status === "VALID") {
-            if (statusEl) {
-              statusEl.innerText = "VALID";
-              statusEl.style.color = "#10b981";
-            }
-            if (detailEl) {
-              detailEl.innerText = `${data.verified_entries_count.toLocaleString()} entries verified (0 tampering)`;
+            if (errJson.tool || errJson.status) {
+              assistantMsg.evidence = {
+                tool: errJson.tool || errJson.tool_selected || "security_guard",
+                args: errJson.args || {},
+                role: errJson.role || "student",
+                result_count: errJson.result_count || 0,
+                latency_ms: errJson.latency_ms || 0,
+                status: assistantMsg.status,
+                grounding: errJson.grounding || { passed: false, substituted: false, reason: "Blocked before execution" },
+                engine: errJson.engine || currentEngineLabel
+              };
             }
           } else {
-            if (statusEl) {
-              statusEl.innerText = "TAMPERED";
-              statusEl.style.color = "#ef4444";
-            }
-            if (detailEl) {
-              detailEl.innerText = data.detail || "Tampering detected in ledger chain!";
+            const reader = resp.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let buffer = "";
+            let streamedText = "";
+
+            while (true) {
+              const chunk = await reader.read();
+              if (chunk.done) break;
+              buffer += decoder.decode(chunk.value, { stream: true });
+
+              const events = buffer.split("\n\n");
+              buffer = events.pop() || "";
+
+              for (let i = 0; i < events.length; i++) {
+                const rawEv = events[i];
+                const dataLines = rawEv.split("\n").filter(function (l) { return l.startsWith("data:"); });
+                if (!dataLines.length) continue;
+                const jsonStr = dataLines.map(function (l) { return l.slice(5).trim(); }).join("\n");
+                let payload;
+                try { payload = JSON.parse(jsonStr); } catch (_) { continue; }
+
+                const evType = payload.event;
+                if (evType === "stage") {
+                  updateStage(payload.stage, payload.label);
+                } else if (evType === "meta") {
+                  assistantMsg.tool = payload.tool_selected || assistantMsg.tool;
+                  assistantMsg.toolResult = payload.tool_result || null;
+                } else if (evType === "delta") {
+                  streamedText += (payload.token || "");
+                  streamBody.innerHTML = renderSafeMarkdown(streamedText);
+                  chatScrollEl.scrollTop = chatScrollEl.scrollHeight;
+                } else if (evType === "done") {
+                  completedStages["choosing_tool"] = true;
+                  completedStages["retrieving_data"] = true;
+                  completedStages["writing_answer"] = true;
+                  assistantMsg.answer = payload.answer !== undefined ? payload.answer : streamedText;
+                  assistantMsg.status = payload.status || "SUCCESS";
+                  assistantMsg.tool = payload.tool || assistantMsg.tool;
+                  assistantMsg.options = Array.isArray(payload.options) ? payload.options : [];
+                  assistantMsg.evidence = {
+                    tool: payload.tool || assistantMsg.tool,
+                    intent: payload.intent || "campus_tool",
+                    args: payload.args || {},
+                    role: payload.role || "student",
+                    result_count: payload.result_count !== undefined ? payload.result_count : 0,
+                    latency_ms: payload.latency_ms !== undefined ? payload.latency_ms : 0,
+                    stage_timings_ms: payload.stage_timings_ms || null,
+                    relevance_score: payload.relevance_score || null,
+                    status: payload.status || "SUCCESS",
+                    grounding: payload.grounding || { passed: true, substituted: false, reason: null },
+                    engine: payload.engine || currentEngineLabel
+                  };
+                } else if (evType === "error") {
+                  assistantMsg.status = payload.status || "POLICY_VIOLATION";
+                  assistantMsg.detail = payload.detail || "Request blocked by security policy.";
+                  assistantMsg.tool = payload.tool || payload.tool_selected || "";
+                  assistantMsg.options = Array.isArray(payload.options) ? payload.options : [];
+                  assistantMsg.evidence = {
+                    tool: payload.tool || payload.tool_selected || "ast_security_interception",
+                    intent: payload.intent || "security_block",
+                    args: payload.args || {},
+                    role: payload.role || "student",
+                    result_count: payload.result_count !== undefined ? payload.result_count : 0,
+                    latency_ms: payload.latency_ms !== undefined ? payload.latency_ms : 0,
+                    status: assistantMsg.status,
+                    grounding: payload.grounding || { passed: false, substituted: false, reason: "Blocked by policy" },
+                    engine: payload.engine || currentEngineLabel
+                  };
+                }
+              }
             }
           }
+        } catch (err) {
+          if (err && err.name === "AbortError") {
+            assistantMsg.status = "TIMEOUT";
+            assistantMsg.errorType = "HTTP_WARNING";
+            assistantMsg.errorTitle = "Request timed out";
+            assistantMsg.answer = "The server took too long to respond. Try again or switch to Instant mode for sub-second answers.";
+          } else {
+            assistantMsg.status = "NETWORK_ERROR";
+            assistantMsg.errorType = "HTTP_WARNING";
+            assistantMsg.errorTitle = "Connection error";
+            assistantMsg.answer = "Could not reach the Campus Knowledge Server. Verify the server is running and try again.";
+          }
+        } finally {
+          clearTimeout(timeoutHandle);
+          session.messages.push(assistantMsg);
+          saveSessions();
+          renderChat();
+          isSending = false;
+          sendBtn.disabled = false;
+          queryInput.focus();
         }
-      } catch (err) {
-        if (statusEl) {
-          statusEl.innerText = "ERROR";
-          statusEl.style.color = "#ef4444";
+      }
+
+      // Sidebar & input helpers
+      function openSidebar() {
+        sidebarEl.classList.add("open");
+        backdropEl.classList.add("open");
+      }
+
+      function closeSidebar() {
+        sidebarEl.classList.remove("open");
+        backdropEl.classList.remove("open");
+      }
+
+      function autoResizeInput() {
+        queryInput.style.height = "auto";
+        queryInput.style.height = Math.min(queryInput.scrollHeight, 140) + "px";
+      }
+
+      // Event bindings
+      openSidebarBtn.addEventListener("click", openSidebar);
+      closeSidebarBtn.addEventListener("click", closeSidebar);
+      backdropEl.addEventListener("click", closeSidebar);
+      newChatBtn.addEventListener("click", createSession);
+
+      themeBtn.addEventListener("click", function () {
+        const cur = document.documentElement.getAttribute("data-theme");
+        applyTheme(cur === "dark" ? "light" : "dark");
+      });
+
+      modeHybridBtn.addEventListener("click", function () {
+        routingMode = "hybrid";
+        applyModeUI();
+      });
+      modeIntentBtn.addEventListener("click", function () {
+        routingMode = "llm_intent";
+        applyModeUI();
+      });
+      proseToggleBtn.addEventListener("click", function () {
+        useQwenProse = !useQwenProse;
+        applyModeUI();
+      });
+
+      chatForm.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        sendMessage(queryInput.value);
+      });
+
+      queryInput.addEventListener("input", autoResizeInput);
+      queryInput.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" && !ev.shiftKey) {
+          ev.preventDefault();
+          sendMessage(queryInput.value);
         }
-        if (detailEl) detailEl.innerText = err.message;
-      }
-    }
+      });
 
-    function recordLatestArchitectureTrace(query, res, latency) {
-      const traceInput = document.getElementById("traceInput");
-      const traceTool = document.getElementById("traceTool");
-      const traceCypher = document.getElementById("traceCypher");
-      const traceHash = document.getElementById("traceHash");
-      const traceTimestamp = document.getElementById("traceTimestamp");
+      // Init
+      let savedTheme = "light";
+      try {
+        savedTheme = localStorage.getItem(STORAGE_THEME_KEY) || "light";
+        const sr = localStorage.getItem(STORAGE_ROUTING_KEY);
+        if (sr === "hybrid" || sr === "llm_intent") routingMode = sr;
+        useQwenProse = localStorage.getItem(STORAGE_PROSE_KEY) === "1";
+      } catch (_) {}
 
-      if (traceTimestamp) traceTimestamp.innerText = new Date().toLocaleTimeString();
-      if (traceInput) traceInput.innerText = `"${query}"`;
-
-      const toolName = res.tool_selected || "governed_tool";
-      const intentSrc = res.intent_source || (toolName !== "governed_tool" ? "High-Speed Normalized Router (~8ms)" : "Direct");
-      if (traceTool) traceTool.innerText = `${toolName} via ${intentSrc}`;
-
-      const cypher = getCypherForTool(toolName, res.parameters);
-      if (traceCypher) traceCypher.innerText = cypher;
-
-      if (traceHash) {
-        const entryHash = (res.tool_result && res.tool_result.entry_hash) || 
-          "SHA-256 Chained (Real-Time Synchronized)";
-        traceHash.innerText = entryHash;
-      }
-
-      // If dashboard modal is open, refresh logs
-      const modal = document.getElementById("dashboardModal");
-      if (modal && modal.classList.contains("open")) {
-        loadAuditLogs();
-        verifyAuditChainLive();
-      }
-    }
-
-    // Initialize Theme & Default Mood on Load
-    initTheme();
-    const initialMood = document.body.getAttribute("data-mood") || "default";
-    setMood(initialMood);
+      applyTheme(savedTheme);
+      applyModeUI();
+      loadSessions();
+      renderSessions();
+      renderChat();
+      refreshHealth();
+      setInterval(refreshHealth, HEALTH_POLL_MS);
+      loadStarterChipsFromRegistry();
+    })();
   </script>
 </body>
 </html>
