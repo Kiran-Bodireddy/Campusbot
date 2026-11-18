@@ -106,6 +106,20 @@ async def security_violation_handler(request: Request, exc: SecurityViolationErr
         content={"error": "Access Policy Violation", "detail": str(exc), "status": "BLOCKED"}
     )
 
+@app.exception_handler(RoleSpoofingError)
+async def role_spoofing_handler(request: Request, exc: RoleSpoofingError):
+    return JSONResponse(
+        status_code=status.HTTP_403_FORBIDDEN,
+        content={"error": "Role Spoofing Blocked", "detail": str(exc), "status": "ROLE_SPOOFING_BLOCKED"}
+    )
+
+@app.exception_handler(AuthenticationError)
+async def authentication_error_handler(request: Request, exc: AuthenticationError):
+    return JSONResponse(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        content={"error": "Authentication Failed", "detail": str(exc), "status": "AUTHENTICATION_FAILED"}
+    )
+
 @app.get("/", response_class=HTMLResponse, tags=["Frontend"])
 def serve_frontend():
     """Serves the interactive SRMIST Campus Knowledge Assistant UI."""
@@ -269,14 +283,31 @@ def _enforce_rate_limit(request: Request, session_id: Optional[str] = None) -> O
     return None
 
 
-def dispatch_governed_tool(tool_name: str, args: dict, request: Request):
+def dispatch_governed_tool(tool_name: str, args: dict, request: Request, requested_role: Optional[str] = None):
     limited = _enforce_rate_limit(request)
     if limited is not None:
         return limited
     auth_header = request.headers.get("Authorization")
     caller_ip = request.client.host if request.client else "unknown"
-    principal = resolve_principal(auth_header=auth_header, caller_ip=caller_ip)
+    principal = resolve_principal(auth_header=auth_header, requested_body_role=requested_role, caller_ip=caller_ip)
     return execute_tool(tool_name, args, principal=principal)
+
+@app.post("/tools/{tool_name}/execute", tags=["Tools"])
+async def execute_tool_by_name(tool_name: str, request: Request):
+    limited = _enforce_rate_limit(request)
+    if limited is not None:
+        return limited
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    if not isinstance(body, dict):
+        body = {}
+    requested_role = body.get("role")
+    auth_header = request.headers.get("Authorization")
+    caller_ip = request.client.host if request.client else "unknown"
+    principal = resolve_principal(auth_header=auth_header, requested_body_role=requested_role, caller_ip=caller_ip)
+    return execute_tool(tool_name, body, principal=principal)
 
 @app.post("/tools/lookup_course", tags=["Tools"])
 def lookup_course(req: CourseLookupRequest, request: Request):

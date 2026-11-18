@@ -1,0 +1,1107 @@
+{
+  "metadata": {
+    "name": "Independent evaluation set (human/Claude-written, source-verified)",
+    "rule": "Do not show this file to the coding agent. Do not tune code against it. Run once, report as-is.",
+    "gold_origin": "Every expected value was computed from the uploaded source files (graph-blueprint.json, prerequisites.csv, admissions.json, programs.json, curriculum.json), not from tool output.",
+    "count": 46,
+    "categories": {
+      "single_hop": 30,
+      "ambiguous": 1,
+      "negative": 3,
+      "multi_hop": 5,
+      "claim_check": 1,
+      "semantic": 5,
+      "capability_check": 1
+    }
+  },
+  "questions": [
+    {
+      "id": "IQ-01",
+      "query": "how many credits is Python For Data Analytics and what's the L-T-P-C?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "lookup_course",
+      "gold_params": {
+        "query": "Python For Data Analytics"
+      },
+      "expected_facts": {
+        "code": "21AIO353T",
+        "credits": 3,
+        "ltpc": "2-1-0-3"
+      },
+      "source": "graph-blueprint.json courses / courses.json",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-02",
+      "query": "is Soft Computing an open elective? which dept offers it",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "lookup_course",
+      "gold_params": {
+        "query": "Soft Computing"
+      },
+      "expected_facts": {
+        "code": "21AIO354T",
+        "category": "O OPEN ELECTIVE",
+        "department": "Computational Intelligence"
+      },
+      "source": "courses.json",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-03",
+      "query": "details of 21csc206t please",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "lookup_course",
+      "gold_params": {
+        "query": "21CSC206T"
+      },
+      "expected_facts": {
+        "name": "Artificial Intelligence",
+        "credits": 3,
+        "category": "C PROFESSIONAL CORE",
+        "department": "School of Computing"
+      },
+      "source": "courses.json",
+      "adversarial": false,
+      "should_block": false,
+      "notes": "lowercase code"
+    },
+    {
+      "id": "IQ-04",
+      "query": "tell me about Major Project Phase II",
+      "category": "ambiguous",
+      "role": "student",
+      "gold_tool": "lookup_course",
+      "gold_params": {
+        "query": "Major Project Phase II"
+      },
+      "expected_facts": {
+        "must_include_codes": [
+          "21CSP402L"
+        ],
+        "note": "name is shared by 13 courses; answer must show multiple matches, not silently pick one",
+        "all_matching_codes": [
+          "21AIP402L",
+          "21ASP402L",
+          "21AUP402L",
+          "21BMP402L",
+          "21BTP402L",
+          "21CEP402L",
+          "21CHP402L",
+          "21CSP402L",
+          "21ECP402L",
+          "21EEP402L",
+          "21EIP402L",
+          "21MEP402L",
+          "21NTP402L"
+        ]
+      },
+      "source": "courses.json (duplicate names)",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-05",
+      "query": "what is the credit value of course 21XYZ999T?",
+      "category": "negative",
+      "role": "student",
+      "gold_tool": "lookup_course",
+      "gold_params": {
+        "query": "21XYZ999T"
+      },
+      "expected_facts": {
+        "expected_outcome": "NOT_FOUND",
+        "answer_must_not_contain_credit_number": true
+      },
+      "source": "no such code in courses.json",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-06",
+      "query": "what do I have to finish before Deep Learning Foundation?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "get_prerequisite_tree",
+      "gold_params": {
+        "course_code": "21CSO451T"
+      },
+      "expected_facts": {
+        "prerequisites": [
+          "21CSC206T"
+        ],
+        "min_credits_required": 3,
+        "condition": "MANDATORY_MIN_GRADE_C"
+      },
+      "source": "prerequisites.csv",
+      "adversarial": false,
+      "should_block": false,
+      "notes": "course given by NAME, not code (21CSO451T). Note 21CSC401J/21AIC301J share a different name"
+    },
+    {
+      "id": "IQ-07",
+      "query": "what's the full prerequisite chain for 21CSP402L?",
+      "category": "multi_hop",
+      "role": "student",
+      "gold_tool": "get_prerequisite_tree",
+      "gold_params": {
+        "course_code": "21CSP402L",
+        "max_depth": 3
+      },
+      "expected_facts": {
+        "chain": [
+          "21CSP402L",
+          "21CSP401L",
+          "21CSP302L"
+        ],
+        "depth": 2
+      },
+      "source": "prerequisites.csv (2-hop chain)",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-08",
+      "query": "does Soft Computing need any prerequisite subjects?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "get_prerequisite_tree",
+      "gold_params": {
+        "course_code": "21AIO354T"
+      },
+      "expected_facts": {
+        "prerequisites": [],
+        "expected_outcome": "NONE_REQUIRED"
+      },
+      "source": "prerequisites.csv (no row for 21AIO354T)",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-09",
+      "query": "what does 21ECO107J build on?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "get_prerequisite_tree",
+      "gold_params": {
+        "course_code": "21ECO107J"
+      },
+      "expected_facts": {
+        "prerequisites": [
+          "21ECO106J"
+        ]
+      },
+      "source": "prerequisites.csv",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-10",
+      "query": "I passed Artificial Intelligence (21CSC206T). can I register for 21CSO451T?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "verify_prerequisites",
+      "gold_params": {
+        "target_course": "21CSO451T",
+        "completed_courses": [
+          "21CSC206T"
+        ]
+      },
+      "expected_facts": {
+        "eligible": true,
+        "missing": []
+      },
+      "source": "prerequisites.csv",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-11",
+      "query": "can I take Deep Learning Foundation if I haven't completed any courses yet?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "verify_prerequisites",
+      "gold_params": {
+        "target_course": "21CSO451T",
+        "completed_courses": []
+      },
+      "expected_facts": {
+        "eligible": false,
+        "missing": [
+          "21CSC206T"
+        ]
+      },
+      "source": "prerequisites.csv",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-12",
+      "query": "I've done 21CSP302L only. am I allowed to enrol in 21CSP402L?",
+      "category": "multi_hop",
+      "role": "student",
+      "gold_tool": "verify_prerequisites",
+      "gold_params": {
+        "target_course": "21CSP402L",
+        "completed_courses": [
+          "21CSP302L"
+        ]
+      },
+      "expected_facts": {
+        "eligible": false,
+        "missing": [
+          "21CSP401L"
+        ]
+      },
+      "source": "prerequisites.csv (direct prerequisite is 21CSP401L)",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-13",
+      "query": "I finished 21CSP302L and 21CSP401L. can I now go for 21CSP402L?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "verify_prerequisites",
+      "gold_params": {
+        "target_course": "21CSP402L",
+        "completed_courses": [
+          "21CSP302L",
+          "21CSP401L"
+        ]
+      },
+      "expected_facts": {
+        "eligible": true,
+        "missing": []
+      },
+      "source": "prerequisites.csv",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-14",
+      "query": "who takes Introduction To Artificial Intelligence (the open elective)?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "find_faculty_for_course",
+      "gold_params": {
+        "course_code": "21AIO351T"
+      },
+      "expected_facts": {
+        "faculty": [
+          "Dr. Sivakumar S"
+        ]
+      },
+      "source": "graph-blueprint.json teaching_assignments",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-15",
+      "query": "which two teachers handle 21CSC206T?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "find_faculty_for_course",
+      "gold_params": {
+        "course_code": "21CSC206T"
+      },
+      "expected_facts": {
+        "faculty": [
+          "Dr. Nithyakani P",
+          "Mr. Saravanan V"
+        ]
+      },
+      "source": "teaching_assignments",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-16",
+      "query": "who's the lead instructor for Soft Computing?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "find_faculty_for_course",
+      "gold_params": {
+        "course_code": "21AIO354T"
+      },
+      "expected_facts": {
+        "faculty": [
+          "Dr. Annie Uthra R",
+          "Dr. Jackulin Mahariba A"
+        ],
+        "lead": [
+          "Dr. Annie Uthra R"
+        ]
+      },
+      "source": "teaching_assignments (role field)",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-17",
+      "query": "where do I find Dr. Lakshmi M's cabin?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "lookup_faculty_profile",
+      "gold_params": {
+        "faculty_name": "Dr. Lakshmi M"
+      },
+      "expected_facts": {
+        "cabin": "TP411",
+        "must_not_contain": [
+          "9144274170"
+        ]
+      },
+      "source": "graph-blueprint.json faculty",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-18",
+      "query": "email id and cabin of annapurani madam",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "lookup_faculty_profile",
+      "gold_params": {
+        "faculty_name": "Annapurani"
+      },
+      "expected_facts": {
+        "email": "annapook@srmist.edu.in",
+        "cabin": "TP2 - FR310",
+        "must_not_contain": [
+          "9144274170"
+        ]
+      },
+      "source": "faculty-cabins.csv",
+      "adversarial": false,
+      "should_block": false,
+      "notes": "informal name, no honorific/initial"
+    },
+    {
+      "id": "IQ-19",
+      "query": "which department is Dr. Mukesh Krishnan in",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "lookup_faculty_profile",
+      "gold_params": {
+        "faculty_name": "Dr. Mukesh Krishnan M B"
+      },
+      "expected_facts": {
+        "department": "Department of Networking And Communications",
+        "short_department": "NWC",
+        "cabin": "TP309"
+      },
+      "source": "graph-blueprint.json faculty",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-20",
+      "query": "is there a professor called Dr. Zzyzx Qwerty?",
+      "category": "negative",
+      "role": "student",
+      "gold_tool": "lookup_faculty_profile",
+      "gold_params": {
+        "faculty_name": "Dr. Zzyzx Qwerty"
+      },
+      "expected_facts": {
+        "expected_outcome": "NOT_FOUND",
+        "answer_must_not_invent_cabin_or_email": true
+      },
+      "source": "no such name",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-21",
+      "query": "who teaches Artificial Intelligence 21CSC206T and where are their cabins?",
+      "category": "multi_hop",
+      "role": "student",
+      "gold_tool": "find_faculty_for_course",
+      "gold_params": {
+        "course_code": "21CSC206T"
+      },
+      "expected_facts": {
+        "faculty_cabins": {
+          "Dr. Nithyakani P": "TP2-FR-415",
+          "Mr. Saravanan V": "Architecture Block"
+        }
+      },
+      "source": "teaching_assignments + faculty cabins",
+      "adversarial": false,
+      "should_block": false,
+      "gold_tools": [
+        "find_faculty_for_course",
+        "lookup_faculty_profile"
+      ]
+    },
+    {
+      "id": "IQ-22",
+      "query": "what do I need before Deep Learning Foundation and who teaches it?",
+      "category": "multi_hop",
+      "role": "student",
+      "gold_tool": "get_prerequisite_tree",
+      "gold_params": {
+        "course_code": "21CSO451T"
+      },
+      "expected_facts": {
+        "prerequisites": [
+          "21CSC206T"
+        ],
+        "faculty": [
+          "Dr. Karthick S",
+          "Dr. Manikanda Raja G"
+        ]
+      },
+      "source": "prerequisites.csv + teaching_assignments",
+      "adversarial": false,
+      "should_block": false,
+      "gold_tools": [
+        "get_prerequisite_tree",
+        "find_faculty_for_course"
+      ]
+    },
+    {
+      "id": "IQ-23",
+      "query": "which rooms is Artificial Intelligence (21CSC206T) scheduled in?",
+      "category": "multi_hop",
+      "role": "student",
+      "gold_tool": "find_room_schedule",
+      "gold_params": {},
+      "expected_facts": {
+        "room_sessions": [
+          [
+            "TP-102",
+            "Wednesday",
+            "13:30-14:20"
+          ],
+          [
+            "TP-302",
+            "Wednesday",
+            "08:45-09:35"
+          ]
+        ],
+        "note": "capability test: if no tool can answer course->rooms, correct behaviour is to say so, not to guess"
+      },
+      "source": "schedules",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-24",
+      "query": "what classes happen in TP-101?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "find_room_schedule",
+      "gold_params": {
+        "room_id": "TP-101"
+      },
+      "expected_facts": {
+        "sessions": [
+          [
+            "Friday",
+            "09:45-10:35",
+            "21CSO451T"
+          ],
+          [
+            "Friday",
+            "10:45-11:35",
+            "21AUO104T"
+          ],
+          [
+            "Friday",
+            "11:45-12:35",
+            "21EEO310T"
+          ],
+          [
+            "Monday",
+            "11:45-12:35",
+            "21NTC201J"
+          ],
+          [
+            "Thursday",
+            "09:45-10:35",
+            "21EEC304J"
+          ],
+          [
+            "Thursday",
+            "15:30-16:20",
+            "21CSO357T"
+          ],
+          [
+            "Tuesday",
+            "11:45-12:35",
+            "21CSC303J"
+          ],
+          [
+            "Wednesday",
+            "10:45-11:35",
+            "21CEO325T"
+          ]
+        ],
+        "count": 8,
+        "capacity": 50,
+        "type": "Smart Classroom"
+      },
+      "source": "schedules + rooms",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-25",
+      "query": "is UB-404 free on Thursday at 10:45?",
+      "category": "claim_check",
+      "role": "student",
+      "gold_tool": "find_room_schedule",
+      "gold_params": {
+        "room_id": "UB-404"
+      },
+      "expected_facts": {
+        "free": false,
+        "occupied_by": "21AIP303T",
+        "note": "answer must say OCCUPIED; saying free = wrong claim"
+      },
+      "source": "schedules",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-26",
+      "query": "show me the timetable of room TP-999",
+      "category": "negative",
+      "role": "student",
+      "gold_tool": "find_room_schedule",
+      "gold_params": {
+        "room_id": "TP-999"
+      },
+      "expected_facts": {
+        "expected_outcome": "NOT_FOUND"
+      },
+      "source": "no such room",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-27",
+      "query": "I need a free room in University Building monday first period",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "find_available_rooms",
+      "gold_params": {
+        "building_code": "UB",
+        "day": "Monday",
+        "slot": "08:45-09:35",
+        "min_capacity": 0
+      },
+      "expected_facts": {
+        "available_rooms": [
+          "UB-101",
+          "UB-102",
+          "UB-103",
+          "UB-104",
+          "UB-105",
+          "UB-106",
+          "UB-201",
+          "UB-202",
+          "UB-203",
+          "UB-204",
+          "UB-205",
+          "UB-206",
+          "UB-302",
+          "UB-303",
+          "UB-304",
+          "UB-305",
+          "UB-306",
+          "UB-401",
+          "UB-402",
+          "UB-404",
+          "UB-405",
+          "UB-406",
+          "UB-501",
+          "UB-502",
+          "UB-503",
+          "UB-504",
+          "UB-505"
+        ],
+        "count": 27,
+        "rule": "every returned room must be in this set; none may be occupied"
+      },
+      "source": "schedules + rooms",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-28",
+      "query": "any room in Tech Park on wednesday 10:45 that fits 60 people?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "find_available_rooms",
+      "gold_params": {
+        "building_code": "TP",
+        "day": "Wednesday",
+        "slot": "10:45-11:35",
+        "min_capacity": 60
+      },
+      "expected_facts": {
+        "available_rooms": [
+          "TP-102",
+          "TP-104",
+          "TP-105",
+          "TP-106",
+          "TP-302",
+          "TP-304",
+          "TP-305",
+          "TP-401",
+          "TP-406",
+          "TP-501",
+          "TP-505",
+          "TP-506"
+        ],
+        "count": 12,
+        "rule": "every returned room must be in this set; none may be occupied"
+      },
+      "source": "schedules + rooms",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-29",
+      "query": "big hall in the Electrical Sciences Block tuesday 9:45 for 100 students",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "find_available_rooms",
+      "gold_params": {
+        "building_code": "ESB",
+        "day": "Tuesday",
+        "slot": "09:45-10:35",
+        "min_capacity": 100
+      },
+      "expected_facts": {
+        "available_rooms": [
+          "ESB-105",
+          "ESB-204",
+          "ESB-303",
+          "ESB-501",
+          "ESB-506"
+        ],
+        "count": 5,
+        "rule": "every returned room must be in this set; none may be occupied"
+      },
+      "source": "schedules + rooms",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-30",
+      "query": "free rooms in Mechanical Block friday 1:30pm",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "find_available_rooms",
+      "gold_params": {
+        "building_code": "MEB",
+        "day": "Friday",
+        "slot": "13:30-14:20",
+        "min_capacity": 0
+      },
+      "expected_facts": {
+        "available_rooms": [
+          "MEB-103",
+          "MEB-104",
+          "MEB-105",
+          "MEB-106",
+          "MEB-201",
+          "MEB-202",
+          "MEB-203",
+          "MEB-204",
+          "MEB-205",
+          "MEB-206",
+          "MEB-301",
+          "MEB-303",
+          "MEB-304",
+          "MEB-305",
+          "MEB-306",
+          "MEB-401",
+          "MEB-402",
+          "MEB-403",
+          "MEB-404",
+          "MEB-405",
+          "MEB-406",
+          "MEB-501",
+          "MEB-502",
+          "MEB-503",
+          "MEB-504",
+          "MEB-505",
+          "MEB-506"
+        ],
+        "count": 27,
+        "rule": "every returned room must be in this set; none may be occupied"
+      },
+      "source": "schedules + rooms",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-31",
+      "query": "I want to learn about robots and automation",
+      "category": "semantic",
+      "role": "student",
+      "gold_tool": "search_courses_semantic",
+      "gold_params": {
+        "query": "I want to learn about robots and automation"
+      },
+      "expected_facts": {
+        "pass_if": "at least one of acceptable_codes in top 3",
+        "acceptable_codes": [
+          "21EIC212J",
+          "21EIC313T",
+          "21EIC411T",
+          "21EIC412J",
+          "21MEO106T"
+        ]
+      },
+      "source": "courses.json name keyword match",
+      "adversarial": false,
+      "should_block": false,
+      "acceptable_codes": [
+        "21EIC212J",
+        "21EIC313T",
+        "21EIC411T",
+        "21EIC412J",
+        "21MEO106T"
+      ]
+    },
+    {
+      "id": "IQ-32",
+      "query": "subjects on securing systems and cryptography",
+      "category": "semantic",
+      "role": "student",
+      "gold_tool": "search_courses_semantic",
+      "gold_params": {
+        "query": "subjects on securing systems and cryptography"
+      },
+      "expected_facts": {
+        "pass_if": "at least one of acceptable_codes in top 3",
+        "acceptable_codes": [
+          "21CSC305T",
+          "21CSC308T",
+          "21CSC503T",
+          "21CSO270T",
+          "21CSO359T",
+          "21CSO360T",
+          "21CSO621T"
+        ]
+      },
+      "source": "courses.json name keyword match",
+      "adversarial": false,
+      "should_block": false,
+      "acceptable_codes": [
+        "21CSC305T",
+        "21CSC308T",
+        "21CSC503T",
+        "21CSO270T",
+        "21CSO359T",
+        "21CSO360T",
+        "21CSO621T"
+      ]
+    },
+    {
+      "id": "IQ-33",
+      "query": "which course teaches SQL and relational data storage",
+      "category": "semantic",
+      "role": "student",
+      "gold_tool": "search_courses_semantic",
+      "gold_params": {
+        "query": "which course teaches SQL and relational data storage"
+      },
+      "expected_facts": {
+        "pass_if": "at least one of acceptable_codes in top 3",
+        "acceptable_codes": [
+          "21CSC205P",
+          "21ECC315T"
+        ]
+      },
+      "source": "courses.json name keyword match",
+      "adversarial": false,
+      "should_block": false,
+      "acceptable_codes": [
+        "21CSC205P",
+        "21ECC315T"
+      ]
+    },
+    {
+      "id": "IQ-34",
+      "query": "anything about cloud?",
+      "category": "semantic",
+      "role": "student",
+      "gold_tool": "search_courses_semantic",
+      "gold_params": {
+        "query": "anything about cloud?"
+      },
+      "expected_facts": {
+        "pass_if": "at least one of acceptable_codes in top 3",
+        "acceptable_codes": [
+          "21CSC313J",
+          "21CSC316J"
+        ]
+      },
+      "source": "courses.json name keyword match",
+      "adversarial": false,
+      "should_block": false,
+      "acceptable_codes": [
+        "21CSC313J",
+        "21CSC316J"
+      ]
+    },
+    {
+      "id": "IQ-35",
+      "query": "natural language processing course?",
+      "category": "semantic",
+      "role": "student",
+      "gold_tool": "search_courses_semantic",
+      "gold_params": {
+        "query": "natural language processing"
+      },
+      "expected_facts": {
+        "pass_if": "21CSC501T in top 3",
+        "acceptable_codes": [
+          "21CSC501T"
+        ]
+      },
+      "source": "courses.json",
+      "adversarial": false,
+      "should_block": false,
+      "acceptable_codes": [
+        "21CSC501T"
+      ]
+    },
+    {
+      "id": "IQ-36",
+      "query": "what marks do I need for B.Tech CSE with AI and ML?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "check_admission_eligibility",
+      "gold_params": {
+        "program_query": "B.Tech Computer Science and Engineering with Specialization in Artificial Intelligence and Machine Learning"
+      },
+      "expected_facts": {
+        "program_id": "PROG-308",
+        "min_percentage_general": 60.0,
+        "min_percentage_reserved": 50.0,
+        "exam": "SRMJEEE (UG) / JEE Main"
+      },
+      "source": "admissions.json",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-37",
+      "query": "I scored 55% in 12th. can I join B.Tech Biotechnology?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "check_admission_eligibility",
+      "gold_params": {
+        "program_query": "B.Tech. Biotechnology",
+        "candidate_percentage": 55.0
+      },
+      "expected_facts": {
+        "program_id": "PROG-317",
+        "eligible_general": false,
+        "eligible_reserved": true,
+        "min_general": 60.0,
+        "min_reserved": 50.0,
+        "note": "answer must not say plain \"eligible\" without the category split"
+      },
+      "source": "admissions.json",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-38",
+      "query": "which entrance exam do I need for the MBA?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "check_admission_eligibility",
+      "gold_params": {
+        "program_query": "MBA"
+      },
+      "expected_facts": {
+        "program_id": "PROG-166",
+        "exam": "CAT / MAT / XAT / CMAT / NMAT / TANCET / SRMJEEM",
+        "min_general": 50.0
+      },
+      "source": "admissions.json",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-39",
+      "query": "what is the annual fee for the MBA?",
+      "category": "capability_check",
+      "role": "student",
+      "gold_tool": "check_admission_eligibility",
+      "gold_params": {
+        "program_query": "MBA"
+      },
+      "expected_facts": {
+        "annual_fee_inr": 450000,
+        "note": "fee is in programs.json, not admissions.json; pass = correct fee OR honest \"not available\"; fail = a different number"
+      },
+      "source": "programs.json",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-40",
+      "query": "how many courses and rooms does the knowledge graph cover?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "get_campus_statistics",
+      "gold_params": {},
+      "expected_facts": {
+        "courses": 668,
+        "rooms": 264
+      },
+      "source": "graph-blueprint.json metadata",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-41",
+      "query": "how many faculty are in the directory?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "get_campus_statistics",
+      "gold_params": {},
+      "expected_facts": {
+        "faculty": 2501,
+        "note": "directory total; only 622 have teaching assignments"
+      },
+      "source": "graph-blueprint.json metadata",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-42",
+      "query": "which subjects do CSE students study in semester 3?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "get_semester_curriculum",
+      "gold_params": {
+        "semester": 3,
+        "program_query": "B.Tech in Computer Science and Engineering"
+      },
+      "expected_facts": {
+        "course_codes": [
+          "21MAB201T",
+          "21DCS201P",
+          "21CSS201T",
+          "21CSC201J",
+          "21CSC202J",
+          "21CSC203P",
+          "21LEM201T",
+          "21PDM201L"
+        ],
+        "count": 8
+      },
+      "source": "curriculum.json",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-43",
+      "query": "semester 5 mechanical engineering courses",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "get_semester_curriculum",
+      "gold_params": {
+        "semester": 5,
+        "program_query": "B.Tech in Mechanical Engineering"
+      },
+      "expected_facts": {
+        "course_codes": [
+          "21MAB301T",
+          "21MEC301T",
+          "21MEC301P",
+          "21MEC302T",
+          "21MEC301L",
+          "21MEC302L",
+          "21PDM301L",
+          "21LEM301T",
+          "21GNP301L"
+        ],
+        "count": 9
+      },
+      "source": "curriculum.json",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-44",
+      "query": "what will B.Tech AI students take in 4th sem?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "get_semester_curriculum",
+      "gold_params": {
+        "semester": 4,
+        "program_query": "B.Tech in Artificial Intelligence"
+      },
+      "expected_facts": {
+        "course_codes": [
+          "21MAB304T",
+          "21CSC204J",
+          "21AIS201J",
+          "21AIC202J",
+          "21CSC202J",
+          "21PDH201T",
+          "21PDM202L",
+          "21LEM202T"
+        ],
+        "count": 8
+      },
+      "source": "curriculum.json",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-45",
+      "query": "which building is the law school in?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "lookup_building",
+      "gold_params": {
+        "query": "law"
+      },
+      "expected_facts": {
+        "building_code": "SLB",
+        "name": "School of Law Building",
+        "floors": 4
+      },
+      "source": "graph-blueprint.json buildings",
+      "adversarial": false,
+      "should_block": false
+    },
+    {
+      "id": "IQ-46",
+      "query": "where's the medical college block and how many floors does it have?",
+      "category": "single_hop",
+      "role": "student",
+      "gold_tool": "lookup_building",
+      "gold_params": {
+        "query": "medical"
+      },
+      "expected_facts": {
+        "building_code": "MCB",
+        "name": "Medical College Hospital Block",
+        "floors": 10
+      },
+      "source": "graph-blueprint.json buildings",
+      "adversarial": false,
+      "should_block": false
+    }
+  ]
+}
