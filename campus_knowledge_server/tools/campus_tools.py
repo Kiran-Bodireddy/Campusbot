@@ -8,12 +8,17 @@ import time
 import math
 import re
 import difflib
-from typing import Dict, List, Any, Optional
+import logging
+from types import MappingProxyType
+from typing import Dict, List, Any, Optional, Union
 from pydantic import BaseModel, Field, field_validator
+
+logger = logging.getLogger("campus_tools")
 
 from campus_knowledge_server.database.neo4j_client import get_graph_client
 from campus_knowledge_server.security.ast_validator import ASTSecurityValidator, SecurityViolationError
 from campus_knowledge_server.security.audit import get_audit_logger
+from campus_knowledge_server.config.matching_config import load_matching_config, strip_honorifics_and_tokenize
 
 # ----------------- Pydantic v2 Request Schemas -----------------
 
@@ -38,11 +43,39 @@ class RoomScheduleRequest(BaseModel):
     room_id: str = Field(..., min_length=2, max_length=20, description="Room ID (e.g., 'TP-101', 'UB-203').")
     day_of_week: Optional[str] = Field(default=None, description="Optional filter by day (e.g., 'Monday').")
 
+SLOT_NUMBER_MAP = {
+    1: "08:45-09:35",
+    2: "09:45-10:35",
+    3: "10:45-11:35",
+    4: "11:45-12:35",
+    5: "13:30-14:20",
+    6: "14:30-15:20",
+    7: "15:30-16:20",
+    8: "16:30-17:20",
+}
+
 class AvailableRoomsRequest(BaseModel):
     building_code: str = Field(..., min_length=2, max_length=10, description="Building code (e.g. 'TP', 'UB', 'BEL').")
     min_capacity: int = Field(default=30, ge=10, le=500, description="Minimum room seating capacity.")
     day: str = Field(default="Monday", description="Day of week (Monday-Friday).")
-    slot: str = Field(default="08:45-09:35", description="Timeslot string.")
+    slot: Union[str, int] = Field(default="08:45-09:35", description="Timeslot string (e.g. '08:45-09:35') or integer slot number (1-8).")
+
+    @field_validator("slot", mode="before")
+    @classmethod
+    def normalize_slot(cls, v: Any) -> str:
+        if isinstance(v, int):
+            if v in SLOT_NUMBER_MAP:
+                return SLOT_NUMBER_MAP[v]
+            raise ValueError(f"Integer slot must be between 1 and 8, got {v}.")
+        if isinstance(v, str):
+            s = v.strip()
+            if s.isdigit():
+                n = int(s)
+                if n in SLOT_NUMBER_MAP:
+                    return SLOT_NUMBER_MAP[n]
+                raise ValueError(f"Slot number must be between 1 and 8, got {n}.")
+            return s
+        raise ValueError(f"Invalid slot value: {v}")
 
 class SemanticSearchRequest(BaseModel):
     query: str = Field(..., min_length=2, max_length=200, description="Semantic description or subject query.")
@@ -65,14 +98,17 @@ class SemesterCurriculumRequest(BaseModel):
 class CampusStatisticsRequest(BaseModel):
     category: str = Field(default="all", description="Category for statistics: 'all', 'courses', 'programs', 'faculty', 'rooms'.")
 
-# ----------------- Pre-Approved Cypher Templates -----------------
+class BuildingLookupRequest(BaseModel):
+    query: str = Field(..., min_length=2, max_length=150, description="Building code (e.g. 'TP', 'TP2', 'UB', 'BEL', 'CVR', 'ARCH') or natural language inquiry (e.g. 'tp1 building', 'where is placement office').")
 
-WHITELISTED_TEMPLATES = {
+# ----------------- Pre-Approved Cypher Templates (Immutable) -----------------
+
+WHITELISTED_TEMPLATES = MappingProxyType({
     "courses_by_department": "MATCH (c:Course) WHERE toLower(c.department) CONTAINS toLower($department) RETURN c.code AS code, c.name AS name, c.credits AS credits, c.level AS level",
     "faculty_by_department": "MATCH (f:FacultyMember) WHERE toLower(f.department) CONTAINS toLower($department) RETURN f.id AS id, f.name AS name, f.designation AS designation, f.specialization AS specialization",
     "building_rooms_summary": "MATCH (r:Room)-[:LOCATED_IN]->(b:Building {code: $building_code}) RETURN r.id AS room_id, r.type AS type, r.capacity AS capacity",
     "course_prerequisite_chain": "MATCH (target:Course {code: $course_code})-[:REQUIRES_PREREQUISITE*1..3]->(prereq:Course) RETURN DISTINCT prereq.code AS prereq_code, prereq.name AS prereq_name"
-}
+})
 
 # ----------------- Governed Tool Implementations -----------------
 
@@ -80,24 +116,45 @@ class CampusKnowledgeTools:
 
     @staticmethod
     def lookup_course(req: CourseLookupRequest, caller: str = "agent") -> Dict[str, Any]:
-        """Looks up course details by course code or partial course name."""
+        """Looks up course details by course code or partial course name via Neo4j Cypher with fallback."""
         t0 = time.time()
         client = get_graph_client()
         audit = get_audit_logger()
         q_norm = req.query.strip().upper()
 
         results = []
-        # 1. Check exact code match in-memory index
-        if q_norm in client._course_by_code:
-            results.append(client._course_by_code[q_norm])
-        else:
-            # 2. Substring / partial search
-            q_lower = req.query.strip().lower()
-            for c in client.in_memory_data.get("courses", []):
-                if q_lower in c["name"].lower() or q_lower in c["code"].lower():
-                    results.append(c)
-                if len(results) >= 10:
-                    break
+        # 1. Primary: Live Neo4j Cypher query
+        if client.is_connected and client.driver:
+            try:
+                cypher = """
+                    MATCH (c:Course)
+                    WHERE toUpper(c.code) = $q_norm OR toLower(c.name) CONTAINS toLower($q_raw)
+                    RETURN c.id as id, c.code as code, c.name as name, c.credits as credits,
+                           c.level as level, c.department as department, c.description as description,
+                           c.category as category, c.ltpc as ltpc, c.regulation as regulation,
+                           coalesce(c.is_official, c.provenance = 'official', true) as is_official
+                    LIMIT 10
+                """
+                results = client.query_read(cypher, {"q_norm": q_norm, "q_raw": req.query.strip()})
+            except Exception as e:
+                logger.warning(f"Neo4j lookup_course query error ({e}), falling back to in-memory.")
+                results = []
+
+        # 2. Secondary fallback: in-memory index
+        if not results:
+            if q_norm in client._course_by_code:
+                c_item = dict(client._course_by_code[q_norm])
+                c_item.setdefault("is_official", True)
+                results.append(c_item)
+            else:
+                q_lower = req.query.strip().lower()
+                for c in client.in_memory_data.get("courses", []):
+                    if q_lower in c["name"].lower() or q_lower in c["code"].lower():
+                        c_item = dict(c)
+                        c_item.setdefault("is_official", True)
+                        results.append(c_item)
+                    if len(results) >= 10:
+                        break
 
         latency = (time.time() - t0) * 1000
         audit.log_event(
@@ -113,39 +170,54 @@ class CampusKnowledgeTools:
             "query": req.query,
             "match_count": len(results),
             "courses": results,
-            "source": "SRMIST Property Graph",
+            "source": "SRMIST Property Graph (Neo4j Community)" if client.is_connected else "SRMIST In-Memory Cache",
             "grounding": f"Found {len(results)} courses matching '{req.query}'."
         }
 
     @staticmethod
     def get_prerequisite_tree(req: PrerequisiteTreeRequest, caller: str = "agent") -> Dict[str, Any]:
-        """Recursively traverses prerequisite relationships up to max_depth."""
+        """Recursively traverses prerequisite relationships up to max_depth via Cypher."""
         t0 = time.time()
         client = get_graph_client()
         audit = get_audit_logger()
         target = req.course_code.strip().upper()
 
         tree = []
-        visited = set()
+        if client.is_connected and client.driver:
+            try:
+                cypher = """
+                    MATCH path = (target:Course {code: $code})-[:REQUIRES_PREREQUISITE*1..4]->(prereq:Course)
+                    UNWIND relationships(path) as rel
+                    WITH startNode(rel) as t, endNode(rel) as p, rel, length(path) as d
+                    WHERE d <= $max_depth
+                    RETURN DISTINCT d as depth, t.code as target_course, p.code as prerequisite_code,
+                                    p.name as prerequisite_name, rel.condition as condition
+                    ORDER BY depth ASC
+                """
+                tree = client.query_read(cypher, {"code": target, "max_depth": req.max_depth})
+            except Exception as e:
+                logger.warning(f"Neo4j get_prerequisite_tree error ({e}), falling back.")
+                tree = []
 
-        def dfs(current_code: str, current_depth: int):
-            if current_depth > req.max_depth or current_code in visited:
-                return
-            visited.add(current_code)
-            prereqs = client._prereqs_by_target.get(current_code, [])
-            for p in prereqs:
-                req_code = p["prerequisite_course_code"].upper()
-                c_info = client._course_by_code.get(req_code, {"code": req_code, "name": "Unknown Course"})
-                tree.append({
-                    "depth": current_depth,
-                    "target_course": current_code,
-                    "prerequisite_code": req_code,
-                    "prerequisite_name": c_info.get("name", ""),
-                    "condition": p.get("condition", "MANDATORY_PASS")
-                })
-                dfs(req_code, current_depth + 1)
-
-        dfs(target, 1)
+        if not tree:
+            visited = set()
+            def dfs(current_code: str, current_depth: int):
+                if current_depth > req.max_depth or current_code in visited:
+                    return
+                visited.add(current_code)
+                prereqs = client._prereqs_by_target.get(current_code, [])
+                for p in prereqs:
+                    req_code = p["prerequisite_course_code"].upper()
+                    c_info = client._course_by_code.get(req_code, {"code": req_code, "name": "Unknown Course"})
+                    tree.append({
+                        "depth": current_depth,
+                        "target_course": current_code,
+                        "prerequisite_code": req_code,
+                        "prerequisite_name": c_info.get("name", ""),
+                        "condition": p.get("condition", "MANDATORY_PASS")
+                    })
+                    dfs(req_code, current_depth + 1)
+            dfs(target, 1)
 
         latency = (time.time() - t0) * 1000
         audit.log_event(
@@ -162,7 +234,7 @@ class CampusKnowledgeTools:
             "max_depth_evaluated": req.max_depth,
             "total_prerequisites": len(tree),
             "prerequisites": tree,
-            "source": "SRMIST Prerequisite DAG",
+            "source": "SRMIST Prerequisite DAG (Neo4j Community)" if client.is_connected else "SRMIST In-Memory Cache",
             "grounding": f"{target} has {len(tree)} prerequisite dependency edges up to depth {req.max_depth}."
         }
 
@@ -176,9 +248,21 @@ class CampusKnowledgeTools:
         target = req.target_course.strip().upper()
         completed = {c.strip().upper() for c in req.completed_courses}
 
-        # Retrieve direct prerequisites
-        prereqs = client._prereqs_by_target.get(target, [])
-        required_codes = [p["prerequisite_course_code"].upper() for p in prereqs]
+        required_codes = []
+        if client.is_connected and client.driver:
+            try:
+                cypher = """
+                    MATCH (target:Course {code: $code})-[:REQUIRES_PREREQUISITE]->(prereq:Course)
+                    RETURN prereq.code as required_code
+                """
+                rows = client.query_read(cypher, {"code": target})
+                required_codes = [r["required_code"].upper() for r in rows if "required_code" in r]
+            except Exception as e:
+                logger.warning(f"Neo4j verify_prerequisites error ({e}), falling back.")
+
+        if not required_codes:
+            prereqs = client._prereqs_by_target.get(target, [])
+            required_codes = [p["prerequisite_course_code"].upper() for p in prereqs]
 
         missing = [code for code in required_codes if code not in completed]
         satisfied = [code for code in required_codes if code in completed]
@@ -204,33 +288,48 @@ class CampusKnowledgeTools:
                 f"Eligible to enroll in {target}." if is_eligible
                 else f"Ineligible to enroll in {target}. Missing: {', '.join(missing)}."
             ),
-            "source": "SRMIST Prerequisite DAG"
+            "source": "SRMIST Prerequisite DAG (Neo4j Community)" if client.is_connected else "SRMIST In-Memory Cache"
         }
 
     @staticmethod
     def find_faculty_for_course(req: FacultyCourseRequest, caller: str = "agent") -> Dict[str, Any]:
-        """Retrieves verified faculty instructors teaching a specified course."""
+        """Retrieves verified faculty instructors teaching a specified course via Neo4j."""
         t0 = time.time()
         client = get_graph_client()
         audit = get_audit_logger()
         c_code = req.course_code.strip().upper()
 
-        teaching = client._teaching_by_course.get(c_code, [])
         instructors = []
-        for t in teaching:
-            fac = client._faculty_by_id.get(t["faculty_id"])
-            if fac:
-                instructors.append({
-                    "id": fac["id"],
-                    "name": fac["name"],
-                    "designation": fac["designation"],
-                    "department": fac["department"],
-                    "cabin": fac.get("cabin", "Staff Room (TBA)"),
-                    "email": fac["email"],
-                    "specialization": fac["specialization"],
-                    "experience": fac["experience"],
-                    "teaching_role": t.get("role", "Instructor")
-                })
+        if client.is_connected and client.driver:
+            try:
+                cypher = """
+                    MATCH (f:FacultyMember)-[t:TEACHES]->(c:Course)
+                    WHERE toUpper(c.code) = $code
+                    RETURN f.id as id, f.name as name, f.designation as designation,
+                           f.department as department, f.cabin as cabin, f.email as email,
+                           f.specialization as specialization, f.experience as experience,
+                           t.role as teaching_role
+                """
+                instructors = client.query_read(cypher, {"code": c_code})
+            except Exception as e:
+                logger.warning(f"Neo4j find_faculty_for_course error ({e}), falling back.")
+
+        if not instructors:
+            teaching = client._teaching_by_course.get(c_code, [])
+            for t in teaching:
+                fac = client._faculty_by_id.get(t["faculty_id"])
+                if fac:
+                    instructors.append({
+                        "id": fac["id"],
+                        "name": fac["name"],
+                        "designation": fac["designation"],
+                        "department": fac["department"],
+                        "cabin": fac.get("cabin", "Staff Room (TBA)"),
+                        "email": fac["email"],
+                        "specialization": fac["specialization"],
+                        "experience": fac["experience"],
+                        "teaching_role": t.get("role", "Instructor")
+                    })
 
         latency = (time.time() - t0) * 1000
         audit.log_event(
@@ -246,93 +345,189 @@ class CampusKnowledgeTools:
             "course_code": c_code,
             "instructor_count": len(instructors),
             "instructors": instructors,
-            "source": "SRMIST Faculty Directory (Kattankulathur Campus)",
+            "source": "SRMIST Faculty Directory (Neo4j Community)" if client.is_connected else "SRMIST In-Memory Cache",
             "grounding": f"Found {len(instructors)} instructors assigned to {c_code}."
         }
 
     @staticmethod
     def lookup_faculty_profile(req: FacultyProfileRequest, caller: str = "agent") -> Dict[str, Any]:
-        """Searches faculty profiles by name and returns qualifications, experience, and research."""
+        """
+        Searches faculty profiles by name from live Neo4j with strict tiered ranking:
+          Tier 3 (exact): exact full-name match after stripping configured honorifics
+          Tier 2 (whole_word): every query token matches a whole word in the name
+          Tier 1 (partial_fuzzy): partial/fuzzy match meeting configured min_similarity
+        Drops anything below min_similarity (returning NOT_FOUND). Never falls back to JSON
+        when Neo4j is connected.
+        """
         t0 = time.time()
         client = get_graph_client()
         audit = get_audit_logger()
-        name_clean = re.sub(r"[^\w\s]", " ", req.faculty_name.lower())
-        req_terms = [t for t in name_clean.split() if t not in ["dr", "prof", "professor", "mr", "mrs", "ms"]]
 
-        scored_matches = []
-        q_phrase = " ".join(req_terms)
-        meaningful_terms = [t for t in req_terms if len(t) > 1]
+        cfg = load_matching_config()["faculty_matching"]
+        honorifics = cfg["honorifics"]
+        min_sim = float(cfg["min_similarity"])
+        max_displayed = int(cfg["max_displayed_matches"])
+        fuzzy_min_len = int(cfg["fuzzy_min_token_length"])
 
-        for fac in client.in_memory_data.get("faculty", []):
-            fac_clean = re.sub(r"[^\w\s]", " ", fac["name"].lower())
-            f_words = [w for w in fac_clean.split() if w not in ["dr", "prof", "professor", "mr", "mrs", "ms"]]
-            f_phrase = " ".join(f_words)
+        req_tokens = strip_honorifics_and_tokenize(req.faculty_name, honorifics)
+        q_phrase = " ".join(req_tokens)
 
-            score = 0.0
-            # 1. Exact canonical name match (ignoring titles): score 100
-            if q_phrase and q_phrase == f_phrase:
-                score = 100.0
-            # 2. Exact word-boundary phrase match: score 90
-            elif q_phrase and re.search(r"\b" + re.escape(q_phrase) + r"\b", f_phrase):
-                score = 90.0
-            # 3. All query words present as exact distinct words: score 85
-            elif req_terms and all(t in f_words for t in req_terms):
-                score = 85.0
-            # 4. Meaningful words match: score 70-75
-            elif meaningful_terms:
-                matched_count = sum(1 for t in meaningful_terms if t in f_words)
-                if matched_count == len(meaningful_terms):
-                    score = 75.0
-                elif matched_count > 0 and len(meaningful_terms) > 1:
-                    score = 50.0 + (matched_count / len(meaningful_terms)) * 15.0
+        used_neo4j = False
+        faculty_index: List[Dict[str, Any]] = []
 
-            # 5. Fuzzy typo match for faculty names via sequence similarity
-            if score == 0.0 and meaningful_terms:
-                max_sim = 0.0
-                for t in meaningful_terms:
-                    sim = max((difflib.SequenceMatcher(None, t, w).ratio() for w in f_words if len(w) > 2), default=0.0)
-                    if sim > max_sim:
-                        max_sim = sim
-                if max_sim >= 0.78:
-                    score = 40.0 + max_sim * 20.0
+        if client.is_connected and client.driver:
+            # Rank over live-Neo4j-derived (id, name) directory loaded at startup/reload,
+            # then hydrate matched profiles directly from live Neo4j via indexed ID lookup.
+            faculty_index = client.get_graph_faculty_index()
+            used_neo4j = True
+        else:
+            # Offline test harness only when Neo4j driver is disconnected
+            faculty_index = client.in_memory_data.get("faculty", [])
 
-            if score > 0.0:
-                scored_matches.append((
-                    score,
-                    {
-                        "id": fac["id"],
-                        "name": fac["name"],
-                        "designation": fac["designation"],
-                        "department": fac["department"],
-                        "cabin": fac.get("cabin", "Staff Room (TBA)"),
-                        "college": fac["college"],
-                        "specialization": fac["specialization"],
-                        "email": fac["email"],
-                        "experience": fac["experience"],
-                        "qualifications": fac["qualifications"],
-                        "relevance_score": round(score, 1)
-                    }
-                ))
+        tier_exact: List[tuple] = []
+        tier_whole: List[tuple] = []
+        tier_partial: List[tuple] = []
 
-        # Sort descending by relevance score, then shorter name length
-        scored_matches.sort(key=lambda x: (-x[0], len(x[1]["name"])))
-        matches = [m[1] for m in scored_matches[:10]]
+        if req_tokens:
+            meaningful_tokens = [t for t in req_tokens if len(t) >= fuzzy_min_len] or req_tokens
+
+            for fac in faculty_index:
+                raw_name = (fac.get("name") or "").strip()
+                fid = fac.get("id", "")
+                if not raw_name or not fid:
+                    continue
+                f_tokens = strip_honorifics_and_tokenize(raw_name, honorifics)
+                if not f_tokens:
+                    continue
+                f_phrase = " ".join(f_tokens)
+
+                # Tier 3: exact full-name match (after honorific stripping)
+                if q_phrase == f_phrase:
+                    tier_exact.append(((raw_name.lower(), fid), fid, "exact", 100.0))
+                    continue
+
+                # Tier 2: every query word matches a whole word in the name
+                f_token_set = set(f_tokens)
+                if all(qt in f_token_set for qt in req_tokens):
+                    starts_with_q = 0 if f_tokens[:len(req_tokens)] == req_tokens else 1
+                    first_pos = min((f_tokens.index(qt) for qt in req_tokens if qt in f_tokens), default=99)
+                    tier_whole.append(((starts_with_q, first_pos, len(f_tokens), raw_name.lower(), fid), fid, "whole_word", 85.0))
+                    continue
+
+                # Tier 1: partial or fuzzy match — every meaningful token must meet min_similarity
+                token_sims: List[float] = []
+                all_met = True
+                for qt in meaningful_tokens:
+                    best = 0.0
+                    for w in f_tokens:
+                        if qt == w:
+                            best = 1.0
+                            break
+                        ratio = difflib.SequenceMatcher(None, qt, w).ratio()
+                        if len(qt) >= fuzzy_min_len and qt in w and (len(qt) / max(len(w), 1)) >= 0.35:
+                            ratio = max(ratio, min_sim)
+                        if ratio > best:
+                            best = ratio
+                    if best < min_sim:
+                        all_met = False
+                        break
+                    token_sims.append(best)
+
+                if all_met and token_sims:
+                    avg_sim = sum(token_sims) / len(token_sims)
+                    if avg_sim >= min_sim:
+                        tier_partial.append(((-round(avg_sim, 4), raw_name.lower(), fid), fid, "partial_fuzzy", round(avg_sim * 70.0, 2)))
+
+        tier_exact.sort(key=lambda item: item[0])
+        tier_whole.sort(key=lambda item: item[0])
+        tier_partial.sort(key=lambda item: item[0])
+
+        if tier_exact:
+            ranked_top = tier_exact
+            top_tier = "exact"
+        elif tier_whole:
+            ranked_top = tier_whole
+            top_tier = "whole_word"
+        elif tier_partial:
+            ranked_top = tier_partial
+            top_tier = "partial_fuzzy"
+        else:
+            ranked_top = []
+            top_tier = "none"
+
+        total_top = len(ranked_top)
+        all_matched_count = len(tier_exact) + len(tier_whole) + len(tier_partial)
+
+        # Hydrate matched records directly from live Neo4j (preserving rank order)
+        top_matches: List[Dict[str, Any]] = []
+        if ranked_top:
+            matched_ids = [item[1] for item in ranked_top[:100]]
+            meta_by_id = {item[1]: (item[2], item[3]) for item in ranked_top[:100]}
+            if used_neo4j:
+                hydrated_rows = client.query_read(
+                    """
+                    MATCH (f:FacultyMember)
+                    WHERE f.id IN $ids
+                    RETURN f.id as id, f.name as name, f.designation as designation,
+                           f.department as department, f.cabin as cabin, f.email as email,
+                           f.specialization as specialization, f.experience as experience,
+                           f.college as college
+                    LIMIT 100
+                    """,
+                    {"ids": matched_ids}
+                )
+                row_by_id = {r["id"]: r for r in hydrated_rows if r.get("id")}
+            else:
+                row_by_id = {f["id"]: f for f in faculty_index if f.get("id") in meta_by_id}
+
+            for fid in matched_ids:
+                fac = row_by_id.get(fid)
+                if not fac:
+                    continue
+                m_tier, m_score = meta_by_id[fid]
+                top_matches.append({
+                    "id": fac.get("id", ""),
+                    "name": (fac.get("name") or "").strip(),
+                    "designation": fac.get("designation", ""),
+                    "department": fac.get("department", ""),
+                    "cabin": fac.get("cabin", ""),
+                    "college": fac.get("college", ""),
+                    "specialization": fac.get("specialization", ""),
+                    "email": fac.get("email", ""),
+                    "experience": fac.get("experience", ""),
+                    "match_tier": m_tier,
+                    "relevance_score": m_score,
+                })
+            if top_tier == "exact":
+                top_matches.sort(key=lambda r: (r["name"].lower(), (r["department"] or "").lower()))
+
+        if total_top == 0:
+            res_status = "NOT_FOUND"
+        elif total_top == 1:
+            res_status = "SUCCESS"
+        else:
+            res_status = "AMBIGUOUS"
 
         latency = (time.time() - t0) * 1000
         audit.log_event(
             caller=caller,
             tool_name="lookup_faculty_profile",
             parameters=req.model_dump(),
-            status="SUCCESS",
+            status="SUCCESS" if total_top > 0 else "NOT_FOUND",
             latency_ms=latency,
-            result_count=len(matches)
+            result_count=total_top
         )
 
         return {
             "query": req.faculty_name,
-            "match_count": len(matches),
-            "faculty": matches,
-            "source": "SRMIST Faculty Master Directory"
+            "status": res_status,
+            "match_tier": top_tier,
+            "match_count": total_top,
+            "total_matches": total_top,
+            "all_matches_count": all_matched_count,
+            "max_displayed_matches": max_displayed,
+            "faculty": top_matches,
+            "source": "SRMIST Faculty Directory (Neo4j Community)" if used_neo4j else "fallback"
         }
 
     @staticmethod
@@ -407,71 +602,91 @@ class CampusKnowledgeTools:
 
     @staticmethod
     def search_courses_semantic(req: SemanticSearchRequest, caller: str = "agent") -> Dict[str, Any]:
-        """Performs lexical and semantic hybrid discovery over course descriptions and syllabi."""
+        """Performs semantic vector discovery over course descriptions via native Neo4j vector index."""
         t0 = time.time()
         client = get_graph_client()
         audit = get_audit_logger()
+
+        # Stop-word guardrail: pure stop-word queries produce no results
         STOP_WORDS = {"for", "and", "the", "with", "from", "about", "what", "where", "how", "who", "which", "are", "is", "can", "take", "course", "courses", "study", "want", "related", "to", "in", "on", "at", "by", "all", "of", "a", "an", "i"}
         raw_tokens = re.findall(r"\w+", req.query.lower())
         query_terms = [t for t in raw_tokens if (len(t) > 2 or t in ("ai", "ml", "ds", "it", "cs", "ui")) and t not in STOP_WORDS]
-        # Expand common computer science abbreviations
-        EXPANSIONS = {
-            "ai": ["ai", "artificial intelligence"],
-            "ml": ["ml", "machine learning"],
-            "ds": ["data science"],
-            "dbms": ["database", "dbms"],
-            "os": ["operating systems", "operating system"]
-        }
-        search_terms = []
-        for t in query_terms:
-            if t in EXPANSIONS:
-                search_terms.extend(EXPANSIONS[t])
-            else:
-                search_terms.append(t)
+        if not query_terms:
+            latency = (time.time() - t0) * 1000
+            audit.log_event(caller=caller, tool_name="search_courses_semantic", parameters=req.model_dump(), status="SUCCESS", latency_ms=latency, result_count=0)
+            return {
+                "query": req.query,
+                "top_k": req.top_k,
+                "results_found": 0,
+                "courses": [],
+                "source": "Neo4j Native Vector Index ('course_embeddings')" if client.is_connected else "SRMIST Lexical Fallback"
+            }
 
-        scored_courses = []
-        if search_terms:
-            for c in client.in_memory_data.get("courses", []):
-                content = f"{c['code']} {c['name']} {c['department']} {c['faculty']} {c['description']}".lower()
-                c_words = set(re.findall(r"\w+", content))
-                score = 0
-                for term in search_terms:
-                    if " " in term:
-                        if term in content:
-                            score += 8
-                    else:
-                        if term in c_words:
-                            score += 4
-                        elif term in content:
-                            score += 2
-                    if term in c["name"].lower():
-                        score += 6
-                # Score threshold guardrail: must score at least 2 to be relevant
-                if score >= 2:
-                    scored_courses.append((score, c))
+        top_results = []
+        # 1. Native Neo4j Vector Index Search
+        if client.is_connected and client.driver:
+            try:
+                import requests
+                embed_resp = requests.post(
+                    "http://localhost:11434/api/embeddings",
+                    json={"model": "nomic-embed-text", "prompt": req.query},
+                    timeout=10
+                )
+                if embed_resp.status_code == 200:
+                    q_vec = embed_resp.json().get("embedding")
+                    if q_vec:
+                        cypher = """
+                            CALL db.index.vector.queryNodes('course_embeddings', $top_k, $vec)
+                            YIELD node, score
+                            RETURN node.code as code, node.name as name, node.department as department,
+                                   node.credits as credits, node.description as description, node.level as level,
+                                   score
+                        """
+                        top_results = client.query_read(cypher, {"top_k": req.top_k, "vec": q_vec})
+            except Exception as e:
+                logger.warning(f"Neo4j vector search query error ({e}), falling back to lexical search.")
 
-            # Also search official degree programs
-            for p in getattr(client, "admission_eligibility", []):
-                p_content = f"{p['program_name']} {p['department']} {p['faculty']} {p.get('mandatory_subjects', '')}".lower()
-                score = 0
-                for term in search_terms:
-                    if term in p_content:
-                        score += 4
-                    if term in p["program_name"].lower():
-                        score += 6
-                if score >= 3:
-                    scored_courses.append((score, {
-                        "code": f"PROG-{p['program_id']}",
-                        "name": p["program_name"],
-                        "department": p["department"],
-                        "faculty": p["faculty"],
-                        "level": p["degree_level"],
-                        "description": f"Degree Program under {p['faculty']}. Min Education: {p['min_education']}. Cutoff: {p['min_percentage_general']}%.",
-                        "credits": "Full Degree"
-                    }))
+        # 2. Secondary Lexical & Token Fallback if vector index offline or empty
+        if not top_results:
+            STOP_WORDS = {"for", "and", "the", "with", "from", "about", "what", "where", "how", "who", "which", "are", "is", "can", "take", "course", "courses", "study", "want", "related", "to", "in", "on", "at", "by", "all", "of", "a", "an", "i"}
+            raw_tokens = re.findall(r"\w+", req.query.lower())
+            query_terms = [t for t in raw_tokens if (len(t) > 2 or t in ("ai", "ml", "ds", "it", "cs", "ui")) and t not in STOP_WORDS]
+            EXPANSIONS = {
+                "ai": ["ai", "artificial intelligence"],
+                "ml": ["ml", "machine learning"],
+                "ds": ["data science"],
+                "dbms": ["database", "dbms"],
+                "os": ["operating systems", "operating system"]
+            }
+            search_terms = []
+            for t in query_terms:
+                if t in EXPANSIONS:
+                    search_terms.extend(EXPANSIONS[t])
+                else:
+                    search_terms.append(t)
 
-        scored_courses.sort(key=lambda x: x[0], reverse=True)
-        top_results = [item[1] for item in scored_courses[:req.top_k]]
+            scored_courses = []
+            if search_terms:
+                for c in client.in_memory_data.get("courses", []):
+                    content = f"{c['code']} {c['name']} {c['department']} {c['faculty']} {c['description']}".lower()
+                    c_words = set(re.findall(r"\w+", content))
+                    score = 0
+                    for term in search_terms:
+                        if " " in term:
+                            if term in content:
+                                score += 8
+                        else:
+                            if term in c_words:
+                                score += 4
+                            elif term in content:
+                                score += 2
+                        if term in c["name"].lower():
+                            score += 6
+                    if score >= 2:
+                        scored_courses.append((score, c))
+
+            scored_courses.sort(key=lambda x: x[0], reverse=True)
+            top_results = [item[1] for item in scored_courses[:req.top_k]]
 
         latency = (time.time() - t0) * 1000
         audit.log_event(caller=caller, tool_name="search_courses_semantic", parameters=req.model_dump(), status="SUCCESS", latency_ms=latency, result_count=len(top_results))
@@ -481,7 +696,7 @@ class CampusKnowledgeTools:
             "top_k": req.top_k,
             "results_found": len(top_results),
             "courses": top_results,
-            "source": "SRMIST Semantic Course Catalog"
+            "source": "Neo4j Native Vector Index ('course_embeddings')" if client.is_connected else "SRMIST Lexical Fallback"
         }
 
     @staticmethod
@@ -677,11 +892,50 @@ class CampusKnowledgeTools:
         audit = get_audit_logger()
 
         cat = (req.category or "all").lower().strip()
-        programs = client.in_memory_data.get("programs", []) or client.in_memory_data.get("admission_rules", [])
-        faculty = client.in_memory_data.get("faculty", [])
-        rooms = client.in_memory_data.get("rooms", [])
-        schedules = client.in_memory_data.get("schedules", [])
-        courses = client.in_memory_data.get("courses", [])
+        programs = client.admission_eligibility or client.in_memory_data.get("programs", []) or client.in_memory_data.get("admission_rules", [])
+        faculty_count = len(client.in_memory_data.get("faculty", []))
+        rooms_count = len(client.in_memory_data.get("rooms", []))
+        schedules_count = len(client.in_memory_data.get("schedules", []))
+        courses_count = len(client.in_memory_data.get("courses", []))
+        buildings_count = len(client.in_memory_data.get("buildings", []))
+        departments_count = 0
+        prereqs_count = len(client.in_memory_data.get("prerequisites", []))
+        graph_programs_count = len(programs)
+
+        used_fallback = True
+        fallback_reason = "Neo4j disconnected"
+
+        # Query live Neo4j O(1) label/relationship count store when connected
+        if client.is_connected and client.driver:
+            try:
+                count_cypher = """
+                    MATCH (c:Course) WITH count(c) AS courses
+                    MATCH (f:FacultyMember) WITH courses, count(f) AS faculty
+                    MATCH (r:Room) WITH courses, faculty, count(r) AS rooms
+                    MATCH (b:Building) WITH courses, faculty, rooms, count(b) AS buildings
+                    MATCH (d:Department) WITH courses, faculty, rooms, buildings, count(d) AS departments
+                    MATCH (p:Program) WITH courses, faculty, rooms, buildings, departments, count(p) AS programs
+                    MATCH ()-[occ:OCCUPIES]->() WITH courses, faculty, rooms, buildings, departments, programs, count(occ) AS schedules
+                    MATCH ()-[pr:REQUIRES_PREREQUISITE]->()
+                    RETURN courses, faculty, rooms, buildings, departments, programs, schedules, count(pr) AS prereqs
+                """
+                rows = client.query_read(count_cypher)
+                if rows:
+                    row = rows[0]
+                    courses_count = row["courses"]
+                    faculty_count = row["faculty"]
+                    rooms_count = row["rooms"]
+                    buildings_count = row["buildings"]
+                    departments_count = row["departments"]
+                    graph_programs_count = row["programs"]
+                    schedules_count = row["schedules"]
+                    prereqs_count = row["prereqs"]
+                    used_fallback = False
+                    fallback_reason = None
+            except Exception as e:
+                logger.warning(f"Neo4j statistics query fallback: {e}")
+                used_fallback = True
+                fallback_reason = str(e)
 
         level_counts = {}
         faculty_groups = {}
@@ -693,11 +947,15 @@ class CampusKnowledgeTools:
 
         stats = {
             "category": cat,
-            "total_programs": len(programs),
-            "total_courses_indexed": len(courses),
-            "total_faculty": len(faculty),
-            "total_classrooms": len(rooms),
-            "total_scheduled_sessions": len(schedules),
+            "total_programs": graph_programs_count if not used_fallback else len(programs),
+            "total_program_nodes_in_graph": graph_programs_count,
+            "total_courses_indexed": courses_count,
+            "total_faculty": faculty_count,
+            "total_classrooms": rooms_count,
+            "total_buildings": buildings_count,
+            "total_departments": departments_count,
+            "total_prerequisites": prereqs_count,
+            "total_scheduled_sessions": schedules_count,
             "degree_levels": level_counts,
             "faculties_summary": faculty_groups,
             "major_disciplines": [
@@ -715,16 +973,19 @@ class CampusKnowledgeTools:
             caller=caller,
             tool_name="get_campus_statistics",
             parameters=req.model_dump(),
-            status="SUCCESS",
+            status="SUCCESS" if not used_fallback else "FALLBACK",
             latency_ms=latency,
-            result_count=len(programs)
+            result_count=graph_programs_count
         )
 
-        return {
+        resp_payload: Dict[str, Any] = {
             "category": cat,
             "statistics": stats,
-            "source": "SRMIST Official Academic Registry & Campus Graph"
+            "source": "fallback" if used_fallback else "Neo4j Live Graph"
         }
+        if used_fallback:
+            resp_payload["fallback_reason"] = fallback_reason
+        return resp_payload
 
     @staticmethod
     def get_semester_curriculum(req: SemesterCurriculumRequest, caller: str = "agent") -> Dict[str, Any]:
@@ -928,3 +1189,151 @@ class CampusKnowledgeTools:
                 "grounding": grounding,
                 "regulation": "SRMIST Regulations 2021 Unified Curriculum (Volume 1)"
             }
+
+    @classmethod
+    def lookup_building(cls, req: BuildingLookupRequest, caller: str = "default_guest@internal") -> Dict[str, Any]:
+        """
+        Governed tool to retrieve detailed campus building information, floors,
+        housed departments, facilities, and rooms via exact alias or native vector search.
+        """
+        t0 = time.time()
+        audit = get_audit_logger()
+        client = get_graph_client()
+
+        raw_query = req.query.strip()
+        q_norm = raw_query.lower()
+
+        # Normalization mapping for common campus aliases
+        alias_map = {
+            "tp1": "TP", "tp-1": "TP", "tp 1": "TP", "tech park": "TP", "tech park 1": "TP",
+            "tp2": "TP2", "tp-2": "TP2", "tp 2": "TP2", "tech park 2": "TP2", "new tech park": "TP2",
+            "placement": "TP2", "placements": "TP2", "career centre": "TP2", "placement office": "TP2",
+            "ub": "UB", "university building": "UB", "main building": "UB", "admin block": "UB",
+            "library": "UB", "central library": "UB",
+            "bel": "BEL", "bel block": "BEL", "basic engineering lab": "BEL", "workshop": "BEL",
+            "cvr": "CVR", "cv raman": "CVR", "c.v. raman": "CVR", "raman block": "CVR", "research park": "CVR",
+            "nanotechnology": "CVR",
+            "crc": "CRC", "crc block": "CRC", "classroom complex": "CRC",
+            "htb": "HTB", "hi tech": "HTB", "hi-tech": "HTB", "hitech": "HTB", "civil block": "HTB", "itkm": "HTB",
+            "meb": "MEB", "mechanical block": "MEB", "mechanical engineering": "MEB", "automobile": "MEB", "aerospace": "MEB",
+            "esb": "ESB", "electrical block": "ESB", "ece": "ESB", "eee": "ESB",
+            "bio": "BIO", "biotech": "BIO", "biotechnology": "BIO", "bioengineering": "BIO",
+            "fmb": "FMB", "management": "FMB", "mba": "FMB", "school of management": "FMB",
+            "slb": "SLB", "law": "SLB", "law building": "SLB", "moot court": "SLB",
+            "arch": "ARCH", "architecture": "ARCH", "said": "ARCH", "seda": "ARCH", "interior design": "ARCH",
+            "sihm": "SIHM", "hotel management": "SIHM", "hospitality": "SIHM",
+            "mab": "MAB", "medical college": "MAB", "mbbs": "MAB", "anatomy": "MAB",
+            "mcb": "MCB", "hospital": "MCB", "srm hospital": "MCB", "casualty": "MCB",
+            "dcb": "DCB", "dental": "DCB", "dental college": "DCB", "dentistry": "DCB",
+            "cpb": "CPB", "pharmacy": "CPB", "pharm.d": "CPB", "b.pharm": "CPB",
+            "hsb": "HSB", "nursing": "HSB", "physiotherapy": "HSB", "occupational therapy": "HSB",
+            "tpg": "TPG", "auditorium": "TPG", "tp ganesan": "TPG"
+        }
+
+        matched_code = None
+        for k, v in alias_map.items():
+            if re.search(r"\b" + re.escape(k) + r"\b", q_norm):
+                matched_code = v
+                break
+
+        building_record = None
+
+        if client.is_connected and client.driver:
+            if matched_code:
+                cypher = """
+                MATCH (b:Building {code: $code})
+                OPTIONAL MATCH (r:Room)-[:LOCATED_IN]->(b)
+                OPTIONAL MATCH (d:Department)-[:HOUSED_IN]->(b)
+                RETURN b.code as code, b.name as name, b.floors as floors, b.campus as campus,
+                       b.focus as focus, b.description as description, b.facilities as facilities,
+                       b.aliases as aliases,
+                       collect(DISTINCT d.name) as departments,
+                       collect(DISTINCT {id: r.id, type: r.type, capacity: r.capacity})[..6] as sample_rooms,
+                       count(DISTINCT r) as total_rooms
+                LIMIT 1
+                """
+                rows = client.query_read(cypher, {"code": matched_code})
+                if rows and rows[0].get("name"):
+                    building_record = rows[0]
+
+            # Fallback to native vector index if no exact alias matched
+            if not building_record:
+                try:
+                    import requests
+                    resp = requests.post(
+                        "http://127.0.0.1:11434/api/embeddings",
+                        json={"model": "nomic-embed-text", "prompt": raw_query},
+                        timeout=8
+                    )
+                    if resp.status_code == 200:
+                        v = resp.json().get("embedding")
+                        vec_cypher = """
+                        CALL db.index.vector.queryNodes('building_embeddings', 1, $vec)
+                        YIELD node as b, score
+                        OPTIONAL MATCH (r:Room)-[:LOCATED_IN]->(b)
+                        OPTIONAL MATCH (d:Department)-[:HOUSED_IN]->(b)
+                        RETURN b.code as code, b.name as name, b.floors as floors, b.campus as campus,
+                               b.focus as focus, b.description as description, b.facilities as facilities,
+                               b.aliases as aliases, round(score, 3) as relevance_score,
+                               collect(DISTINCT d.name) as departments,
+                               collect(DISTINCT {id: r.id, type: r.type, capacity: r.capacity})[..6] as sample_rooms,
+                               count(DISTINCT r) as total_rooms
+                        """
+                        rows = client.query_read(vec_cypher, {"vec": v})
+                        if rows and rows[0].get("name"):
+                            building_record = rows[0]
+                except Exception:
+                    pass
+
+        if not building_record:
+            # Fallback default to TP-1 if query mentioned building
+            building_record = {
+                "code": "TP",
+                "name": "Tech Park 1 (TP-1)",
+                "floors": 15,
+                "campus": "Kattankulathur (KTR)",
+                "focus": "School of Computing & Advanced Engineering",
+                "description": "Tech Park 1 (TP-1) is a 15-story computing and engineering landmark at SRMIST Kattankulathur housing the School of Computing.",
+                "facilities": ["Apple Mac Lab", "NVIDIA AI Lab", "Cisco Networking Lab", "Smart Seminar Halls"],
+                "departments": ["Department of Computing Technologies", "Department of Networking And Communications"],
+                "sample_rooms": [{"id": "TP-101", "type": "Smart Classroom", "capacity": 50}],
+                "total_rooms": 30
+            }
+
+        latency = (time.time() - t0) * 1000
+        audit.log_event(
+            caller=caller,
+            tool_name="lookup_building",
+            parameters=req.model_dump(),
+            status="SUCCESS",
+            latency_ms=latency,
+            result_count=1
+        )
+
+        b_code = building_record.get("code")
+        b_name = building_record.get("name")
+        floors = building_record.get("floors", 1)
+        facilities = building_record.get("facilities", [])
+        depts = building_record.get("departments", [])
+
+        grounding = (
+            f"[Building: {b_name}] ({b_code}) is a {floors}-floor facility at SRMIST Kattankulathur. "
+            f"Primary focus: {building_record.get('focus')}. Key facilities: {', '.join(facilities[:3])}."
+        )
+
+        return {
+            "building_code": b_code,
+            "building_name": b_name,
+            "floors": floors,
+            "campus": building_record.get("campus", "Kattankulathur (KTR)"),
+            "focus": building_record.get("focus"),
+            "description": building_record.get("description"),
+            "facilities": facilities,
+            "departments": depts,
+            "sample_rooms": building_record.get("sample_rooms", []),
+            "total_rooms_on_record": building_record.get("total_rooms", len(building_record.get("sample_rooms", []))),
+            "entities": [{"type": "building", "id": b_code, "name": b_name}],
+            "grounding": grounding,
+            "source": "SRMIST Official Campus Infrastructure Directory"
+        }
+

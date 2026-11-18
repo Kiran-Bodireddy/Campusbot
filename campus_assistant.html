@@ -645,19 +645,28 @@
       color: var(--text-heading);
     }
 
-    .md-li {
-      display: flex;
-      align-items: baseline;
-      gap: 0.55rem;
-      margin: 0.35rem 0;
+    .md-list {
+      margin: 0.45rem 0 0.65rem 0;
+      padding-left: 1.35rem;
+      list-style-type: disc;
+    }
+
+    .md-list li {
+      margin: 0.25rem 0;
       line-height: 1.6;
     }
 
-    .md-bullet {
+    .md-list li::marker {
       color: var(--mood-accent);
-      font-size: 0.95rem;
-      flex-shrink: 0;
-      line-height: 1;
+    }
+
+    .md-para {
+      margin: 0 0 0.55rem 0;
+    }
+
+    .md-para:last-child,
+    .md-list:last-child {
+      margin-bottom: 0;
     }
 
     /* Loading Pulse */
@@ -1589,7 +1598,7 @@
     function formatText(raw) {
       if (!raw) return "";
       let text = escapeHtml(raw);
-      // Entity Tags
+      // Inline formatting & entity tags
       text = text
         .replace(/\[Course:\s*([^\]]+)\]/g, '<span class="entity-tag">[Course: $1]</span>')
         .replace(/\[Faculty:\s*([^\]]+)\]/g, '<span class="entity-tag">[Faculty: $1]</span>')
@@ -1598,26 +1607,66 @@
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         .replace(/`([^`]+)`/g, '<code class="md-code">$1</code>');
 
-      // Headings
-      text = text.replace(/^### (.*$)/gim, '<div class="md-h3">$1</div>');
-      text = text.replace(/^#### (.*$)/gim, '<div class="md-h4">$1</div>');
+      // Block-level rendering: proper <ul><li> lists, headings, and paragraphs with no stray bullets or <br> gaps
+      const lines = text.split(/\r?\n/);
+      const blocks = [];
+      let listItems = [];
+      let paraLines = [];
 
-      // Unordered lists
-      const lines = text.split('\n');
-      const formattedLines = [];
+      const flushList = () => {
+        if (listItems.length) {
+          blocks.push(`<ul class="md-list">${listItems.map(item => `<li>${item}</li>`).join('')}</ul>`);
+          listItems = [];
+        }
+      };
+
+      const flushPara = () => {
+        if (paraLines.length) {
+          blocks.push(`<p class="md-para">${paraLines.join('<br>')}</p>`);
+          paraLines = [];
+        }
+      };
+
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        if (line.match(/^\s*[-*]\s+(.*)$/)) {
-          const content = line.replace(/^\s*[-*]\s+/, '');
-          formattedLines.push(`<div class="md-li"><span class="md-bullet">&#9679;</span><div>${content}</div></div>`);
-        } else {
-          formattedLines.push(line);
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+          flushList();
+          flushPara();
+          continue;
         }
+
+        const h4Match = trimmed.match(/^####\s+(.*)$/);
+        if (h4Match) {
+          flushList();
+          flushPara();
+          blocks.push(`<div class="md-h4">${h4Match[1]}</div>`);
+          continue;
+        }
+
+        const h3Match = trimmed.match(/^###\s+(.*)$/);
+        if (h3Match) {
+          flushList();
+          flushPara();
+          blocks.push(`<div class="md-h3">${h3Match[1]}</div>`);
+          continue;
+        }
+
+        const liMatch = line.match(/^\s*[-*]\s+(.*)$/);
+        if (liMatch) {
+          flushPara();
+          listItems.push(liMatch[1]);
+          continue;
+        }
+
+        flushList();
+        paraLines.push(trimmed);
       }
-      text = formattedLines.join('\n');
-      text = text.replace(/\n\n/g, '<div style="height:0.75rem;"></div>');
-      text = text.replace(/\n/g, '<br>');
-      return text;
+
+      flushList();
+      flushPara();
+      return blocks.join('');
     }
 
     function askQuestion(q) {

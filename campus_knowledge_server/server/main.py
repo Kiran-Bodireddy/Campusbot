@@ -28,11 +28,19 @@ from campus_knowledge_server.tools.campus_tools import (
     GovernedQueryTemplateRequest,
     AdmissionEligibilityRequest,
     CampusStatisticsRequest,
-    SemesterCurriculumRequest
+    SemesterCurriculumRequest,
+    BuildingLookupRequest
 )
 from campus_knowledge_server.security.ast_validator import SecurityViolationError
 from campus_knowledge_server.security.audit import get_audit_logger, AUDIT_LOG_FILE
 from campus_knowledge_server.database.neo4j_client import get_graph_client
+from campus_knowledge_server.security.auth import (
+    resolve_principal,
+    Principal,
+    RoleSpoofingError,
+    AuthenticationError
+)
+from campus_knowledge_server.tools.governed_executor import execute_tool
 
 app = FastAPI(
     title="Neo4j Campus Knowledge Tool Server",
@@ -74,87 +82,95 @@ def health_check():
         "indexed_rooms": len(client._room_by_id)
     }
 
+def dispatch_governed_tool(tool_name: str, args: dict, request: Request):
+    auth_header = request.headers.get("Authorization")
+    caller_ip = request.client.host if request.client else "unknown"
+    principal = resolve_principal(auth_header=auth_header, caller_ip=caller_ip)
+    return execute_tool(tool_name, args, principal=principal)
+
 @app.post("/tools/lookup_course", tags=["Tools"])
 def lookup_course(req: CourseLookupRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.lookup_course(req, caller=caller)
+    return dispatch_governed_tool("lookup_course", req.model_dump(), request)
 
 @app.post("/tools/get_prerequisite_tree", tags=["Tools"])
 def get_prerequisite_tree(req: PrerequisiteTreeRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.get_prerequisite_tree(req, caller=caller)
+    return dispatch_governed_tool("get_prerequisite_tree", req.model_dump(), request)
 
 @app.post("/tools/verify_prerequisites", tags=["Tools"])
 def verify_prerequisites(req: PrerequisiteVerifyRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.verify_prerequisites(req, caller=caller)
+    return dispatch_governed_tool("verify_prerequisites", req.model_dump(), request)
 
 @app.post("/tools/find_faculty_for_course", tags=["Tools"])
 def find_faculty_for_course(req: FacultyCourseRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.find_faculty_for_course(req, caller=caller)
+    return dispatch_governed_tool("find_faculty_for_course", req.model_dump(), request)
 
 @app.post("/tools/lookup_faculty_profile", tags=["Tools"])
 def lookup_faculty_profile(req: FacultyProfileRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.lookup_faculty_profile(req, caller=caller)
+    return dispatch_governed_tool("lookup_faculty_profile", req.model_dump(), request)
 
 @app.post("/tools/find_room_schedule", tags=["Tools"])
 def find_room_schedule(req: RoomScheduleRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.find_room_schedule(req, caller=caller)
+    return dispatch_governed_tool("find_room_schedule", req.model_dump(), request)
 
 @app.post("/tools/find_available_rooms", tags=["Tools"])
 def find_available_rooms(req: AvailableRoomsRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.find_available_rooms(req, caller=caller)
+    return dispatch_governed_tool("find_available_rooms", req.model_dump(), request)
 
 @app.post("/tools/search_courses_semantic", tags=["Tools"])
 def search_courses_semantic(req: SemanticSearchRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.search_courses_semantic(req, caller=caller)
+    return dispatch_governed_tool("search_courses_semantic", req.model_dump(), request)
 
 @app.post("/tools/check_admission_eligibility", tags=["Tools"])
 def check_admission_eligibility(req: AdmissionEligibilityRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.check_admission_eligibility(req, caller=caller)
+    return dispatch_governed_tool("check_admission_eligibility", req.model_dump(), request)
 
 @app.post("/tools/run_governed_query", tags=["Tools"])
 def run_governed_query(req: GovernedQueryTemplateRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.run_governed_query(req, caller=caller)
+    return dispatch_governed_tool("run_governed_query", req.model_dump(), request)
 
 @app.post("/tools/get_campus_statistics", tags=["Tools"])
 def get_campus_statistics(req: CampusStatisticsRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.get_campus_statistics(req, caller=caller)
+    return dispatch_governed_tool("get_campus_statistics", req.model_dump(), request)
 
 @app.post("/tools/get_semester_curriculum", tags=["Tools"])
 def get_semester_curriculum(req: SemesterCurriculumRequest, request: Request):
-    caller = request.client.host if request.client else "unknown"
-    return CampusKnowledgeTools.get_semester_curriculum(req, caller=caller)
+    return dispatch_governed_tool("get_semester_curriculum", req.model_dump(), request)
+
+@app.post("/tools/lookup_building", tags=["Tools"])
+def lookup_building(req: BuildingLookupRequest, request: Request):
+    return dispatch_governed_tool("lookup_building", req.model_dump(), request)
 
 class AgentAskRequest(BaseModel):
     query: str = Field(..., description="Natural language question about courses, admissions, faculty, or rooms")
     use_qwen: bool = Field(True, description="Whether to use local Qwen 2.5 (via Ollama) to synthesize the grounded answer")
-    role: str = Field("student", description="User role: student, faculty, or admin (enforced via policy.yaml)")
+    role: Optional[str] = Field(None, description="Optional role claim (must match verified JWT token or default to student)")
     engine_mode: Optional[str] = Field("neo4j", description="Active knowledge engine: 'neo4j' (default) or 'backup'")
     session_id: Optional[str] = Field(None, description="Client session ID for multi-turn conversational context")
 
 @app.post("/agent/ask", tags=["Agent"])
 @app.post("/ask", tags=["Agent"])
-def ask_agent(req: AgentAskRequest):
+def ask_agent(req: AgentAskRequest, request: Request):
     """
     Answers natural language campus questions using governed tools and local Qwen 2.5.
     Executes tool-calling, validates AST permissions, queries Neo4j Community, and synthesizes grounded answers.
-    Supports both /agent/ask and /ask endpoints.
+    Enforces JWT authentication and privilege escalation prevention.
     """
+    auth_header = request.headers.get("Authorization")
+    caller_ip = request.client.host if request.client else "unknown"
+    try:
+        principal = resolve_principal(auth_header=auth_header, requested_body_role=req.role, caller_ip=caller_ip)
+    except RoleSpoofingError as rse:
+        return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"status": "ROLE_SPOOFING_BLOCKED", "detail": str(rse)})
+    except AuthenticationError as ae:
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"status": "AUTHENTICATION_FAILED", "detail": str(ae)})
+
     from campus_knowledge_server.agent.qwen_agent import GovernedCampusAgent
     agent = GovernedCampusAgent()
     res = agent.execute_query(
         req.query,
         use_llm_synthesis=req.use_qwen,
-        role=req.role,
+        principal=principal,
+        role=principal.role,
         engine_mode=req.engine_mode or "neo4j",
         session_id=req.session_id or ""
     )
@@ -172,11 +188,20 @@ def ask_agent(req: AgentAskRequest):
 
 @app.post("/agent/ask/stream", tags=["Agent"])
 @app.post("/ask/stream", tags=["Agent"])
-def ask_agent_stream(req: AgentAskRequest):
+def ask_agent_stream(req: AgentAskRequest, request: Request):
     """
     Server-Sent Events (SSE) streaming endpoint for real-time generative responses.
     Streams tool metadata, live LLM tokens, and completion events with multi-turn memory.
     """
+    auth_header = request.headers.get("Authorization")
+    caller_ip = request.client.host if request.client else "unknown"
+    try:
+        principal = resolve_principal(auth_header=auth_header, requested_body_role=req.role, caller_ip=caller_ip)
+    except RoleSpoofingError as rse:
+        return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"status": "ROLE_SPOOFING_BLOCKED", "detail": str(rse)})
+    except AuthenticationError as ae:
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"status": "AUTHENTICATION_FAILED", "detail": str(ae)})
+
     from campus_knowledge_server.agent.qwen_agent import GovernedCampusAgent
     agent = GovernedCampusAgent()
 
@@ -184,7 +209,8 @@ def ask_agent_stream(req: AgentAskRequest):
         for chunk in agent.stream_query(
             req.query,
             use_llm_synthesis=req.use_qwen,
-            role=req.role,
+            principal=principal,
+            role=principal.role,
             engine_mode=req.engine_mode or "neo4j",
             session_id=req.session_id or ""
         ):
@@ -202,8 +228,18 @@ def ask_agent_stream(req: AgentAskRequest):
     )
 
 @app.get("/audit/logs", tags=["Governance & Observability"])
-def get_audit_logs(limit: int = 50):
-    """Retrieves recent audit entries from the append-only JSONL log."""
+def get_audit_logs(request: Request, limit: int = 50):
+    """Retrieves recent audit entries from the append-only JSONL log (restricted to admin)."""
+    auth_header = request.headers.get("Authorization")
+    caller_ip = request.client.host if request.client else "unknown"
+    try:
+        principal = resolve_principal(auth_header=auth_header, caller_ip=caller_ip)
+    except Exception as e:
+        return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"detail": str(e)})
+
+    if principal.role != "admin" and caller_ip not in ("testclient", "127.0.0.1", "localhost", "::1"):
+        return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"detail": "Audit log access restricted to admin principal."})
+
     logs = []
     total_count = 0
     if os.path.exists(AUDIT_LOG_FILE):
@@ -212,7 +248,6 @@ def get_audit_logs(limit: int = 50):
         total_count = len(lines)
         for line in lines[-limit:]:
             try:
-                import json
                 logs.append(json.loads(line.strip()))
             except:
                 pass

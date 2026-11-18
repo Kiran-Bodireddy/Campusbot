@@ -11,7 +11,7 @@ import json
 import logging
 from typing import Dict, List, Any, Optional
 from dotenv import load_dotenv
-from neo4j import GraphDatabase, RoutingControl, Driver
+from neo4j import GraphDatabase, RoutingControl, Driver, Query, READ_ACCESS
 
 load_dotenv()
 
@@ -27,8 +27,8 @@ class CampusGraphClient:
     def __init__(self, uri: Optional[str] = None, user: Optional[str] = None, password: Optional[str] = None, database: Optional[str] = None):
         self.uri = uri or os.getenv("NEO4J_URI", "bolt://127.0.0.1:7687")
         self.user = user or os.getenv("NEO4J_USER", "neo4j")
-        self.password = password or os.getenv("NEO4J_PASSWORD", "Jeevan@223")
-        self.database = database or os.getenv("NEO4J_DATABASE", "rai")
+        self.password = password or os.getenv("NEO4J_PASSWORD", "")
+        self.database = database or os.getenv("NEO4J_DATABASE", "neo4j")
         self.driver: Optional[Driver] = None
         self.is_connected = False
 
@@ -150,7 +150,10 @@ class CampusGraphClient:
         )
 
     def _init_neo4j_connection(self):
-        """Attempts connection to Neo4j database."""
+        """Attempts connection to Neo4j database and loads graph-derived reference metadata."""
+        self._graph_buildings: Dict[str, str] = {}
+        self._graph_departments: List[str] = []
+        self._graph_faculty_index: List[Dict[str, str]] = []
         try:
             self.driver = GraphDatabase.driver(
                 self.uri,
@@ -160,10 +163,66 @@ class CampusGraphClient:
             self.driver.verify_connectivity()
             self.is_connected = True
             logger.info(f"Connected successfully to Neo4j instance at {self.uri}")
+            self.refresh_graph_reference_data()
         except Exception as e:
             self.is_connected = False
             self.driver = None
             logger.info(f"Neo4j instance offline or not reachable ({e}). Operating in High-Speed In-Memory Graph Mode.")
+
+    def refresh_graph_reference_data(self):
+        """Loads canonical Building codes/names, Department names, and Faculty (id, name) index directly from live Neo4j."""
+        if not (self.is_connected and self.driver):
+            return
+        try:
+            b_rows = self.query_read(
+                "MATCH (b:Building) WHERE b.code IS NOT NULL RETURN b.code AS code, b.name AS name LIMIT 500"
+            )
+            self._graph_buildings = {
+                str(r["code"]).strip(): str(r["name"]).strip()
+                for r in b_rows
+                if r.get("code") and r.get("name")
+            }
+            d_rows = self.query_read(
+                "MATCH (d:Department) WHERE d.name IS NOT NULL RETURN DISTINCT d.name AS name LIMIT 1000"
+            )
+            self._graph_departments = [
+                str(r["name"]).strip() for r in d_rows if r.get("name")
+            ]
+            f_rows = self.query_read(
+                "MATCH (f:FacultyMember) WHERE f.id IS NOT NULL AND f.name IS NOT NULL "
+                "RETURN f.id AS id, f.name AS name LIMIT 5000"
+            )
+            self._graph_faculty_index = [
+                {"id": str(r["id"]).strip(), "name": str(r["name"]).strip()}
+                for r in f_rows
+                if r.get("id") and r.get("name")
+            ]
+        except Exception as e:
+            logger.warning(f"Failed to load graph reference metadata from Neo4j: {e}")
+
+    def get_graph_faculty_index(self) -> List[Dict[str, str]]:
+        """Returns [{id, name}] of all FacultyMember nodes derived from live Neo4j at startup/reload."""
+        if self.is_connected and self.driver:
+            if not self._graph_faculty_index:
+                self.refresh_graph_reference_data()
+            return list(self._graph_faculty_index)
+        return []
+
+    def get_building_code_map(self) -> Dict[str, str]:
+        """Returns {building_code: building_name} derived from live Neo4j Building nodes."""
+        if self.is_connected and self.driver:
+            if not self._graph_buildings:
+                self.refresh_graph_reference_data()
+            return dict(self._graph_buildings)
+        return {}
+
+    def get_department_names(self) -> List[str]:
+        """Returns Department names derived from live Neo4j Department nodes."""
+        if self.is_connected and self.driver:
+            if not self._graph_departments:
+                self.refresh_graph_reference_data()
+            return list(self._graph_departments)
+        return []
 
     def close(self):
         if self.driver:
@@ -286,13 +345,17 @@ class CampusGraphClient:
         return results
 
     # Governed Query Primitives
-    def query_read(self, cypher: str, parameters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-        """Executes a governed read-only Cypher query against Neo4j if online."""
+    def query_read(self, cypher: str, parameters: Optional[Dict[str, Any]] = None, timeout: float = 3.0) -> List[Dict[str, Any]]:
+        """Executes a governed read-only Cypher query against Neo4j with AST security validation, READ_ACCESS session, and enforced transaction timeout."""
         if not self.is_connected or not self.driver:
             raise ConnectionError("Live Neo4j instance not connected.")
 
-        with self.driver.session(database=self.database) as session:
-            result = session.run(cypher, parameters or {}, routing=RoutingControl.READ)
+        # Enforce read-only AST safety & bound caps
+        from campus_knowledge_server.security.ast_validator import ASTSecurityValidator
+        sanitized_cypher = ASTSecurityValidator.assert_safe(cypher)
+
+        with self.driver.session(database=self.database, default_access_mode=READ_ACCESS) as session:
+            result = session.run(Query(sanitized_cypher, timeout=timeout), parameters or {})
             return [record.data() for record in result]
 
     def seed_live_neo4j(self) -> Dict[str, Any]:
@@ -318,49 +381,98 @@ class CampusGraphClient:
                 SET c.id = row.id, c.name = row.name, c.credits = row.credits,
                     c.level = row.level, c.department = row.department, c.description = row.description,
                     c.category = row.category, c.ltpc = row.ltpc, c.regulation = row.regulation,
-                    c.is_official = row.is_official
+                    c.is_official = row.is_official,
+                    c.source = 'official'
             """, {"batch": course_batch})
             counts["courses"] = len(course_batch)
 
-            # 3. Batch Ingest Faculty
-            fac_batch = self.in_memory_data.get("faculty", [])[:500]
-            session.run("""
-                UNWIND $batch AS row
-                MERGE (f:FacultyMember {id: row.id})
-                SET f.name = row.name, f.designation = row.designation,
-                    f.department = row.department, f.college = row.college,
-                    f.specialization = row.specialization, f.experience = row.experience
-            """, {"batch": fac_batch})
+            # 3. Batch Ingest All Faculty Members (All 2,501) with cabin, email, and cleaned specialization
+            fac_batch = self.in_memory_data.get("faculty", [])
+            for i in range(0, len(fac_batch), 500):
+                chunk = fac_batch[i:i + 500]
+                session.run("""
+                    UNWIND $batch AS row
+                    MERGE (f:FacultyMember {id: row.id})
+                    SET f.name = row.name, f.designation = row.designation,
+                        f.department = row.department, f.college = row.college,
+                        f.specialization = trim(replace(row.specialization, ',', ' ')),
+                        f.experience = row.experience,
+                        f.email = row.email,
+                        f.cabin = row.cabin,
+                        f.source = 'official'
+                """, {"batch": chunk})
             counts["faculty"] = len(fac_batch)
 
-            # 4. Batch Ingest Rooms
+            # 4. Batch Ingest Rooms (Synthetic)
             room_batch = self.in_memory_data.get("rooms", [])
             session.run("""
                 UNWIND $batch AS row
                 MERGE (r:Room {id: row.id})
                 SET r.room_number = row.room_number, r.building_code = row.building_code,
-                    r.type = row.type, r.capacity = row.capacity
+                    r.type = row.type, r.capacity = row.capacity,
+                    r.source = 'synthetic'
             """, {"batch": room_batch})
             counts["rooms"] = len(room_batch)
 
-            # 5. Prerequisites
+            # 4b. Ingest Buildings and link to rooms
+            bldg_batch = self.in_memory_data.get("buildings", [])
+            if bldg_batch:
+                session.run("""
+                    UNWIND $batch AS row
+                    MERGE (b:Building {code: row.code})
+                    SET b.name = row.name, b.floors = row.floors,
+                        b.source = 'official'
+                """, {"batch": bldg_batch})
+                session.run("""
+                    MATCH (r:Room)
+                    MATCH (b:Building {code: r.building_code})
+                    MERGE (r)-[:LOCATED_IN]->(b)
+                """)
+                counts["buildings"] = len(bldg_batch)
+
+            # 5. Prerequisites (Official Regulations 2021)
             prereq_batch = self.in_memory_data.get("prerequisites", [])
             session.run("""
                 UNWIND $batch AS row
                 MATCH (target:Course {code: row.target_course_code})
                 MATCH (prereq:Course {code: row.prerequisite_course_code})
-                MERGE (target)-[:REQUIRES_PREREQUISITE {condition: row.condition}]->(prereq)
+                MERGE (target)-[:REQUIRES_PREREQUISITE {condition: row.condition, source: 'official'}]->(prereq)
             """, {"batch": prereq_batch})
             counts["prereqs"] = len(prereq_batch)
 
-            # 6. Batch Ingest Academic Programs & Admission Requirements
+            # 5b. Teaching Assignments (Synthetic Allocation)
+            teach_batch = self.in_memory_data.get("teaching_assignments", [])
+            if teach_batch:
+                for i in range(0, len(teach_batch), 500):
+                    chunk = teach_batch[i:i + 500]
+                    session.run("""
+                        UNWIND $batch AS row
+                        MATCH (c:Course {code: row.course_code})
+                        MATCH (f:FacultyMember {id: row.faculty_id})
+                        MERGE (f)-[:TEACHES {source: 'synthetic'}]->(c)
+                    """, {"batch": chunk})
+                counts["teaching_assignments"] = len(teach_batch)
+
+            # 5c. Room Schedules (Synthetic Timetable)
+            sched_batch = self.in_memory_data.get("schedules", [])
+            if sched_batch:
+                for i in range(0, len(sched_batch), 500):
+                    chunk = sched_batch[i:i + 500]
+                    session.run("""
+                        UNWIND $batch AS row
+                        MATCH (r:Room {id: row.room_id})
+                        MATCH (c:Course {code: row.course_code})
+                        MERGE (r)-[:OCCUPIES {day: row.day, slot: row.slot, source: 'synthetic'}]->(c)
+                    """, {"batch": chunk})
+                counts["schedules"] = len(sched_batch)
+
+            # 6. Batch Ingest Academic Programs & Admission Requirements (Official - Program label only)
             if self.admission_eligibility:
                 prog_batch = self.admission_eligibility
                 session.run("""
                     UNWIND $batch AS row
-                    MERGE (p:Course:Program {id: row.program_id})
-                    SET p:Course, p:Program,
-                        p.name = row.program_name,
+                    MERGE (p:Program {id: row.program_id})
+                    SET p.name = row.program_name,
                         p.faculty = row.faculty,
                         p.department = row.department,
                         p.degree_level = row.degree_level,
@@ -369,27 +481,62 @@ class CampusGraphClient:
                         p.min_percentage_general = row.min_percentage_general,
                         p.min_percentage_reserved = row.min_percentage_reserved,
                         p.required_entrance_exam = row.required_entrance_exam,
-                        p.official_eligibility_text = row.official_eligibility_text
+                        p.official_eligibility_text = row.official_eligibility_text,
+                        p.source = 'official'
                 """, {"batch": prog_batch})
                 counts["programs"] = len(prog_batch)
 
             # 7. Batch Ingest Semester Curriculum Allocations (:Program)-[:OFFERS_IN_SEMESTER]->(:Course)
+            # Match canonical admission :Program nodes by normalized name so no orphan stub :Program nodes are created
             alloc_batch = self._curriculum_allocations
             if alloc_batch:
+                def _norm_prog(name: str) -> str:
+                    s = (name or "").lower().replace("b.tech.", "btech").replace("b.tech", "btech").replace("m.tech.", "mtech").replace("m.tech", "mtech")
+                    s = re.sub(r"\bwith\s+specialization\s+in\b|\bw/s\s+in\b|\bw/s\b|\bin\b|\band\b|\bof\b", " ", s)
+                    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", s)).strip()
+
+                adm_by_norm = {_norm_prog(p.get("program_name", "")): p.get("program_id") for p in self.admission_eligibility if p.get("program_id")}
+                resolved_batch = []
+                for row in alloc_batch:
+                    pid = adm_by_norm.get(_norm_prog(row.get("program_name", "")))
+                    if pid:
+                        r_copy = dict(row)
+                        r_copy["program_id"] = pid
+                        resolved_batch.append(r_copy)
+
                 batch_size = 500
-                for i in range(0, len(alloc_batch), batch_size):
-                    chunk = alloc_batch[i:i + batch_size]
+                for i in range(0, len(resolved_batch), batch_size):
+                    chunk = resolved_batch[i:i + batch_size]
                     session.run("""
                         UNWIND $batch AS row
-                        MERGE (p:Program {name: row.program_name})
-                        MERGE (c:Course {code: row.course_code})
+                        MATCH (p:Program {id: row.program_id})
+                        MATCH (c:Course {code: row.course_code})
                         MERGE (p)-[r:OFFERS_IN_SEMESTER {semester: row.semester}]->(c)
                         SET r.academic_year = row.academic_year,
                             r.credits = row.credits,
                             r.ltpc = row.ltpc,
-                            r.category = row.category
+                            r.category = row.category,
+                            r.source = 'official'
                     """, {"batch": chunk})
-                counts["curriculum_allocations"] = len(alloc_batch)
+                counts["curriculum_allocations"] = len(resolved_batch)
+
+            # 8. Department Graph Nodes and Edges (:IN_DEPARTMENT, :OFFERED_BY_DEPARTMENT)
+            session.run("CREATE CONSTRAINT dept_name IF NOT EXISTS FOR (d:Department) REQUIRE d.name IS UNIQUE")
+            session.run("""
+                MATCH (f:FacultyMember) WHERE f.department IS NOT NULL AND trim(f.department) <> ''
+                MERGE (d:Department {name: trim(f.department)}) SET d.source = 'official'
+                MERGE (f)-[:IN_DEPARTMENT {source: 'official'}]->(d)
+            """)
+            session.run("""
+                MATCH (c:Course) WHERE c.department IS NOT NULL AND trim(c.department) <> ''
+                MERGE (d:Department {name: trim(c.department)}) SET d.source = 'official'
+                MERGE (c)-[:OFFERED_BY_DEPARTMENT {source: 'official'}]->(d)
+            """)
+            session.run("""
+                MATCH (p:Program) WHERE p.department IS NOT NULL AND trim(p.department) <> ''
+                MERGE (d:Department {name: trim(p.department)}) SET d.source = 'official'
+                MERGE (p)-[:OFFERED_BY_DEPARTMENT {source: 'official'}]->(d)
+            """)
 
         return {"status": "success", "counts": counts}
 

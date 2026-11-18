@@ -1,0 +1,138 @@
+{
+  "before_guard_count": 76,
+  "total": 80,
+  "substitutions_count": 4,
+  "substitutions": [
+    {
+      "id": "SH-59",
+      "query": "Overview of active curriculum offerings and room assets",
+      "tool": "get_campus_statistics",
+      "reason": "Hallucinated faculty name(s) detected: ['Dr. Name']",
+      "raw_qwen_answer": "Our active curriculum offerings span across [430] programs, with [668] courses indexed. We have [264] classrooms distributed across [9] buildings. [Faculty: Dr. Name] from [Faculty of Engineering & Technology] and [Faculty of Liberal Arts & Business Studies] are some of our distinguished faculty members. [SRM School of Law] is also a notable department.",
+      "compact_tool_res": {
+        "statistics": {
+          "category": "all",
+          "total_programs": 430,
+          "total_program_nodes_in_graph": 430,
+          "total_courses_indexed": 668,
+          "total_faculty": 2501,
+          "total_classrooms": 264,
+          "total_buildings": 9,
+          "total_departments": 0,
+          "total_prerequisites": 31,
+          "total_scheduled_sessions": 1336,
+          "degree_levels": {
+            "Diploma / Certificate": 12,
+            "Doctoral / Ph.D.": 51,
+            "Fellowship": 2,
+            "Postgraduate (PG)": 201,
+            "Specialized / Other": 37,
+            "Undergraduate (UG)": 127
+          },
+          "faculties_summary": {
+            "Faculty of Engineering & Technology": 144,
+            "Faculty of Liberal Arts & Business Studies": 99,
+            "Medicine & Health Sciences": 137,
+            "College of Agriculture Sciences": 20,
+            "Faculty of Management": 15,
+            "SRM School of Law": 11,
+            "Faculty of Engineering & Technology, Baburayanpettai, Acharapakkam": 2,
+            "Faculty of Medicine and Health Sciences": 2
+          },
+          "major_disciplines": [
+            "Engineering & Technology",
+            "Medicine & Health Sciences",
+            "Management & Business Studies",
+            "Science & Humanities",
+            "Law",
+            "Agricultural Sciences"
+          ]
+        }
+      }
+    },
+    {
+      "id": "MH-03",
+      "query": "What courses are in 3rd semester CSE and who teaches them?",
+      "tool": "get_semester_curriculum",
+      "reason": "Hallucinated faculty name(s) detected: ['Name', 'Name']",
+      "raw_qwen_answer": "In the 3rd semester, Computer Science and Engineering (CSE) offers courses like \"Design Thinking and Methodology\" (Course: 21DCS201P, taught by Dr. Name) and \"Computer Organization and Architecture\" (Course: 21CSS201T, taught by Dr. Name). [Course: 21MAB201T] is a course on \"Transforms and Boundary Value Problems\" but it's not offered in the 3rd semester.",
+      "compact_tool_res": {
+        "courses": [
+          {
+            "code": "21MAB201T",
+            "name": "Transforms And Boundary Value Problems",
+            "credits": 4,
+            "dept": null,
+            "semester": 3,
+            "summary": ""
+          },
+          {
+            "code": "21DCS201P",
+            "name": "Design Thinking And Methodology",
+            "credits": 3,
+            "dept": null,
+            "semester": 3,
+            "summary": ""
+          },
+          {
+            "code": "21CSS201T",
+            "name": "Computer Organization And Architecture",
+            "credits": 4,
+            "dept": null,
+            "semester": 3,
+            "summary": ""
+          }
+        ]
+      }
+    },
+    {
+      "id": "MH-08",
+      "query": "Show the timetable for room TP-101 and the professors taking those classes",
+      "tool": "find_room_schedule",
+      "reason": "Hallucinated faculty name(s) detected: ['Name', 'Name', 'Name', 'Name']",
+      "raw_qwen_answer": "In room TP-101, you can find classes on Friday at 10:45 AM, Wednesday at 10:45 AM, Thursday at 3:30 PM, and Friday at 9:45 AM. [Course: 21AUO104T] is taught by Dr. Name on Friday, [Course: 21CEO325T] by Dr. Name on Wednesday, [Course: 21CSO357T] by Dr. Name on Thursday, and [Course: 21CSO451T] by Dr. Name on Friday.",
+      "compact_tool_res": {
+        "room_id": "TP-101",
+        "room_type": "Smart Classroom",
+        "schedules": [
+          {
+            "day": "Friday",
+            "slot": "10:45-11:35",
+            "course": "21AUO104T"
+          },
+          {
+            "day": "Wednesday",
+            "slot": "10:45-11:35",
+            "course": "21CEO325T"
+          },
+          {
+            "day": "Thursday",
+            "slot": "15:30-16:20",
+            "course": "21CSO357T"
+          },
+          {
+            "day": "Friday",
+            "slot": "09:45-10:35",
+            "course": "21CSO451T"
+          }
+        ]
+      }
+    },
+    {
+      "id": "MH-14",
+      "query": "Prerequisites and teaching staff for 21AIP302L",
+      "tool": "get_prerequisite_tree",
+      "reason": "Hallucinated faculty name(s) detected: ['Name']",
+      "raw_qwen_answer": "21AIP302L has 0 prerequisite dependencies up to a depth of 3, meaning it can be taken directly without any prerequisites. [Course: 21AIP302L] is taught by Dr. Name.",
+      "compact_tool_res": {
+        "target_course": "21AIP302L",
+        "max_depth_evaluated": 3,
+        "total_prerequisites": 0,
+        "prerequisites": [],
+        "source": "SRMIST Prerequisite DAG (Neo4j Community)",
+        "grounding": "21AIP302L has 0 prerequisite dependency edges up to depth 3.",
+        "entities": []
+      }
+    }
+  ]
+}

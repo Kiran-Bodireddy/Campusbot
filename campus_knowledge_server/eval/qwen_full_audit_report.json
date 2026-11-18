@@ -1,0 +1,139 @@
+{
+  "qwen_alone_80": {
+    "model": "qwen2.5:3b",
+    "accuracy_pct": 87.5,
+    "correct": 70,
+    "total": 80,
+    "median_latency_ms": 11079.8,
+    "mean_latency_ms": 11635.5,
+    "misses": [
+      {
+        "id": "SH-19",
+        "query": "Verify eligibility for 21AIP302L with no prior completed subjects",
+        "expected": "verify_prerequisites",
+        "qwen_selected": "check_admission_eligibility"
+      },
+      {
+        "id": "SH-26",
+        "query": "Where is Dr. Godfrey cabin?",
+        "expected": "lookup_faculty_profile",
+        "qwen_selected": "lookup_building"
+      },
+      {
+        "id": "SH-43",
+        "query": "Find available rooms in Electrical Sciences Block",
+        "expected": "find_available_rooms",
+        "qwen_selected": "lookup_building"
+      },
+      {
+        "id": "MH-02",
+        "query": "What prerequisites do I need for courses taught by Dr. Godfrey Winster S?",
+        "expected": "lookup_faculty_profile",
+        "qwen_selected": "find_faculty_for_course"
+      },
+      {
+        "id": "MH-04",
+        "query": "Find the cabin location of the professor who instructs 21CSO451T",
+        "expected": "find_faculty_for_course",
+        "qwen_selected": "lookup_faculty_profile"
+      },
+      {
+        "id": "MH-05",
+        "query": "What rooms in Tech Park host classes for 21CSC206T?",
+        "expected": "lookup_course",
+        "qwen_selected": "find_room_schedule"
+      },
+      {
+        "id": "MH-07",
+        "query": "What degree programs require 21MAT101T in their first year curriculum?",
+        "expected": "get_semester_curriculum",
+        "qwen_selected": "check_admission_eligibility"
+      },
+      {
+        "id": "MH-09",
+        "query": "What are the prerequisite dependencies for 4th semester courses in AI?",
+        "expected": "get_semester_curriculum",
+        "qwen_selected": "search_courses_semantic"
+      },
+      {
+        "id": "MH-11",
+        "query": "What courses does Dr. Lakshmi M teach and what are their credit ratings?",
+        "expected": "lookup_faculty_profile",
+        "qwen_selected": "find_faculty_for_course"
+      },
+      {
+        "id": "MH-14",
+        "query": "Prerequisites and teaching staff for 21AIP302L",
+        "expected": "get_prerequisite_tree",
+        "qwen_selected": "find_faculty_for_course"
+      }
+    ]
+  },
+  "grounding_80": {
+    "before_guard_pct": 73.75,
+    "before_guard_count": 59,
+    "substitutions_count": 21,
+    "after_guard_pct": 100.0,
+    "tp101_raw_qwen": "The room TP-101, a Smart Classroom, is available on Friday from 10:45 AM to 11:35 AM for the course 21AUO104T, and from 10:45 AM to 11:35 AM on Wednesday for the course 21",
+    "tp101_passed_guard": false,
+    "tp101_post_guard": "**Timetable & Allocation for [Room: TP-101]** (Smart Classroom, Capacity: **50** seats, Building **TP**):\n\n- **Friday** @ **10:45-11:35**: [Course: 21AUO104T]\n- **Wednesday** @ **10:45-11:35**: [Course: 21CEO325T]\n- **Thursday** @ **15:30-16:20**: [Course: 21CSO357T]\n- **Friday** @ **09:45-10:35**: [Course: 21CSO451T]\n- **Friday** @ **11:45-12:35**: [Course: 21EEO310T]\n- **Tuesday** @ **11:45-12:35**: [Course: 21CSC303J]\n- **Thursday** @ **09:45-10:35**: [Course: 21EEC304J]\n- **Monday** @ **11:45-12:35**: [Course: 21NTC201J]\n\nOutside these scheduled lecture slots, [Room: TP-101] is open and available for academic activities.",
+    "substitution_examples": [
+      {
+        "id": "SH-18",
+        "query": "Check if completed courses 21AIO351T satisfy prerequisite requirements for 21AIO355T",
+        "tool": "verify_prerequisites",
+        "raw_qwen_answer": "The course 21AIO351T does not satisfy the prerequisite requirements for 21AIO355T, as there are no prerequisites listed for 21AIO355T in the verified facts. [Status: Eligible to enroll in 21AIO355",
+        "substituted_preview": "**Eligible**: Student has satisfied all required prerequisites for [Course: 21AIO355T] (Completed: )."
+      },
+      {
+        "id": "SH-32",
+        "query": "Schedule for TP-101",
+        "tool": "find_room_schedule",
+        "raw_qwen_answer": "The room TP-101, a Smart Classroom, is scheduled for the following courses: \"21AUO104T\" on Friday from 10:45 AM to 11:35 AM, \"21CEO325T\" on Wednesday from 10:4",
+        "substituted_preview": "**Timetable & Allocation for [Room: TP-101]** (Smart Classroom, Capacity: **50** seats, Building **TP**):\n\n- **Friday** @ **10:45-11:35**: [Course: 21AUO104T]\n- **Wednesday** @ **1"
+      },
+      {
+        "id": "SH-35",
+        "query": "Timetable and course allocations for BEL-101",
+        "tool": "find_room_schedule",
+        "raw_qwen_answer": "The Smart Classroom BEL-101 has allocated slots for the following courses: \"21BMO125T\" on Monday from 15:30 to 16:20, \"21BMC101J\" on Wednesday from 13:30 to 1",
+        "substituted_preview": "**Timetable & Allocation for [Room: BEL-101]** (Smart Classroom, Capacity: **50** seats, Building **BEL**):\n\n- **Monday** @ **15:30-16:20**: [Course: 21BMO125T]\n- **Wednesday** @ *"
+      },
+      {
+        "id": "SH-36",
+        "query": "Is room TP-105 occupied and what is its schedule?",
+        "tool": "find_room_schedule",
+        "raw_qwen_answer": "Room TP-105 is an Auditorium Hall and its schedule includes courses like 21CSO351T, 21LEM202T, and CSE201 on different days.",
+        "substituted_preview": "**Timetable & Allocation for [Room: TP-105]** (Auditorium Hall, Capacity: **145** seats, Building **TP**):\n\n- **Thursday** @ **09:45-10:35**: [Course: 21CSO351T]\n- **Thursday** @ *"
+      },
+      {
+        "id": "SH-38",
+        "query": "Find available rooms in Tech Park",
+        "tool": "find_available_rooms",
+        "raw_qwen_answer": "In Tech Park, you have several available rooms: TP-101, TP-102, TP-105, TP-106, TP-201, and TP-202. There are a total of 18 vacant rooms available.",
+        "substituted_preview": "Found **18 available classrooms** in **Tech Park 1 (TP-1)** for **Monday** at slot **08:45-09:35**:\n\n- **[Room: TP-101]**: Smart Classroom (Capacity: **50** seats)\n- **[Room: TP-10"
+      },
+      {
+        "id": "SH-39",
+        "query": "Vacant classrooms in University Building on Monday slot 1",
+        "tool": "find_available_rooms",
+        "raw_qwen_answer": "In University Building, there are 27 vacant classrooms available on Monday slot 1. Some of the available rooms are UB-101, UB-102, UB-103, UB-104, UB-105, and UB-106.",
+        "substituted_preview": "Found **27 available classrooms** in **University Building** for **Monday** at slot **08:45-09:35**:\n\n- **[Room: UB-101]**: Smart Classroom (Capacity: **50** seats)\n- **[Room: UB-1"
+      },
+      {
+        "id": "SH-40",
+        "query": "Find available rooms in Basic Engineering Lab",
+        "tool": "find_available_rooms",
+        "raw_qwen_answer": "In the Basic Engineering Lab, there are several available rooms in the TP building. You can choose from TP-101, TP-102, TP-105, TP-106, TP-201, or TP-202. There are 18 total vacant rooms",
+        "substituted_preview": "Found **18 available classrooms** in **Tech Park 1 (TP-1)** for **Monday** at slot **08:45-09:35**:\n\n- **[Room: TP-101]**: Smart Classroom (Capacity: **50** seats)\n- **[Room: TP-10"
+      },
+      {
+        "id": "SH-41",
+        "query": "Vacant rooms in Mechanical Engineering Block for 60 students",
+        "tool": "find_available_rooms",
+        "raw_qwen_answer": "In the Mechanical Engineering Block, there are 13 vacant rooms available [building: TP], including TP-102, TP-105, TP-106, TP-204, TP-206, and TP-304. These rooms can accommodate 60 students",
+        "substituted_preview": "Found **13 available classrooms** in **Tech Park 1 (TP-1)** for **Monday** at slot **08:45-09:35**:\n\n- **[Room: TP-102]**: Computer Lab (Capacity: **60** seats)\n- **[Room: TP-105]*"
+      }
+    ]
+  }
+}

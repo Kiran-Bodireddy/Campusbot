@@ -20,6 +20,7 @@ roles:
       - check_admission_eligibility
       - get_campus_statistics
       - get_semester_curriculum
+      - lookup_building
     forbidden_tools:
       - run_governed_query
       - get_faculty_contact
@@ -45,6 +46,7 @@ roles:
       - check_admission_eligibility
       - get_campus_statistics
       - get_semester_curriculum
+      - lookup_building
       - run_governed_query
       - get_faculty_contact
     forbidden_tools:
@@ -69,6 +71,7 @@ roles:
       - check_admission_eligibility
       - get_campus_statistics
       - get_semester_curriculum
+      - lookup_building
       - run_governed_query
       - get_faculty_contact
       - detect_prereq_cycles

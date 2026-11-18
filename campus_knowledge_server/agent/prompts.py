@@ -5,40 +5,41 @@ Enforces strict source grounding, provenance attribution, and least-privilege to
 
 # ─── DATABASE CONTEXT (injected into every Qwen prompt) ───────────────────────
 DATABASE_CONTEXT = """
-SRMIST Campus Knowledge Graph — What You Know About This Database:
+SRMIST Campus Knowledge Graph — Verified Database Inventory:
 
-CAMPUS BUILDINGS (9 buildings at Kattankulathur):
-  TP   = Tech Park (Tech Park 1 / TP-1)      — 15 floors, Engineering & Computing labs, 30 rooms
-  TP2  = Tech Park 2 (TP-2)                  — 12 floors, Research Wings & Specialized Labs, 30 rooms
-  UB   = University Building                  — 14 floors, Administration & Sciences, 30 rooms
-  BEL  = Bioengineering Block                 — 8 floors, Biotechnology & Genetic Engg, 30 rooms
-  MEB  = Mechanical Engineering Block         — 6 floors, Mechanical & Automobile, 30 rooms
-  ESB  = Electrical Sciences Block            — 7 floors, ECE & EEE, 30 rooms
-  FMB  = Faculty of Management Block          — 5 floors, Management & MBA, 30 rooms
-  SLB  = School of Law Building               — 4 floors, Law & Moot Court, 24 rooms
-  MCB  = Medical College Hospital Block       — 10 floors, Medicine & Health Sciences, 30 rooms
-  Total: 264 rooms across all buildings.
+CAMPUS BUILDINGS (20 verified buildings at Kattankulathur):
+  TP   = Tech Park 1 (TP-1)                  — 15 floors, School of Computing & Engineering labs
+  TP2  = Tech Park 2 (TP-2)                  — G+15 floors, Technical Depts & Central Placement Office (15th floor)
+  CVR  = Sir C.V. Raman Research Park        — 7 floors, Scientific Research, Nanotechnology & Clean Energy
+  UB   = University Building                 — G+15 floors, Central Administration & Central Library (4 floors)
+  BEL  = Basic Engineering Laboratory Block  — G+5 floors, 1st-Year Engineering Workshops & Foundational Labs
+  CRC  = Classroom Complex                   — G+8 floors, Centralized Lecture Halls & Exam Suites
+  HTB  = Hi-Tech Block                       — G+6 floors, ITKM Data Center & Civil Engineering
+  MEB  = Mechanical Engineering Block        — G+6 floors, Mechanical, Automobile & Aerospace
+  ESB  = Electrical Sciences Block           — G+7 floors, ECE & EEE
+  BIO  = School of Bioengineering Block      — G+6 floors, Biotechnology, Biomedical & Genetic Engg
+  FMB  = Faculty of Management Block         — G+4 floors, School of Management & MBA
+  SLB  = School of Law Building              — G+3 floors, Law & Moot Court
+  ARCH = School of Architecture (SAID)       — G+3 floors, Architecture & Interior Design Studios
+  SIHM = SRM Institute of Hotel Management   — G+3 floors, Hospitality & Culinary Labs
+  MAB/MCB/DCB/CPB/HSB = Medical Academic, 1200-bed Hospital, Dental, Pharmacy, Nursing & Physiotherapy
+  TPG  = Dr. T.P. Ganesan Auditorium         — 4,000-seat Central Convention Auditorium
+  Total: 264 rooms across campus buildings.
 
 COURSES & CURRICULUM (Regulations 2021):
-  - 264 verified official courses (B.Tech, M.Tech, M.Sc, MBA, MBBS, Law, etc.)
-  - Departments: School of Computing (CSC, CSO, CSP), AI & ML (AIC, AIO), ECE, EEE, Mechanical, Aerospace, etc.
-  - Course codes follow pattern: 21XXXnnnX (e.g., 21CSC206T = Artificial Intelligence, Sem 4)
-  - 8 semesters for B.Tech (Semesters 1–8), 10 semesters for Integrated M.Tech
-  - 19 prerequisite dependency links in the graph
+  - 668 verified official courses with 768-dim vector embeddings (course_embeddings)
+  - 31 REQUIRES_PREREQUISITE dependency links in the graph
+  - 3,498 OFFERS_IN_SEMESTER allocations across semesters 1-10
 
 FACULTY:
-  - 2501 faculty members across all departments
-  - Each has: name, designation, department, college, cabin/office location, email, specialization
-  - Query by name (e.g., "Dr. Madhusoodhanan"), department, or cabin
+  - 2,501 faculty members across 208 departments (622 with active TEACHES edges to ingested courses)
 
 PROGRAMS & ADMISSIONS:
-  - 500+ degree programs across Engineering, Sciences, Management, Law, Medicine
-  - Each has: cutoff percentage, entrance exam (SRMJEEE/NEET/CAT/CLAT), annual fee, duration
+  - 485 degree programs (430 embedded in program_embeddings) with cutoffs, entrance exams, fees, and duration
 
 WHAT YOU CANNOT DO:
-  - You cannot answer questions about food, sports, hostels, WiFi, attendance, placements, or non-academic topics
-  - You cannot modify, delete, or write any data
-  - You cannot make up facts not returned by the tools
+  - You cannot modify, delete, or write any data (database is strictly read-only)
+  - You cannot fabricate facts, course codes, room IDs, or faculty names not returned by the tools
 """
 
 SYSTEM_GROUNDING_PROMPT = """You are the SRMIST Campus Knowledge Assistant, powered by a governed local knowledge tool server.
@@ -179,172 +180,38 @@ TOOL_DEFINITIONS = [
             },
             "required": ["program_query"]
         }
+    },
+    {
+        "name": "lookup_building",
+        "description": "Retrieve verified campus building description, floors, housed departments, key facilities, and rooms (e.g. TP1, TP2, UB, BEL, CVR, ARCH, MCB).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Building code, alias, or facility inquiry (e.g. 'tp1 building', 'where is placement office')"}
+            },
+            "required": ["query"]
+        }
     }
 ]
 
-INTENT_ROUTING_PROMPT = """You are the two-stage Semantic Intent Parser for the SRMIST Campus Knowledge Assistant.
+INTENT_ROUTING_PROMPT = """Select the exact tool name from this list and respond with valid JSON ONLY:
+{"tool": "<name>", "parameters": {...}}
 
-═══════════════════════════════════════════════════════════════
-STAGE 1 — UNDERSTAND THE USER'S INTENT (Read this first)
-═══════════════════════════════════════════════════════════════
+Tools:
+- lookup_course(query): details/credits/syllabus for a specific course code or title (e.g. 21CSC206T)
+- get_prerequisite_tree(course_code, max_depth): prerequisites or dependency tree for a course
+- verify_prerequisites(completed_courses, target_course): check if student with completed courses can enroll in target course
+- find_faculty_for_course(course_code): professors teaching a specific course code or subject
+- lookup_faculty_profile(faculty_name): lookup a professor's profile, cabin, email, department, or specialization
+- find_room_schedule(room_id, day_of_week): timetable/schedule for a specific room (e.g. TP-101, UB-203)
+- find_available_rooms(building_code, min_capacity, day, slot): free/vacant rooms in a building (TP, TP2, UB, BEL, MEB, ESB, FMB, SLB, MCB)
+- search_courses_semantic(query, top_k): discover courses covering a broad topic/concept (e.g. machine learning, cloud security)
+- check_admission_eligibility(program_query, candidate_percentage, is_reserved_category, candidate_stream): admission cutoff, fees, entrance exams, eligibility for a degree program
+- get_campus_statistics(category): aggregate counts of courses, programs, faculty, or rooms
+- get_semester_curriculum(program_query, semester): semester-wise subjects/curriculum plan for a branch (e.g. CSE Sem 3)
+- lookup_building(query): campus building overview, floors, departments, or facility location (e.g. TP1, TP2 placement office, UB library, BEL, CV Raman)
 
-Before routing, understand what the user is REALLY asking.
-Users are students and faculty at SRMIST college. They often type casually with typos.
-
-INTENT CATEGORIES:
-A. BUILDING / ROOM INFO   — asking about a physical location, campus building, or facility
-   Signals: "tp1", "tech park", "building", "block", "TP-1", "UB", "BEL", "MEB", "ESB", "FMB", "SLB", "MCB"
-   Buildings: TP=Tech Park(tp1), TP2=Tech Park 2(tp2), UB=University Building, BEL=Bioengineering,
-              MEB=Mechanical Block, ESB=Electrical Block, FMB=Management Block, SLB=Law Building, MCB=Medical Block
-
-B. ROOM SCHEDULE          — asking about a specific room's timetable
-   Signals: specific room code like "TP-101", "UB-302", "schedule of room", "who uses TP-201"
-
-C. AVAILABLE ROOMS        — looking for a free/vacant classroom
-   Signals: "available room", "free room", "vacant", "empty room", "book a room"
-
-D. COURSE LOOKUP          — asking about a specific course's details, credits, syllabus
-   Signals: course code (21CSC206T, 21CSO451T), "what is [course]", "tell me about [subject]", "details of"
-
-E. COURSE TOPIC SEARCH    — looking for courses covering a broad topic
-   Signals: "courses on AI", "what courses cover python", "find subjects related to networks"
-
-F. PREREQUISITES          — asking about course prerequisites or dependency chains
-   Signals: "prereq", "prerequisite", "dependency", "before taking", "required courses for"
-
-G. ELIGIBILITY CHECK      — checking if student can enroll based on completed courses
-   Signals: "can I take", "am I eligible", "if I passed X can I do Y", "completed [code] take [code]"
-
-H. FACULTY PROFILE        — asking about a professor: office, cabin, email, research, designation
-   Signals: "Dr.", "professor", "faculty", "who is", "cabin of", "email of", "where does [name] sit"
-   IMPORTANT: Building names (tech park, tp1, university building) are NOT faculty names.
-
-I. FACULTY FOR COURSE     — which professor teaches a course
-   Signals: "who teaches", "instructor for", "professor for [course code]"
-
-J. ADMISSION & FEES       — joining the college, cutoffs, fees, entrance exam
-   Signals: "eligibility for btech", "fee for cse", "cutoff", "SRMJEEE", "NEET", "admission"
-
-K. CURRICULUM / SUBJECTS  — semester-wise subjects for a branch
-   Signals: "sem 3 subjects", "semester 4 CSE", "what do I study in year 2", "implementation plan"
-
-L. CAMPUS STATISTICS      — total counts and overview
-   Signals: "how many courses", "total faculty", "programs offered", "campus overview"
-
-═══════════════════════════════════════════════════════════════
-STAGE 2 — MAP TO THE RIGHT TOOL
-═══════════════════════════════════════════════════════════════
-
-After identifying the intent category from Stage 1, pick ONE tool:
-
-Intent A (Building info) or C (Available rooms) → find_available_rooms
-  Parameters:
-  - building_code: "TP" | "TP2" | "UB" | "BEL" | "MEB" | "ESB" | "FMB" | "SLB" | "MCB"
-  - min_capacity: 1 (for building info), 30 (for available room search)
-  - day: "Monday" (default)
-  - slot: "08:45-09:35" (default)
-
-Intent B (Room schedule) → find_room_schedule
-  Parameters:
-  - room_id: e.g. "TP-101" (always uppercase with dash)
-  - day_of_week: optional e.g. "Monday"
-
-Intent D (Course lookup) → lookup_course
-  Parameters:
-  - query: course code or course name
-
-Intent E (Course topic search) → search_courses_semantic
-  Parameters:
-  - query: topic description
-  - top_k: 5 (default)
-
-Intent F (Prerequisite tree) → get_prerequisite_tree
-  Parameters:
-  - course_code: e.g. "21CSC206T"
-  - max_depth: 3 (default)
-
-Intent G (Eligibility check) → verify_prerequisites
-  Parameters:
-  - target_course: e.g. "21CSO451T"
-  - completed_courses: list e.g. ["21CSC201J"]
-
-Intent H (Faculty profile) → lookup_faculty_profile
-  Parameters:
-  - faculty_name: clean name only, no title (e.g. "Madhusoodhanan" not "Dr. Madhusoodhanan")
-
-Intent I (Faculty for course) → find_faculty_for_course
-  Parameters:
-  - course_code: e.g. "21CSC206T"
-
-Intent J (Admission & fees) → check_admission_eligibility
-  Parameters:
-  - program_query: e.g. "B.Tech Computer Science" or "MBBS" or "MBA"
-  - candidate_percentage: optional float
-  - is_reserved_category: optional boolean
-  - candidate_stream: optional "PCM" | "PCB" | "Commerce" | "Arts"
-
-Intent K (Curriculum) → get_semester_curriculum
-  Parameters:
-  - program_query: e.g. "CSE" | "AI" | "ECE" | "Mechanical"
-  - semester: optional integer 1-8
-
-Intent L (Statistics) → get_campus_statistics
-  Parameters:
-  - category: "all" | "programs" | "faculty" | "rooms"
-
-═══════════════════════════════════════════════════════════════
-OUTPUT RULES
-═══════════════════════════════════════════════════════════════
-
-You MUST respond with valid JSON ONLY. No explanation, no markdown, just JSON.
-{
-  "intent_category": "<A|B|C|D|E|F|G|H|I|J|K|L>",
-  "intent_description": "<one sentence of what the user wants>",
-  "tool": "<tool_name>",
-  "parameters": {<arguments>},
-  "normalized_query": "<cleaned query without typos>"
-}
-
-═══════════════════════════════════════════════════════════════
-FEW-SHOT EXAMPLES
-═══════════════════════════════════════════════════════════════
-
-User: "tp1 building"
-=> {"intent_category": "A", "intent_description": "User wants info about Tech Park building", "tool": "find_available_rooms", "parameters": {"building_code": "TP", "min_capacity": 1, "day": "Monday", "slot": "08:45-09:35"}, "normalized_query": "Tech Park building info"}
-
-User: "tell me about tech park"
-=> {"intent_category": "A", "intent_description": "User wants info about Tech Park building", "tool": "find_available_rooms", "parameters": {"building_code": "TP", "min_capacity": 1, "day": "Monday", "slot": "08:45-09:35"}, "normalized_query": "Tech Park building info"}
-
-User: "which rooms are available in tp2 on tuesday"
-=> {"intent_category": "C", "intent_description": "User wants available rooms in Tech Park 2 on Tuesday", "tool": "find_available_rooms", "parameters": {"building_code": "TP2", "min_capacity": 30, "day": "Tuesday", "slot": "08:45-09:35"}, "normalized_query": "available rooms in Tech Park 2 on Tuesday"}
-
-User: "schedule of TP-201"
-=> {"intent_category": "B", "intent_description": "User wants the timetable for room TP-201", "tool": "find_room_schedule", "parameters": {"room_id": "TP-201"}, "normalized_query": "room schedule for TP-201"}
-
-User: "what is 21CSC206T"
-=> {"intent_category": "D", "intent_description": "User wants details about course 21CSC206T (Artificial Intelligence)", "tool": "lookup_course", "parameters": {"query": "21CSC206T"}, "normalized_query": "course details 21CSC206T"}
-
-User: "courses on machine learning"
-=> {"intent_category": "E", "intent_description": "User wants to find courses covering machine learning", "tool": "search_courses_semantic", "parameters": {"query": "machine learning", "top_k": 5}, "normalized_query": "machine learning courses"}
-
-User: "prereqs for 21CSO451T"
-=> {"intent_category": "F", "intent_description": "User wants the prerequisite chain for course 21CSO451T", "tool": "get_prerequisite_tree", "parameters": {"course_code": "21CSO451T", "max_depth": 3}, "normalized_query": "prerequisites for 21CSO451T"}
-
-User: "if I passed 21CSC206T can I take 21CSO451T"
-=> {"intent_category": "G", "intent_description": "User wants to verify if completing 21CSC206T allows enrollment in 21CSO451T", "tool": "verify_prerequisites", "parameters": {"target_course": "21CSO451T", "completed_courses": ["21CSC206T"]}, "normalized_query": "verify prerequisites 21CSC206T for 21CSO451T"}
-
-User: "where is dr madhusoodhanan cabin"
-=> {"intent_category": "H", "intent_description": "User wants the office/cabin location of Dr. Madhusoodhanan", "tool": "lookup_faculty_profile", "parameters": {"faculty_name": "Madhusoodhanan"}, "normalized_query": "Dr. Madhusoodhanan cabin location"}
-
-User: "who teaches artificial intelligence course"
-=> {"intent_category": "I", "intent_description": "User wants to know which faculty teaches the AI course", "tool": "find_faculty_for_course", "parameters": {"course_code": "21CSC206T"}, "normalized_query": "faculty teaching Artificial Intelligence 21CSC206T"}
-
-User: "eligibity for btech cse 75 percent"
-=> {"intent_category": "J", "intent_description": "User wants admission eligibility info for B.Tech CSE with 75% marks", "tool": "check_admission_eligibility", "parameters": {"program_query": "B.Tech Computer Science and Engineering", "candidate_percentage": 75.0}, "normalized_query": "eligibility for B.Tech CSE 75 percent"}
-
-User: "sem 3 subjects cse"
-=> {"intent_category": "K", "intent_description": "User wants the list of subjects in Semester 3 for CSE branch", "tool": "get_semester_curriculum", "parameters": {"program_query": "Computer Science and Engineering", "semester": 3}, "normalized_query": "Semester 3 subjects for CSE"}
-
-User: "how many courses does srm offer"
-=> {"intent_category": "L", "intent_description": "User wants total course and program count at SRMIST", "tool": "get_campus_statistics", "parameters": {"category": "all"}, "normalized_query": "total courses offered at SRMIST"}
-"""
+Rules:
+- Respond ONLY with JSON containing "tool" and "parameters".
+- For lookup_faculty_profile, pass only the clean name without Dr./Prof.
+- For building descriptions or locations (not vacant room searches), use lookup_building."""

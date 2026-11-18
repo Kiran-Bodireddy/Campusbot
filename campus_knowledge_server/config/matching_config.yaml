@@ -1,0 +1,22 @@
+# Generic faculty name matching & cabin labeling configuration.
+# No person names, IDs, course codes, buildings, or departments belong here.
+
+faculty_matching:
+  honorifics:
+    - "dr"
+    - "prof"
+    - "professor"
+    - "mr"
+    - "mrs"
+    - "ms"
+  min_similarity: 0.72
+  max_displayed_matches: 5
+  fuzzy_min_token_length: 3
+
+cabin_labeling:
+  # Characters considered an unambiguous separator after a graph Building.code
+  separators:
+    - "-"
+    - "/"
+    - ":"
+    - " "

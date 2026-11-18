@@ -102,3 +102,26 @@ python -m uvicorn campus_knowledge_server.server.main:app --host 0.0.0.0 --port 
 ```powershell
 python -m pytest -q
 ```
+
+### Neo4j Read-Only Serving Mode & Reload Toggle
+
+In serving mode, Neo4j Community is locked read-only at the database server level in `neo4j.conf`:
+```ini
+dbms.databases.default_to_read_only=true
+```
+Combined with `default_access_mode=READ_ACCESS` in `neo4j_client.py`, any write attempt (`CREATE`, `MERGE`, `SET`, `DELETE`) is rejected directly by the Neo4j server (`Neo.ClientError.General.WriteOnReadOnlyAccessDatabase`).
+
+**Procedure to reload data or recompute vector embeddings:**
+1. Stop the running Neo4j Community instance.
+2. In `<NEO4J_HOME>/conf/neo4j.conf`, temporarily change:
+   ```ini
+   dbms.databases.default_to_read_only=false
+   ```
+3. Start Neo4j and run the ingestion/embedding scripts (`seed.py`, `seed_vector_index.py`, `seed_program_vector_index.py`, `scripts/update_buildings_and_embeddings.py`).
+4. Verify all vector indexes report `ONLINE` (`100.0%`) via `SHOW VECTOR INDEXES`.
+5. Stop Neo4j, restore:
+   ```ini
+   dbms.databases.default_to_read_only=true
+   ```
+6. Restart Neo4j for read-only serving.
+
