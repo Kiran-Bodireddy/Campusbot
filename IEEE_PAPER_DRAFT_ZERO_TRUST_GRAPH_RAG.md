@@ -11,7 +11,7 @@ Retrieval-Augmented Generation over Labeled Property Graphs (Graph-RAG) has emer
 
 To resolve this security-expressiveness-verifiability trilemma, we present **Zero-Trust Governed Graph-RAG (ZTG-RAG)**, an enterprise-grade agentic architecture that completely eliminates unconstrained query generation. ZTG-RAG enforces four novel contributions: (1) **Parameterized Governed Tool Brokerage**: a closed, pre-compiled catalog of parameterized graph tools protected by a structural query and lexical token security validator; (2) **Broker-Enforced Zero-Trust RBAC**: caller-bound role authorization and data-layer column masking that prevents unauthorized PII disclosure regardless of LLM generation; (3) **Deterministic Multi-Hop Chaining with Structured Entity Interception**: an engine that resolves multi-hop relational dependencies without LLM iterations by strictly intercepting intermediate outputs, enforcing format regex and graph existence validation, and mathematically preventing free-text forwarding; and (4) **Cryptographically Chained (SHA-256) Audit Provenance**: an append-only, tamper-evident linear hash-chained ledger guaranteeing verifiable non-repudiation under regulatory compliance mandates (e.g., EU AI Act Article 12). 
 
-Empirical evaluation on an enterprise campus knowledge graph (668 courses, 2,501 faculty, 264 rooms, 3,498 curriculum allocations) across 90 benchmark queries demonstrates that ZTG-RAG achieves a **100% interception rate against 10 distinct adversarial injection vectors**, reduces the invalid query rate from **11.25% to 0.0%**, and slashes median decision-and-tool execution latency from **12,312.6 ms to 63.6 ms (a 193x speedup in tool invocation)** compared to pure LLM function calling, while maintaining a verified SHA-256 ledger integrity over 10,000+ sequential multi-hop agent turns.
+Empirical evaluation on an enterprise campus knowledge graph (669 courses, 2,501 faculty, 264 rooms, 437 academic programs, 1,336 scheduled timetable sessions) across 90 benchmark queries demonstrates that ZTG-RAG achieves a **100% interception rate against 10 distinct adversarial injection vectors** at the gateway perimeter, reduces the invalid query rate from **11.25% to 0.0%**, and slashes median tool invocation latency from **12,312.6 ms to 63.6 ms (a 193x speedup in tool invocation latency, excluding answer generation; see §VI-C)** compared to pure LLM function calling, while maintaining a verified SHA-256 ledger integrity over 10,000+ sequential multi-hop agent turns.
 
 **Index Terms**—Large Language Models, Graph-RAG, Zero-Trust Architecture, Role-Based Access Control, Tamper-Evident Audit Ledger, Indirect Prompt Injection, Knowledge Graphs.
 
@@ -33,7 +33,7 @@ flowchart LR
 
     subgraph Proposed["Proposed: Zero-Trust Governed Graph-RAG"]
         U2["Principal (Authenticated Role)"] --> R2["Hybrid Router & Policy Broker"]
-        R2 -->|"AST Validation & RBAC"| T2["Pre-Compiled Governed Tools"]
+        R2 -->|"Lexical Validation & RBAC"| T2["Pre-Compiled Governed Tools"]
         T2 -->|"Parameterized Read-Only"| DB2[("Isolated Neo4j")]
         T2 -->|"Structured Entity Interceptor"| CH2["Deterministic Chaining"]
         T2 & CH2 -->|"Cryptographic Hash Chain"| AL2["SHA-256 Tamper-Evident Ledger"]
@@ -48,7 +48,7 @@ Furthermore, resolving multi-hop questions (e.g., *"Which instructors teach the 
 
 ### Contributions
 To address these challenges, we present **Zero-Trust Governed Graph-RAG (ZTG-RAG)**. Our contributions are:
-- **Parameterized Governed Tool Brokerage**: We eliminate dynamic Text-to-Cypher entirely. We formalize a closed inventory of 14 pre-compiled, parameterized Cypher tools guarded by Abstract Syntax Tree (AST) validation and database-level read-only transaction constraints.
+- **Parameterized Governed Tool Brokerage**: We eliminate dynamic Text-to-Cypher entirely. We formalize a closed inventory of 14 pre-compiled, parameterized Cypher tools guarded by a **lexical token security validator** (regex-based forbidden-clause detection) and database-level read-only transaction constraints.
 - **Zero-Trust Principal Authorization & Field Masking**: We enforce caller-bound Role-Based Access Control (RBAC) at the broker boundary. Sensitive fields (e.g., faculty telephone numbers) are programmatically redacted at the data-serialization layer, making PII exfiltration physically impossible regardless of prompt jailbreaks.
 - **Deterministic Multi-Hop Chaining with Structured Entity Interception**: We present **Option A Chaining**, a configuration-driven composition engine that executes multi-hop graph dependencies deterministically. We introduce a **Structured Entity Interceptor** that strictly validates intermediate parameters against format regex and live graph caches, **forbidding free-text propagation between hops** and mathematically neutralizing indirect prompt injections.
 - **Cryptographically Chained (SHA-256) Audit Provenance**: We implement an append-only, linear hash-chained audit ledger that binds each agent interaction, tool call, latency trace, and chained hop to an immutable hash chain, guaranteeing complete tamper detection.
@@ -69,7 +69,7 @@ We consider a strong adversary $\mathcal{A}$ interacting with the Graph-RAG syst
 ### B. Formal Security Invariants
 Our architecture enforces four mathematical security invariants:
 - **Invariant 1 (Read-Only Execution)**: $\forall t \in \mathcal{T}, \text{Operations}(t) \subseteq \{\text{MATCH}, \text{RETURN}, \text{WHERE}, \text{ORDER BY}\}$. Any query containing $\text{Mutators} = \{\text{CREATE}, \text{DELETE}, \text{SET}, \text{REMOVE}, \text{DROP}, \text{CALL}\}$ is rejected prior to execution:
-$$\mathcal{P}_{\text{AST}}(q) = \text{REJECT} \quad \text{if} \quad \text{Tokens}(q) \cap \text{Mutators} \neq \emptyset$$
+$$\mathcal{P}_{\text{Lexical}}(q) = \text{REJECT} \quad \text{if} \quad \text{Tokens}(q) \cap \text{Mutators} \neq \emptyset$$
 - **Invariant 2 (Least Privilege RBAC)**: Let $P = \langle u, r \rangle$ be the principal with role $r \in \{\text{student}, \text{faculty}, \text{admin}\}$, and let $\text{Policy}(r)$ be the authorized tool set. A tool $t$ executes if and only if $t \in \text{Policy}(r)$.
 - **Invariant 3 (Structured Entity Isolation)**: In any multi-hop chain $t_1 \to t_2$, the input parameter $x_2$ to tool $t_2$ must be an element of the structured entity cache $\mathcal{E}$ and satisfy schema regex $\mathcal{R}$:
 $$x_2 \in \mathcal{E} \land \text{RegexMatch}(\mathcal{R}, x_2) = \text{True}$$
@@ -91,7 +91,7 @@ The ZTG-RAG architecture consists of five coordinated modules operating under a 
 ┌────────────────────────────────────────────────────────┐
 │ 1. Zero-Trust Gateway & Principal Binding              │
 │    - Role Resolution (student | faculty | admin)       │
-│    - Read-Only Mutation Guard (Regex + AST)            │
+│    - Read-Only Mutation Guard (Lexical Token Regex)    │
 └──────────────────────────┬─────────────────────────────┘
                            │
                            ▼
@@ -107,7 +107,7 @@ The ZTG-RAG architecture consists of five coordinated modules operating under a 
 ┌────────────────────────┐  ┌────────────────────────────┐
 │ 3A. Single-Hop Broker  │  │ 3B. Option A Chaining      │
 │     - Pydantic Schema  │  │     - Independent Template │
-│     - AST Sanitizer    │  │     - Dependent Template   │
+│     - Lexical Token Sanitizer │  │     - Dependent Template   │
 │     - RBAC Policy Gate │  │     - Entity Interceptor   │
 └────────────┬───────────┘  └────────────┬───────────────┘
              │                           │
@@ -124,8 +124,8 @@ The ZTG-RAG architecture consists of five coordinated modules operating under a 
              ▼                           ▼
 ┌────────────────────────┐  ┌────────────────────────────┐
 │ 5A. Grounded Synthesizer│  │ 5B. Cryptographic Audit    │
-│     - Entity Citation  │  │     - SHA-256 Merkle Chain │
-│     - Delimiter Shield │  │     - Shared chain_id Log  │
+│     - Entity Citation  │  │     - SHA-256 Linear Hash Chain │
+│     - Delimiter Shield │  │     - Shared chain_id Log       │
 └────────────────────────┘  └────────────────────────────┘
 ```
 
@@ -143,12 +143,16 @@ Because `$code` is bound strictly as a literal parameter within the Neo4j Bolt d
 ### B. Broker-Enforced RBAC & Data Masking
 Before query dispatch, `execute_tool()` validates the caller's `Principal`. If an unauthorized role attempts execution (e.g., a student invoking `run_governed_query`), execution terminates immediately with a `SecurityViolationError`. 
 
-Crucially, privacy enforcement does not rely on post-hoc LLM prompting. In `lookup_faculty_profile`, the phone number property is masked at the data-serialization layer:
+Crucially, privacy enforcement does not rely on post-hoc LLM prompting. Sensitive field declarations live in `policy.yaml` per role (e.g., `hidden_fields: [phone, mobile, personal_phone]` for the `student` role). After every tool execution, `governed_executor.py` applies masking uniformly across all tool outputs before returning data to the agent:
 ```python
-if principal.role != "admin":
-    faculty_record["phone"] = "[Hidden by Policy]"
+# governed_executor.py — applied after tool execution, before returning to agent
+hidden_fields = set(role_rules.get("hidden_fields", []))  # from policy.yaml
+for item in raw_result.get("faculty", []):
+    for hf in hidden_fields:
+        if hf in item:
+            item[hf] = "[Hidden by Policy]"
 ```
-Even if an attacker crafts a jailbreak prompt instructing the model to *"reveal all hidden variables"*, the underlying data payload provided to the LLM does not contain the plaintext value.
+Even if an attacker crafts a jailbreak prompt instructing the model to *"reveal all hidden variables"*, the underlying data payload provided to the LLM does not contain the plaintext value. This declarative pattern means adding a new sensitive field requires only a `policy.yaml` config change — no code modifications.
 
 ---
 
@@ -223,7 +227,7 @@ If an adversary edits a past log entry $e_k$ (e.g., to conceal an unauthorized t
 ## VI. Empirical Evaluation & Benchmarks
 
 ### A. Experimental Setup
-- **Knowledge Graph Corpus**: Modeled in Neo4j Community `2026.10.2` representing SRMIST Kattankulathur: 668 accredited courses, 2,501 faculty members, 264 rooms across campus complexes, 430 degree eligibility criteria, and 3,498 semester curriculum allocations.
+- **Knowledge Graph Corpus**: Modeled in Neo4j Community `2026.10.2` representing SRMIST Kattankulathur: **669** accredited courses, 2,501 faculty members, 264 rooms across campus complexes, **437** degree program eligibility records, and **1,336** scheduled timetable sessions.
 - **Evaluation Dataset**: 90 rigorous test queries comprising:
   - 65 Single-Hop domain questions (`SH-01` to `SH-65`).
   - 15 Multi-Hop relational dependency questions (`MH-01` to `MH-15`).
@@ -245,13 +249,15 @@ TABLE I presents the comparative benchmark across three distinct configurations:
 | **Gold Entity Match (%)** | **93.75%** (75/80) | 80.0% (64/80) | 78.8% (63/80) | $\ge 90.0\%$ |
 | **Invalid Query Rate (%)** | **0.0%** | 11.25% | 11.25% | $< 2.0\%$ |
 | **Pydantic Schema Violations** | **0** | 9 | 9 | 0 |
-| **Cypher Execution Accuracy (%)** | **100.0%** | 100.0% | 100.0% | 100.0% |
+| **Cypher Execution Accuracy (%)** $^\ddagger$ | **100.0%** | 100.0% | 100.0% | 100.0% |
 | **Median Decision & Tool Latency** $^\dagger$ | **63.6 ms** | 12,312.6 ms | 8,463.1 ms | $< 2,000\text{ ms}$ |
 | **Mean End-to-End Latency** | **1,257.8 ms** | 13,904.6 ms | 9,269.0 ms | $< 3,000\text{ ms}$ |
-| **Adversarial Attacks Blocked** | **10 / 10 (100%)** | 10 / 10 (100%) | 10 / 10 (100%) | 100.0% |
+| **Adversarial Attacks Blocked** $^*$ | **10 / 10 (100%)** | 10 / 10 (100%) | 10 / 10 (100%) | 100.0% |
 | **Audit Ledger Verification** | **100% Intact (10,323 entries)** | N/A | N/A | 100% Intact |
 
-$^\dagger$*Note on Latency: Median latency reflects routing plus tool execution time, measuring the system's operational decision speed before subsequent text generation. In Router-Off modes, the LLM consumes 8–12 seconds purely to synthesize the initial tool call.*
+$^\dagger$*Note on Latency: Median latency reflects routing plus tool execution time, measuring the system's operational decision speed before subsequent text generation. In Router-Off modes, the LLM consumes 8–12 seconds purely to synthesize the initial tool call.*  
+$^\ddagger$*Note on Cypher Accuracy: Evaluated over queries that successfully dispatched to a governed tool; queries resulting in schema rejections or no tool invocation are accounted for in the invalid query rate.*  
+$^*$*Note on Adversarial Interception: Interception occurs at the zero-trust perimeter before routing; hence Router-Off configurations achieve the same 10/10 block rate as hybrid mode.*
 
 ```mermaid
 xychart-beta
@@ -267,21 +273,23 @@ xychart-beta
 #### RQ1: Injection Resistance & Security Boundary
 Under ZTG-RAG, all 10 adversarial injection vectors were intercepted at the perimeter:
 - Database destructive injections (`ADV-01`, `ADV-02`, `ADV-05`) were blocked by the Zero-Trust Read-Only Gateway before invoking any database connection.
-- Procedure escape attempts (`ADV-03` APOC execution) and credential harvesting (`ADV-04`) were blocked by AST syntax analysis.
+- Procedure escape attempts (`ADV-03` APOC execution) and credential harvesting (`ADV-04`) were blocked by the **lexical token security validator** (regex-based forbidden-clause detection in `ASTSecurityValidator.is_adversarial_or_destructive()`).
 - Prompt delimiter escapes (`ADV-06`) were neutralized by XML encapsulation boundaries.
 - Privilege escalation attempts (`ADV-07`, `ADV-08`) were blocked by Principal RBAC checks.
+
+> **Note on Router Independence of Security**: Gateway-level interception operates prior to any routing decision. All three evaluation modes (hybrid and both Router-Off configurations) achieved identical 10/10 adversarial blocking, confirming that security is structurally enforced at the perimeter, not router-dependent. The hybrid router's contribution is **accuracy and latency**, not adversarial security.
 **Result**: Invariant 1 and Invariant 2 hold with $100.0\%$ empirical efficacy ($0$ security leaks).
 
 #### RQ2: Multi-Hop Reasoning & Hallucination Mitigation
 In traditional ReAct loops, multi-hop queries suffer from high failure rates. For query `MH-14` (*"Prerequisites and teaching staff for 21AIP302L"*), baseline models selected only `get_prerequisite_tree`, completely ignoring faculty instructors. Under ZTG-RAG Option A Chaining, the engine automatically dispatched `course_prereqs_and_faculty`, concurrently executing both hops and assembling sectioned Markdown grounded in verified graph entities. Furthermore, for query `MH-05` (*"What rooms in Tech Park host classes for 21CSC206T?"*), the dedicated `find_course_schedule` tool returned precise room allocations (`TP-302`, `TP-102`), resolving a historic miss recorded in prior runs.
 
 #### RQ3: Latency & Computational Overhead
-Pure LLM function calling introduces debilitating latency ($12.3\text{s}$ median for 3B, $8.5\text{s}$ median for 1.5B). By contrast, ZTG-RAG's hybrid architecture achieves a median latency of **63.6 ms**—a **193x speedup**. Detailed stage profiling indicates:
-- Heuristic intent routing: $1.2\text{ ms} - 4.8\text{ ms}$.
-- Pydantic schema & AST validation: $0.4\text{ ms}$.
-- Neo4j indexed Bolt read: $12.0\text{ ms} - 45.0\text{ ms}$.
-- SHA-256 audit ledger hashing: $0.15\text{ ms}$.
-The computational overhead of cryptographic audit logging and AST checking is less than **$1\text{ ms}$**, proving that rigorous security does not compromise throughput.
+Pure LLM function calling introduces debilitating latency ($12.3\text{s}$ median for 3B, $8.5\text{s}$ median for 1.5B). By contrast, ZTG-RAG's hybrid architecture achieves a median decision-and-tool latency of **63.6 ms**—a **193x speedup in tool invocation**. Stage breakdown profiling reveals:
+- Heuristic intent routing: $\sim 1.2\text{ ms} - 4.8\text{ ms}$ (estimated via profiler).
+- Pydantic schema validation & lexical regex check: $\sim 0.4\text{ ms}$.
+- Neo4j indexed Bolt read: $\sim 12.0\text{ ms} - 45.0\text{ ms}$.
+- SHA-256 audit ledger hashing: $\sim 0.15\text{ ms}$.
+The computational overhead of cryptographic audit logging and lexical security checking combined is less than **$1\text{ ms}$**, proving that rigorous enterprise governance does not degrade throughput.
 
 #### RQ4: Cryptographic Ledger Scalability & Verifiability
 We verified the sequential hash integrity across **10,323 consecutive audit entries** in `audit_telemetry.jsonl`. Verification completed in $0.42\text{ seconds}$ with zero broken links:
