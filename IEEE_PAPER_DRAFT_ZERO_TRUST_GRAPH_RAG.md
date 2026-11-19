@@ -300,10 +300,11 @@ In simulated tampering trials (altering a single parameter character in entry 6,
 Our findings indicate that for institutional enterprise domains governed by regulatory frameworks, unconstrained Text-to-Cypher represents an unacceptably high risk profile. Dynamic query synthesis conflates instruction and data spaces, creating vulnerabilities that prompt engineering cannot reliably resolve. Constraining local LLMs to parameter extraction over pre-compiled, parameterized tools eliminates the query-injection attack surface while maintaining low latency on consumer-grade hardware.
 
 ### B. Limitations
-We identify three primary limitations of this work:
-1. **Rule & Schema Maintenance Overhead**: The hybrid router relies on hand-crafted token extraction rules and Pydantic schemas. When institutional curriculum taxonomies evolve, administrators must maintain corresponding schema mappings.
-2. **Single-Domain Scope**: Evaluation was conducted on a single university campus graph and local model family (`qwen2.5:3b`). Cross-domain validation (e.g., healthcare or legal domains) remains necessary to assess generalization.
+We identify four primary limitations of this work:
+1. **Rule & Schema Maintenance Overhead**: The hybrid router relies on hand-crafted token extraction rules and Pydantic schemas (~4,500 lines of routing logic). When institutional curriculum taxonomies evolve, administrators must maintain corresponding schema mappings.
+2. **Single-Domain Scope**: Evaluation was conducted on a single university campus graph and local model family (`qwen2.5:3b`). Cross-domain validation (e.g., healthcare or legal domains) remains necessary to assess generalization across heterogeneous domain ontologies.
 3. **Conversational Synthesis Drift**: While retrieved graph facts are 100% verified, the LLM still generates the final conversational prose. Post-generation grounding guards verify that cited course codes and room IDs match retrieved data, but open-ended generative prose can still exhibit stylistic variation.
+4. **Partly Modeled Scheduling Topology**: While courses, degree requirements, and faculty profiles represent authentic university records, classroom allocations and timetable slots are synthetically modeled to evaluate scheduling queries without accessing confidential internal registrar databases.
 
 ---
 
