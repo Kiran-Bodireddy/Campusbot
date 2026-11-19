@@ -54,7 +54,8 @@ class AuditLogger:
         result_count: int = 0,
         cypher_executed: Optional[str] = None,
         violation_reason: Optional[str] = None,
-        role: str = "student"
+        role: str = "student",
+        chain_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Appends a structured, SHA-256 hash-chained event entry to the JSONL log file."""
         self._last_hash = self._get_tail_hash()
@@ -71,6 +72,8 @@ class AuditLogger:
             "violation_reason": violation_reason,
             "prev_hash": self._last_hash
         }
+        if chain_id is not None:
+            event["chain_id"] = chain_id
 
         # Compute tamper-evident SHA-256 entry hash
         canonical_str = json.dumps(event, sort_keys=True)

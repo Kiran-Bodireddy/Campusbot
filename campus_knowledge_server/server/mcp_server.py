@@ -67,5 +67,9 @@ def get_semester_curriculum(program_query: str, semester: Optional[int] = None) 
 def lookup_building(query: str) -> Dict[str, Any]:
     return execute_tool("lookup_building", {"query": query}, principal=MCP_PRINCIPAL)
 
+@mcp.tool(name="find_course_schedule", description="Retrieves classroom allocations and weekly timetable slots for a given course code.")
+def find_course_schedule(course_code: str, day_of_week: Optional[str] = None) -> Dict[str, Any]:
+    return execute_tool("find_course_schedule", {"course_code": course_code, "day_of_week": day_of_week}, principal=MCP_PRINCIPAL)
+
 if __name__ == "__main__":
     mcp.run()

@@ -80,9 +80,9 @@ Evaluated via `scripts/run_part_c_dev_benchmark.py` on the **90-question develop
 
 ---
 
-## 4. The 13 Governed Campus Tools (12 via MCP)
+## 4. The 14 Governed Campus Tools (13 via MCP)
 
-All database access is constrained to least-privilege, Pydantic-validated, parameterized tools. The FastAPI REST server (`campus_knowledge_server/server/main.py`) exposes **13 tools** under `/tools/*`; the FastMCP server (`campus_knowledge_server/server/mcp_server.py`) exposes **12 tools** (omitting the admin-only `run_governed_query`):
+All database access is constrained to least-privilege, Pydantic-validated, parameterized tools. The FastAPI REST server (`campus_knowledge_server/server/main.py`) exposes **14 tools** under `/tools/*`; the FastMCP server (`campus_knowledge_server/server/mcp_server.py`) exposes **13 tools** (omitting the admin-only `run_governed_query`):
 
 | # | Tool Name | Exposed via REST | Exposed via MCP | Purpose |
 | :-: | :--- | :---: | :---: | :--- |
@@ -98,7 +98,8 @@ All database access is constrained to least-privilege, Pydantic-validated, param
 | 10 | `get_campus_statistics` | Yes | Yes | Returns live aggregate Neo4j graph counts across programs, courses, faculty, rooms, buildings, and prerequisites. |
 | 11 | `get_semester_curriculum` | Yes | Yes | Retrieves official Regulations-2021 semester-by-semester subjects and credits for a program. |
 | 12 | `lookup_building` | Yes | Yes | Looks up campus building metadata, aliases (e.g., `BEL` / `Basic Engineering Lab`), and room counts from live Neo4j. |
-| 13 | `run_governed_query` | **Yes (Admin only)** | **No** | AST-validated read-only Cypher query execution restricted strictly to authenticated `admin` principals. |
+| 13 | `find_course_schedule` | Yes | Yes | Retrieves weekly classroom allocations and timetable slots for a canonical course code. |
+| 14 | `run_governed_query` | **Yes (Admin only)** | **No** | AST-validated read-only Cypher query execution restricted strictly to authenticated `admin` principals. |
 
 ---
 

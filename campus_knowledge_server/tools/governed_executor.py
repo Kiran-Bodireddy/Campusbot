@@ -22,6 +22,7 @@ from campus_knowledge_server.security.audit import get_audit_logger
 from campus_knowledge_server.tools.campus_tools import (
     CampusKnowledgeTools,
     CourseLookupRequest,
+    CourseScheduleRequest,
     PrerequisiteTreeRequest,
     PrerequisiteVerifyRequest,
     FacultyCourseRequest,
@@ -38,9 +39,70 @@ from campus_knowledge_server.tools.campus_tools import (
 
 logger = logging.getLogger("governed_executor")
 
+# Tool entity type declarations (declaring accepted parameters and returned structured entity types)
+TOOL_ENTITY_REGISTRY: Dict[str, Dict[str, Dict[str, str]]] = {
+    "lookup_course": {
+        "accepts": {"query": "COURSE_CODE_OR_TITLE"},
+        "returns": {"code": "COURSE_CODE", "name": "COURSE_TITLE", "prerequisites": "COURSE_CODE_LIST"}
+    },
+    "find_course_schedule": {
+        "accepts": {"course_code": "COURSE_CODE", "day_of_week": "DAY_NAME"},
+        "returns": {"course_code": "COURSE_CODE", "room_id": "ROOM_ID", "schedules": "SCHEDULE_LIST"}
+    },
+    "get_prerequisite_tree": {
+        "accepts": {"course_code": "COURSE_CODE"},
+        "returns": {"code": "COURSE_CODE", "prerequisites": "COURSE_CODE_LIST"}
+    },
+    "verify_prerequisites": {
+        "accepts": {"target_course": "COURSE_CODE", "completed_courses": "COURSE_CODE_LIST"},
+        "returns": {"target_course": "COURSE_CODE", "missing_prerequisites": "COURSE_CODE_LIST"}
+    },
+    "find_faculty_for_course": {
+        "accepts": {"course_code": "COURSE_CODE"},
+        "returns": {"faculty_id": "FACULTY_ID", "faculty_name": "FACULTY_NAME", "instructors": "FACULTY_LIST"}
+    },
+    "lookup_faculty_profile": {
+        "accepts": {"faculty_name": "FACULTY_NAME"},
+        "returns": {"faculty_id": "FACULTY_ID", "cabin": "CABIN_LOCATION", "department": "DEPARTMENT_NAME"}
+    },
+    "find_room_schedule": {
+        "accepts": {"room_id": "ROOM_ID", "day_of_week": "DAY_NAME"},
+        "returns": {"room_id": "ROOM_ID", "schedules": "SCHEDULE_LIST", "course_code": "COURSE_CODE"}
+    },
+    "find_available_rooms": {
+        "accepts": {"building_code": "BUILDING_CODE"},
+        "returns": {"room_id": "ROOM_ID", "available_rooms": "ROOM_LIST"}
+    },
+    "search_courses_semantic": {
+        "accepts": {"query": "TOPIC_STRING"},
+        "returns": {"code": "COURSE_CODE", "courses": "COURSE_LIST"}
+    },
+    "check_admission_eligibility": {
+        "accepts": {"program_query": "PROGRAM_NAME"},
+        "returns": {"program_id": "PROGRAM_ID"}
+    },
+    "get_campus_statistics": {
+        "accepts": {"category": "STATISTICS_CATEGORY"},
+        "returns": {"statistics": "STATISTICS_OBJECT"}
+    },
+    "get_semester_curriculum": {
+        "accepts": {"program_query": "PROGRAM_NAME", "semester": "SEMESTER_INT"},
+        "returns": {"code": "COURSE_CODE", "courses": "COURSE_LIST"}
+    },
+    "lookup_building": {
+        "accepts": {"query": "BUILDING_CODE_OR_NAME"},
+        "returns": {"building_code": "BUILDING_CODE", "rooms": "ROOM_ID_LIST"}
+    },
+    "run_governed_query": {
+        "accepts": {"template_id": "TEMPLATE_ID", "parameters": "OBJECT"},
+        "returns": {"records": "RECORD_LIST"}
+    }
+}
+
 # Tool parameter model mapping for zero-trust schema validation
 TOOL_SCHEMA_MAP = {
     "lookup_course": CourseLookupRequest,
+    "find_course_schedule": CourseScheduleRequest,
     "get_prerequisite_tree": PrerequisiteTreeRequest,
     "verify_prerequisites": PrerequisiteVerifyRequest,
     "find_faculty_for_course": FacultyCourseRequest,
@@ -58,6 +120,7 @@ TOOL_SCHEMA_MAP = {
 # Tool implementation dispatch table
 TOOL_FUNC_MAP = {
     "lookup_course": CampusKnowledgeTools.lookup_course,
+    "find_course_schedule": CampusKnowledgeTools.find_course_schedule,
     "get_prerequisite_tree": CampusKnowledgeTools.get_prerequisite_tree,
     "verify_prerequisites": CampusKnowledgeTools.verify_prerequisites,
     "find_faculty_for_course": CampusKnowledgeTools.find_faculty_for_course,
@@ -72,7 +135,7 @@ TOOL_FUNC_MAP = {
     "run_governed_query": CampusKnowledgeTools.run_governed_query
 }
 
-def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Principal] = None) -> Dict[str, Any]:
+def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Principal] = None, chain_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Unified, single governed executor for all campus tools.
     1. Schema Validation (Pydantic models)
@@ -99,7 +162,8 @@ def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Princ
             status="POLICY_VIOLATION",
             latency_ms=(time.time() - t0) * 1000,
             violation_reason=err,
-            role=principal.role
+            role=principal.role,
+            chain_id=chain_id
         )
         raise SecurityViolationError(err)
 
@@ -129,7 +193,8 @@ def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Princ
             status="POLICY_VIOLATION",
             latency_ms=(time.time() - t0) * 1000,
             violation_reason=err,
-            role=principal.role
+            role=principal.role,
+            chain_id=chain_id
         )
         raise SecurityViolationError(err)
 
@@ -168,7 +233,8 @@ def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Princ
             status="VALIDATION_ERROR",
             latency_ms=(time.time() - t0) * 1000,
             violation_reason=err,
-            role=principal.role
+            role=principal.role,
+            chain_id=chain_id
         )
         raise ve
 
@@ -188,7 +254,8 @@ def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Princ
             status="EXECUTION_ERROR",
             latency_ms=(time.time() - t0) * 1000,
             violation_reason=str(e),
-            role=principal.role
+            role=principal.role,
+            chain_id=chain_id
         )
         raise e
 
@@ -231,7 +298,8 @@ def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Princ
         status="SUCCESS",
         latency_ms=latency,
         result_count=res_count,
-        role=principal.role
+        role=principal.role,
+        chain_id=chain_id
     )
 
     return raw_result
@@ -245,6 +313,13 @@ def extract_standardized_entities(tool_name: str, result: Dict[str, Any]) -> Lis
         for c in result.get("courses", []):
             if isinstance(c, dict) and "code" in c:
                 entities.append({"type": "course", "id": c["code"], "name": c.get("name", "")})
+
+    elif tool_name == "find_course_schedule":
+        if "course_code" in result:
+            entities.append({"type": "course", "id": result["course_code"]})
+        for s in result.get("schedules", []):
+            if isinstance(s, dict) and "room_id" in s:
+                entities.append({"type": "room", "id": s["room_id"], "day": s.get("day", ""), "slot": s.get("slot", "")})
 
     elif tool_name == "get_prerequisite_tree":
         for p in result.get("prerequisites", []):

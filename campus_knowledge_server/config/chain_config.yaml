@@ -1,0 +1,52 @@
+# SRMIST Campus Knowledge Server - Governed Tool Chaining Configuration
+# Enforces deterministic multi-hop tool composition without LLM loop overhead.
+# All parameters, sequence rules, and limits reside here (zero hardcoding).
+
+chaining:
+  enabled: true
+  limits:
+    max_hops: 3
+    max_total_tool_calls_per_question: 5
+    max_rows_passed_forward: 5
+    truncation_warning: "\n\n> [!NOTE] Results were truncated to the maximum allowed limit of {limit} entries as per campus governance policy."
+
+  # Multi-part Independent Chains: Same entity, multiple tool calls executed in user-requested order
+  independent_templates:
+    - id: "course_prereqs_and_faculty"
+      description: "Retrieves prerequisite tree and teaching instructors for a course"
+      entity_type: "COURSE_CODE"
+      tools:
+        - tool_name: "get_prerequisite_tree"
+          param_key: "course_code"
+          section_title: "Academic Prerequisites"
+        - tool_name: "find_faculty_for_course"
+          param_key: "course_code"
+          section_title: "Instructors & Teaching Faculty"
+
+    - id: "course_details_and_schedule"
+      description: "Retrieves course information and weekly room schedule allocations"
+      entity_type: "COURSE_CODE"
+      tools:
+        - tool_name: "lookup_course"
+          param_key: "query"
+          section_title: "Course Details"
+        - tool_name: "find_course_schedule"
+          param_key: "course_code"
+          section_title: "Classroom Allocations & Timetable"
+
+  # Dependent Chains: Hop 2 consumes structured IDs/codes produced by Hop 1
+  dependent_templates:
+    - id: "prerequisite_instructors"
+      description: "Discovers prerequisites of a target course, then fetches instructors teaching those prerequisites"
+      hop1:
+        tool_name: "get_prerequisite_tree"
+        param_key: "course_code"
+        output_list_key: "prerequisites"
+        code_key: "prerequisite_code"
+        entity_type: "COURSE_CODE"
+        section_title: "Direct & Transitive Prerequisites"
+      hop2:
+        tool_name: "find_faculty_for_course"
+        param_key: "course_code"
+        entity_type: "COURSE_CODE"
+        section_title: "Instructors Teaching Prerequisite Courses"

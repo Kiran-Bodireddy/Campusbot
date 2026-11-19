@@ -742,7 +742,7 @@ class GovernedCampusAgent:
             raw_lower,
         )
 
-        if is_building_intent or bare_bldg:
+        if (is_building_intent or bare_bldg) and not (codes and any(w in raw_lower for w in ["host", "class", "classes", "held", "lecture", "course", "schedule", "timetable"])):
             is_availability_query = any(w in raw_lower for w in [
                 "available", "vacant", "free room", "free classroom", "empty", "slot", "occupancy",
                 "room in", "rooms in", "any room", "hall in", "fits", "seats", "capacity"
@@ -794,7 +794,10 @@ class GovernedCampusAgent:
             return "find_room_schedule", {"room_id": room_id, "day_of_week": day_val}
 
         # 5. Vacant / available rooms in building (never silently fall back unknown building names to TP)
-        if meta.get("is_room_intent") or any(w in q_lower for w in ["available room", "available classroom", "free room", "vacant", "classroom in", "rooms in", "room in"]):
+        if (
+            meta.get("is_room_intent")
+            or any(w in q_lower for w in ["available room", "available classroom", "free room", "vacant", "classroom in", "rooms in", "room in"])
+        ) and not (codes and any(w in q_lower for w in ["host", "class", "classes", "held", "lecture", "course", "schedule", "timetable"])):
             b_code = matched_bldg_code or meta.get("detected_building")
             if not b_code:
                 b_match = re.search(rf"\b({b_code_pat})\b", norm_query, re.IGNORECASE)
@@ -918,6 +921,12 @@ class GovernedCampusAgent:
         is_explicit_semantic_query = bool(re.search(r"\b(?:courses?\s+(?:about|covering|related\s+to|on|dealing\s+with)|search\s+courses?)\b", raw_lower))
         if is_explicit_semantic_query and not re.search(r"\b(?:who\s+teaches|instructor|professor|prereq|before|eligible|fee|admission)\b", raw_lower):
             return "search_courses_semantic", {"query": user_query, "top_k": 5}
+
+        # 6c. Course schedule & classroom allocations lookup
+        if codes and any(w in raw_lower for w in ["schedule", "scheduled", "timetable", "rooms is", "rooms for", "room for", "host classes", "classes for", "classes of", "classrooms for", "venue for"]):
+            day_m = re.search(r"\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b", user_query, re.IGNORECASE)
+            day_val = day_m.group(1).capitalize() if day_m else None
+            return "find_course_schedule", {"course_code": codes[0], "day_of_week": day_val}
 
         # 7. Direct course lookup by code
         if codes:
@@ -2489,6 +2498,109 @@ class GovernedCampusAgent:
             "_tool_ms": tool_ms,
         }
 
+    def _detect_and_execute_chain(
+        self,
+        user_query: str,
+        principal: Any,
+        engine_mode: str = "neo4j"
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Detects compound/multi-hop intents and executes deterministic governed tool chains (Option A).
+        Supports both independent multi-part chains and dependent chains.
+        """
+        from campus_knowledge_server.agent.chain_executor import GovernedChainExecutor
+        executor = GovernedChainExecutor()
+        if not executor.config.get("enabled", True):
+            return None
+
+        q_lower = user_query.lower()
+        codes = re.findall(r"\b(?:21[A-Z]{2,4}\d{3}[A-Z]?|[A-Za-z]{3,4}\d{3})\b", user_query.upper())
+
+        # Resolve known course titles dynamically from graph if no explicit code
+        if not codes:
+            gc = get_graph_client()
+            course_map = getattr(gc, "_cached_course_title_to_code", None)
+            if course_map is None:
+                course_map = {}
+                if hasattr(gc, "_course_by_code"):
+                    for c_code, c_obj in gc._course_by_code.items():
+                        c_name = (c_obj.get("name") or "").strip().lower()
+                        if len(c_name) >= 5:
+                            course_map[c_name] = c_code
+                gc._cached_course_title_to_code = course_map
+
+            for name, c_code in sorted(course_map.items(), key=lambda x: len(x[0]), reverse=True):
+                if re.search(r"\b" + re.escape(name) + r"\b", q_lower):
+                    codes.append(c_code)
+                    break
+
+        if not codes:
+            return None
+
+        target_code = codes[0]
+
+        # 1. Dependent Chain: "who teaches the prerequisites for {course}" or "instructors of prerequisites"
+        is_prereq_instructor_dependent = bool(re.search(
+            r"(?i)\b(?:who\s+(?:teaches|instructs)|instructors?|faculty|professors?)\b.*\b(?:prereq|prerequisites?)\b|"
+            r"\b(?:prereq|prerequisites?)\b.*\b(?:taught\s+by|instructors?|who\s+teaches)\b",
+            user_query
+        )) and bool(re.search(r"(?i)\b(?:for|of|in)\b", user_query)) and not bool(re.search(r"(?i)\b(?:and|also|as\s+well\s+as)\b", user_query))
+
+        if is_prereq_instructor_dependent:
+            res = executor.execute_dependent_chain("prerequisite_instructors", target_code, principal)
+            return {
+                "user_query": user_query,
+                "tool_selected": "get_prerequisite_tree",
+                "parameters": {"course_code": target_code},
+                "status": res["status"],
+                "answer": res["answer"],
+                "evidence": res["evidence"],
+                "grounded": True,
+                "intent_source": "Governed Dependent Chain (Option A)",
+                "source": "SRMIST Property Graph (Neo4j Community)",
+                "synthesizer": "Deterministic Governed Synthesizer",
+                "tool_result": res.get("hop_results", [{}]),
+                "_tool_ms": res["evidence"]["latency_ms"]
+            }
+
+        # 2. Independent Multi-Part Chain: Course Prerequisites AND Teaching Faculty
+        has_prereq_kw = bool(re.search(r"(?i)\b(?:prereq|prerequisites?|before\s+taking|need\s+before|complete\s+before|requirements?)\b", user_query))
+        has_faculty_kw = bool(re.search(r"(?i)\b(?:who\s+teaches|instructor|instructors|teaching\s+staff|faculty|professor|professors)\b", user_query))
+
+        if has_prereq_kw and has_faculty_kw:
+            # Determine section order based on which keyword appeared first in user query
+            m_prereq = re.search(r"(?i)\b(?:prereq|before|requirement)", user_query)
+            m_faculty = re.search(r"(?i)\b(?:teach|instructor|faculty|professor)", user_query)
+            prereq_pos = m_prereq.start() if m_prereq else 0
+            faculty_pos = m_faculty.start() if m_faculty else 999
+            if prereq_pos < faculty_pos:
+                section_order = ["get_prerequisite_tree", "find_faculty_for_course"]
+            else:
+                section_order = ["find_faculty_for_course", "get_prerequisite_tree"]
+
+            res = executor.execute_independent_chain(
+                "course_prereqs_and_faculty",
+                target_code,
+                principal,
+                section_order=section_order
+            )
+            return {
+                "user_query": user_query,
+                "tool_selected": section_order[0],
+                "parameters": {"course_code": target_code},
+                "status": res["status"],
+                "answer": res["answer"],
+                "evidence": res["evidence"],
+                "grounded": True,
+                "intent_source": "Governed Independent Chain (Option A)",
+                "source": "SRMIST Property Graph (Neo4j Community)",
+                "synthesizer": "Deterministic Governed Synthesizer",
+                "tool_result": res.get("hop_results", [{}]),
+                "_tool_ms": res["evidence"]["latency_ms"]
+            }
+
+        return None
+
     @staticmethod
     def _format_no_relevant_match() -> str:
         """Config-driven no-match / below-threshold response listing supported campus capabilities."""
@@ -2841,6 +2953,13 @@ class GovernedCampusAgent:
             if len(multi_names) >= 2:
                 self._last_stage_timings["routing_ms"] = round((time.perf_counter() - t_route0) * 1000.0, 1)
                 return self._execute_multi_faculty_lookup(original_query, multi_names, principal, engine_mode=engine_mode)
+
+            # 0.7. Governed Tool Chaining (Option A)
+            chain_res = self._detect_and_execute_chain(original_query, principal, engine_mode=engine_mode)
+            if chain_res is not None:
+                self._last_stage_timings["routing_ms"] = round((time.perf_counter() - t_route0) * 1000.0, 1)
+                self._last_stage_timings["tool_ms"] = float(chain_res.pop("_tool_ms", 0.0))
+                return chain_res
 
         tool_call = None
         intent_source = None
@@ -3724,6 +3843,35 @@ Answer:"""
             }
             return
 
+        # 0.7. Governed Tool Chaining (Option A)
+        chain_res = self._detect_and_execute_chain(original_query, principal, engine_mode=engine_mode)
+        if chain_res is not None:
+            self._last_stage_timings["routing_ms"] = round((time.perf_counter() - t_route0) * 1000.0, 1)
+            yield {"event": "stage", "stage": "retrieving_data", "label": "Executing Governed Tool Chain"}
+            self._last_stage_timings["tool_ms"] = float(chain_res.pop("_tool_ms", 0.0))
+            yield {
+                "event": "meta",
+                "user_query": chain_res["user_query"],
+                "tool_selected": chain_res["tool_selected"],
+                "parameters": chain_res["parameters"],
+                "status": chain_res["status"],
+                "evidence": chain_res.get("evidence", {}),
+                "grounded": True,
+                "engine_mode": engine_mode,
+                "intent_source": chain_res["intent_source"],
+                "source": chain_res["source"],
+                "synthesizer": chain_res.get("synthesizer", "Deterministic Governed Synthesizer"),
+            }
+            for word in chain_res["answer"].split(" "):
+                yield {"event": "delta", "token": word + " "}
+            yield {
+                "event": "done",
+                "answer": chain_res["answer"],
+                "status": chain_res["status"],
+                "evidence": chain_res.get("evidence", {}),
+            }
+            return
+
         tool_call = None
         intent_source = None
 
@@ -4234,6 +4382,24 @@ Answer:"""
             for s in schedules[:8]:
                 lines.append(f"- **{s.get('day', 'Day')}** @ **{s.get('slot', 'Slot')}**: [Course: {s.get('course_code', 'Class')}]")
             lines.append(f"\nOutside these scheduled lecture slots, [Room: {r_id}] is open and available for academic activities.")
+            return "\n".join(lines)
+
+        elif tool_name == "find_course_schedule":
+            schedules = result.get("schedules", [])
+            course = result.get("course_code", "")
+            day_filter = result.get("day_of_week")
+            result["suggestions"] = self._build_registry_suggestions("find_course_schedule", result, role=role)
+
+            if not schedules:
+                if day_filter:
+                    return f"No scheduled classroom timetable sessions found for course **{course}** on **{day_filter}**."
+                return f"No scheduled classroom timetable sessions found for course **{course}** in the current timetable."
+
+            lines = [
+                f"**Classroom Allocations & Schedule for Course [{course}]**:\n"
+            ]
+            for s in schedules:
+                lines.append(f"- **{s.get('day', 'Day')}** @ **{s.get('slot', 'Slot')}**: Room **{s.get('room_id', 'TBA')}** ({s.get('room_type', 'Classroom')}, Capacity: **{s.get('capacity', 'N/A')}** seats, Building: **{s.get('building_code', '')}**)")
             return "\n".join(lines)
 
         elif tool_name == "find_available_rooms":

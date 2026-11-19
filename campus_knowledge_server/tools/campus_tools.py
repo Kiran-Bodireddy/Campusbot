@@ -39,6 +39,18 @@ class CourseLookupRequest(BaseModel):
             raise ValueError("Query must contain at least 2 non-whitespace characters.")
         return s
 
+class CourseScheduleRequest(BaseModel):
+    course_code: str = Field(..., min_length=2, max_length=20, description="Canonical course code (e.g. '21CSC206T').")
+    day_of_week: Optional[str] = Field(default=None, description="Optional filter by day (e.g., 'Monday').")
+
+    @field_validator("course_code", mode="before")
+    @classmethod
+    def validate_course_code(cls, v: Any) -> str:
+        s = str(v).strip() if v is not None else ""
+        if len(s) < 2:
+            raise ValueError("Course code must contain at least 2 non-whitespace characters.")
+        return s.upper()
+
 class PrerequisiteTreeRequest(BaseModel):
     course_code: str = Field(..., min_length=3, max_length=20, description="Course code (e.g., '21CSO451T').")
     max_depth: int = Field(default=3, ge=1, le=4, description="Maximum traversal depth (bounded <= 4).")
@@ -668,6 +680,71 @@ class CampusKnowledgeTools:
             "scheduled_slots_count": len(schedules),
             "schedules": schedules,
             "source": "SRMIST Room Allocation Master"
+        }
+
+    @staticmethod
+    def find_course_schedule(req: CourseScheduleRequest, caller: str = "agent") -> Dict[str, Any]:
+        """Retrieves classroom allocations and weekly timetable slots for a given course code."""
+        t0 = time.time()
+        client = get_graph_client()
+        audit = get_audit_logger()
+        c_code = req.course_code.strip().upper()
+
+        schedules = []
+        source = "SRMIST In-Memory Schedule Cache"
+
+        if client.is_connected and client.driver:
+            try:
+                cypher = """
+                    MATCH (r:Room)-[o:OCCUPIES]->(c:Course)
+                    WHERE toUpper(c.code) = $code
+                    RETURN r.id AS room_id, r.type AS room_type, r.capacity AS capacity,
+                           r.building_code AS building_code, o.day AS day, o.slot AS slot
+                    ORDER BY o.day, o.slot
+                """
+                rows = client.query_read(cypher, {"code": c_code})
+                if rows:
+                    schedules = rows
+                    source = "SRMIST Space Allocation Matrix (Neo4j Community)"
+            except Exception as e:
+                logger.warning(f"Neo4j query failed for course schedule {c_code}: {e}")
+
+        if not schedules:
+            cached = client._schedules_by_course.get(c_code, [])
+            if cached:
+                schedules = [
+                    {
+                        "room_id": s.get("room_id"),
+                        "room_type": client._room_by_id.get(s.get("room_id"), {}).get("type", "Classroom"),
+                        "capacity": client._room_by_id.get(s.get("room_id"), {}).get("capacity", 60),
+                        "building_code": s.get("building_code", "TP"),
+                        "day": s.get("day"),
+                        "slot": s.get("slot")
+                    }
+                    for s in cached
+                ]
+
+        if req.day_of_week:
+            target_day = req.day_of_week.strip().capitalize()
+            schedules = [s for s in schedules if s.get("day") == target_day]
+
+        latency = (time.time() - t0) * 1000
+        status = "SUCCESS" if schedules else "NOT_FOUND"
+        audit.log_event(
+            caller=caller,
+            tool_name="find_course_schedule",
+            parameters=req.model_dump(),
+            status=status,
+            latency_ms=latency,
+            result_count=len(schedules)
+        )
+
+        return {
+            "course_code": c_code,
+            "scheduled_slots_count": len(schedules),
+            "schedules": schedules,
+            "day_filter": req.day_of_week,
+            "source": source
         }
 
     @staticmethod

@@ -31,7 +31,8 @@ from campus_knowledge_server.tools.campus_tools import (
     AdmissionEligibilityRequest,
     CampusStatisticsRequest,
     SemesterCurriculumRequest,
-    BuildingLookupRequest
+    BuildingLookupRequest,
+    CourseScheduleRequest
 )
 from campus_knowledge_server.security.ast_validator import SecurityViolationError
 from campus_knowledge_server.security.audit import get_audit_logger, AUDIT_LOG_FILE
@@ -43,7 +44,7 @@ from campus_knowledge_server.security.auth import (
     AuthenticationError
 )
 from campus_knowledge_server.security.rate_limit import get_rate_limiter
-from campus_knowledge_server.tools.governed_executor import execute_tool, TOOL_SCHEMA_MAP
+from campus_knowledge_server.tools.governed_executor import execute_tool, TOOL_SCHEMA_MAP, TOOL_ENTITY_REGISTRY
 from campus_knowledge_server.config.matching_config import load_matching_config
 import threading
 import requests as http_requests
@@ -256,6 +257,7 @@ def get_tool_registry(request: Request):
             "name": tname,
             "description": desc,
             "fields": list(schema_cls.model_fields.keys()),
+            "entity_declarations": TOOL_ENTITY_REGISTRY.get(tname, {}),
         })
     return {
         "role": principal.role,
@@ -360,6 +362,10 @@ def get_semester_curriculum(req: SemesterCurriculumRequest, request: Request):
 @app.post("/tools/lookup_building", tags=["Tools"])
 def lookup_building(req: BuildingLookupRequest, request: Request):
     return dispatch_governed_tool("lookup_building", req.model_dump(), request)
+
+@app.post("/tools/find_course_schedule", tags=["Tools"])
+def find_course_schedule(req: CourseScheduleRequest, request: Request):
+    return dispatch_governed_tool("find_course_schedule", req.model_dump(), request)
 
 class AgentAskRequest(BaseModel):
     query: str = Field(..., description="Natural language question about courses, admissions, faculty, or rooms")
