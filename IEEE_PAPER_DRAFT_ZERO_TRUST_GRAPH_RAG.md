@@ -9,9 +9,9 @@
 ### Abstract
 Retrieval-Augmented Generation over Labeled Property Graphs (Graph-RAG) has emerged as the state-of-the-art paradigm for grounding Large Language Models (LLMs) in structured relational data. However, prevailing implementations rely on two fundamentally vulnerable design patterns: **unconstrained Text-to-Cypher generation** and **open-loop iterative ReAct agent loops**. In this paper, we demonstrate that Text-to-Cypher exposes enterprise databases to direct prompt injection, arbitrary database manipulation (`DETACH DELETE`), cross-tenant data leakage, and denial-of-service via unindexed Cartesian products. Furthermore, iterative ReAct loops introduce severe semantic drift, cascading hallucinations, multi-second latencies, and susceptibility to indirect prompt injection across intermediate hops.
 
-To resolve this security-expressiveness-verifiability trilemma, we present **Zero-Trust Governed Graph-RAG (ZTG-RAG)**, an enterprise-grade agentic architecture that completely eliminates unconstrained query generation. ZTG-RAG enforces four novel contributions: (1) **Parameterized Governed Tool Brokerage**: a closed, pre-compiled catalog of parameterized graph tools protected by an Abstract Syntax Tree (AST) security firewall; (2) **Broker-Enforced Zero-Trust RBAC**: caller-bound role authorization and data-layer column masking that prevents unauthorized PII disclosure regardless of LLM generation; (3) **Deterministic Multi-Hop Chaining with Structured Entity Interception**: an engine that resolves multi-hop relational dependencies without LLM iterations by strictly intercepting intermediate outputs, enforcing format regex and graph existence validation, and mathematically preventing free-text forwarding; and (4) **Cryptographically Chained (SHA-256) Audit Provenance**: an append-only, tamper-evident Merkle ledger guaranteeing verifiable non-repudiation under regulatory compliance mandates (e.g., EU AI Act Article 12). 
+To resolve this security-expressiveness-verifiability trilemma, we present **Zero-Trust Governed Graph-RAG (ZTG-RAG)**, an enterprise-grade agentic architecture that completely eliminates unconstrained query generation. ZTG-RAG enforces four novel contributions: (1) **Parameterized Governed Tool Brokerage**: a closed, pre-compiled catalog of parameterized graph tools protected by a structural query and lexical token security validator; (2) **Broker-Enforced Zero-Trust RBAC**: caller-bound role authorization and data-layer column masking that prevents unauthorized PII disclosure regardless of LLM generation; (3) **Deterministic Multi-Hop Chaining with Structured Entity Interception**: an engine that resolves multi-hop relational dependencies without LLM iterations by strictly intercepting intermediate outputs, enforcing format regex and graph existence validation, and mathematically preventing free-text forwarding; and (4) **Cryptographically Chained (SHA-256) Audit Provenance**: an append-only, tamper-evident linear hash-chained ledger guaranteeing verifiable non-repudiation under regulatory compliance mandates (e.g., EU AI Act Article 12). 
 
-Empirical evaluation on an enterprise campus knowledge graph (668 courses, 2,501 faculty, 264 rooms, 3,498 curriculum allocations) across 90 benchmark queries demonstrates that ZTG-RAG achieves a **100% interception rate against 10 distinct adversarial injection vectors**, reduces the invalid query rate from **11.25% to 0.0%**, and slashes median end-to-end latency from **12,312.6 ms to 63.6 ms (a 193x speedup)** compared to pure LLM function calling, while maintaining a verified SHA-256 ledger integrity over 10,000+ sequential multi-hop agent turns.
+Empirical evaluation on an enterprise campus knowledge graph (668 courses, 2,501 faculty, 264 rooms, 3,498 curriculum allocations) across 90 benchmark queries demonstrates that ZTG-RAG achieves a **100% interception rate against 10 distinct adversarial injection vectors**, reduces the invalid query rate from **11.25% to 0.0%**, and slashes median decision-and-tool execution latency from **12,312.6 ms to 63.6 ms (a 193x speedup in tool invocation)** compared to pure LLM function calling, while maintaining a verified SHA-256 ledger integrity over 10,000+ sequential multi-hop agent turns.
 
 **Index Terms**—Large Language Models, Graph-RAG, Zero-Trust Architecture, Role-Based Access Control, Tamper-Evident Audit Ledger, Indirect Prompt Injection, Knowledge Graphs.
 
@@ -51,7 +51,7 @@ To address these challenges, we present **Zero-Trust Governed Graph-RAG (ZTG-RAG
 - **Parameterized Governed Tool Brokerage**: We eliminate dynamic Text-to-Cypher entirely. We formalize a closed inventory of 14 pre-compiled, parameterized Cypher tools guarded by Abstract Syntax Tree (AST) validation and database-level read-only transaction constraints.
 - **Zero-Trust Principal Authorization & Field Masking**: We enforce caller-bound Role-Based Access Control (RBAC) at the broker boundary. Sensitive fields (e.g., faculty telephone numbers) are programmatically redacted at the data-serialization layer, making PII exfiltration physically impossible regardless of prompt jailbreaks.
 - **Deterministic Multi-Hop Chaining with Structured Entity Interception**: We present **Option A Chaining**, a configuration-driven composition engine that executes multi-hop graph dependencies deterministically. We introduce a **Structured Entity Interceptor** that strictly validates intermediate parameters against format regex and live graph caches, **forbidding free-text propagation between hops** and mathematically neutralizing indirect prompt injections.
-- **Cryptographically Chained (SHA-256) Audit Provenance**: We implement an append-only, Merkle-linked audit ledger that binds each agent interaction, tool call, latency trace, and chained hop to an immutable hash chain, guaranteeing complete tamper detection.
+- **Cryptographically Chained (SHA-256) Audit Provenance**: We implement an append-only, linear hash-chained audit ledger that binds each agent interaction, tool call, latency trace, and chained hop to an immutable hash chain, guaranteeing complete tamper detection.
 - **Empirical Rigor**: We evaluate ZTG-RAG on an authentic university knowledge graph across 90 benchmark queries and 10 adversarial attacks, demonstrating a **100% attack mitigation rate**, an invalid query rate of **0.0%**, and a **193x latency reduction** over pure LLM tool calling.
 
 ---
@@ -241,15 +241,17 @@ TABLE I presents the comparative benchmark across three distinct configurations:
 | Metric | ZTG-RAG Hybrid (Proposed) | Router-Off (Qwen 2.5 3B) | Router-Off (Qwen 2.5 1.5B) | Target Benchmark |
 |---|:---:|:---:|:---:|:---:|
 | **Legitimate Queries Evaluated** | 80 | 80 | 80 | 80 |
-| **Tool Selection Accuracy (%)** | **92.5%** | 87.5% | 85.0% | $\ge 92.0\%$ |
-| **Gold Entity Match (%)** | **95.0%** | 80.0% | 78.8% | $\ge 90.0\%$ |
+| **Tool Selection Accuracy (%)** | **91.25%** (73/80) | 87.5% (70/80) | 85.0% (68/80) | $\ge 92.0\%$ |
+| **Gold Entity Match (%)** | **93.75%** (75/80) | 80.0% (64/80) | 78.8% (63/80) | $\ge 90.0\%$ |
 | **Invalid Query Rate (%)** | **0.0%** | 11.25% | 11.25% | $< 2.0\%$ |
 | **Pydantic Schema Violations** | **0** | 9 | 9 | 0 |
 | **Cypher Execution Accuracy (%)** | **100.0%** | 100.0% | 100.0% | 100.0% |
-| **Median End-to-End Latency** | **63.6 ms** | 12,312.6 ms | 8,463.1 ms | $< 2,000\text{ ms}$ |
+| **Median Decision & Tool Latency** $^\dagger$ | **63.6 ms** | 12,312.6 ms | 8,463.1 ms | $< 2,000\text{ ms}$ |
 | **Mean End-to-End Latency** | **1,257.8 ms** | 13,904.6 ms | 9,269.0 ms | $< 3,000\text{ ms}$ |
 | **Adversarial Attacks Blocked** | **10 / 10 (100%)** | 10 / 10 (100%) | 10 / 10 (100%) | 100.0% |
-| **Audit Ledger Verification** | **100% Intact** | N/A | N/A | 100% Intact |
+| **Audit Ledger Verification** | **100% Intact (10,323 entries)** | N/A | N/A | 100% Intact |
+
+$^\dagger$*Note on Latency: Median latency reflects routing plus tool execution time, measuring the system's operational decision speed before subsequent text generation. In Router-Off modes, the LLM consumes 8–12 seconds purely to synthesize the initial tool call.*
 
 ```mermaid
 xychart-beta
@@ -310,7 +312,7 @@ While ZTG-RAG excels in structured retrieval, its declarative chaining relies on
 
 ## VIII. Conclusion
 
-We presented **Zero-Trust Governed Graph-RAG (ZTG-RAG)**, a robust architecture that resolves the vulnerabilities of dynamic Text-to-Cypher and open-loop ReAct agents. By decoupling the LLM from database query generation and introducing a **parameterized tool broker**, **deterministic chaining with structured entity interception**, **Zero-Trust caller RBAC**, and a **cryptographically verifiable SHA-256 audit ledger**, ZTG-RAG guarantees complete immunity against query injection and indirect prompt poisoning. Our empirical results demonstrate $100\%$ adversarial attack mitigation, $0.0\%$ invalid query rates, and a $193\text{x}$ latency reduction. Future work will investigate anchoring local SHA-256 Merkle checkpoints to public decentralized consensus networks (e.g., Hedera or Ethereum) for cross-organizational audit proofs.
+We presented **Zero-Trust Governed Graph-RAG (ZTG-RAG)**, a robust architecture that resolves the vulnerabilities of dynamic Text-to-Cypher and open-loop ReAct agents. By decoupling the LLM from database query generation and introducing a **parameterized tool broker**, **deterministic chaining with structured entity interception**, **Zero-Trust caller RBAC**, and a **cryptographically verifiable SHA-256 audit ledger**, ZTG-RAG guarantees structural isolation of the database interface, eliminating the attack surface for dynamic Cypher injection and sanitizing intermediate tokens to block indirect prompt poisoning. Our empirical results demonstrate $100\%$ adversarial attack mitigation on the evaluated test vectors, $0.0\%$ invalid query rates, and a $193\text{x}$ latency reduction in tool invocation. Future work will investigate anchoring local SHA-256 hash-chain checkpoints to public decentralized consensus networks (e.g., Hedera or Ethereum) for cross-organizational audit proofs.
 
 ---
 
