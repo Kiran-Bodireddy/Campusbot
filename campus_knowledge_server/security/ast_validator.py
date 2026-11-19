@@ -75,6 +75,21 @@ class ASTSecurityValidator:
         if first_token not in allowed_starting_tokens:
             return False, f"Invalid query root: '{first_token}'. Must start with MATCH, WITH, UNWIND, or CALL.", cleaned
 
+        # 3b. Strict procedure allowlist when CALL is used (replaces unsafe procedure blocklist)
+        call_matches = re.finditer(r"\bCALL\s+([a-zA-Z0-9_.]+)", cleaned, re.IGNORECASE)
+        allowed_procedure_prefixes = (
+            "db.index.vector.",
+            "db.index.fulltext.",
+            "db.labels",
+            "db.relationshipTypes",
+            "db.propertyKeys",
+            "dbms.components",
+        )
+        for cm in call_matches:
+            proc_name = cm.group(1).lower()
+            if not any(proc_name.startswith(p.lower()) for p in allowed_procedure_prefixes):
+                return False, f"Access policy violation: Procedure 'CALL {cm.group(1)}' is not in the allowed procedure allowlist.", cleaned
+
         # 4. Inject automatic bounds (LIMIT 50) if query lacks a LIMIT clause
         sanitized = cleaned
         if not re.search(r"\bLIMIT\s+\d+\b", sanitized, re.IGNORECASE):

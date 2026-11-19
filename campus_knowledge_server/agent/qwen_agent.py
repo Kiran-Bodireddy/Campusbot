@@ -424,14 +424,11 @@ class GovernedCampusAgent:
         self.ollama_url = ollama_url
         self.model_name = model_name or os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
         self.ollama_active = False
-        self.intent_model_name = self.model_name
+        self.intent_model_name = os.getenv("OLLAMA_INTENT_MODEL", self.model_name)
         try:
-            r = requests.get(f"{self.ollama_url}/api/tags", timeout=1.0)
+            r = requests.get(f"{self.ollama_url}/api/tags", timeout=2.0)
             if r.status_code == 200:
                 self.ollama_active = True
-                models = [m.get("name", "") for m in r.json().get("models", [])]
-                if any("1.5b" in m for m in models):
-                    self.intent_model_name = next(m for m in models if "1.5b" in m)
         except Exception:
             self.ollama_active = False
 
@@ -962,21 +959,30 @@ class GovernedCampusAgent:
             return "find_room_schedule", {"room_id": m_room.group(1)}
         return None
 
-    def _select_tool_with_llm(self, user_query: str) -> Optional[tuple[str, Dict[str, Any]]]:
+    def _select_tool_with_llm(self, user_query: str, history: Optional[List[Dict[str, Any]]] = None) -> Optional[tuple[str, Dict[str, Any]]]:
         """
         Two-Stage Semantic Intent Parser using Qwen 2.5 (JSON Mode).
         Stage 1: Qwen understands intent category and what the user really wants.
         Stage 2: Qwen maps intent to the correct governed tool with parameters.
-        Handles typos, slang, abbreviations, and casual phrasing naturally.
+        Handles multi-turn conversational coreference, typos, slang, abbreviations, and casual phrasing naturally.
         """
         try:
             llm_cfg = load_matching_config().get("llm") or {}
             keep_alive = str(llm_cfg.get("keep_alive") or "30m")
-            prompt = f"{INTENT_ROUTING_PROMPT}\n\nUser Question: {user_query}\n\nJSON Output:"
+            history_block = ""
+            if history:
+                lines = ["Recent conversation context:"]
+                for turn in history[-3:]:
+                    q = turn.get("query", "")
+                    t = turn.get("tool", "")
+                    ans = (turn.get("answer") or "")[:80]
+                    lines.append(f"- User: \"{q}\" -> Tool: {t} -> Key info: {ans}")
+                history_block = "\n".join(lines) + "\n\n"
+            prompt = f"{INTENT_ROUTING_PROMPT}\n\n{history_block}User Question: {user_query}\n\nJSON Output:"
             resp = requests.post(
                 f"{self.ollama_url}/api/generate",
                 json={
-                    "model": self.model_name,
+                    "model": getattr(self, "intent_model_name", self.model_name),
                     "prompt": prompt,
                     "format": "json",
                     "stream": False,
@@ -984,10 +990,11 @@ class GovernedCampusAgent:
                     "options": {
                         "temperature": 0.0,
                         "top_p": 0.9,
-                        "num_predict": 65
+                        "num_predict": 256,
+                        "num_ctx": 4096
                     }
                 },
-                timeout=60.0
+                timeout=30.0
             )
             if resp.status_code == 200:
                 data = resp.json()
@@ -1060,8 +1067,9 @@ class GovernedCampusAgent:
                         if "program_query" not in params:
                             params["program_query"] = "Computer Science and Engineering"
                     return tool, params
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.getLogger("qwen_agent").warning(f"[Qwen Router] Tool selection failed: {e}")
         return None
 
     def _federated_cross_entity_search(
@@ -2665,7 +2673,7 @@ class GovernedCampusAgent:
                     "format": "json",
                     "stream": False,
                     "keep_alive": keep_alive,
-                    "options": {"temperature": 0.0, "num_predict": 96},
+                    "options": {"temperature": 0.0, "num_predict": 256, "num_ctx": 4096},
                 },
                 timeout=intent_timeout,
             )
@@ -2692,7 +2700,9 @@ class GovernedCampusAgent:
                     out["tool"] = tname
                     out["args"] = sanitize_tool_arguments(tname, targs)
             return out
-        except Exception:
+        except Exception as e:
+            import logging
+            logging.getLogger("qwen_agent").warning(f"[Qwen Intent] Intent understanding exception: {e}")
             return None
 
     def _build_item25_fields(
@@ -3002,22 +3012,27 @@ class GovernedCampusAgent:
                         tool_call = self._fast_path_match(user_query) or self._select_tool_heuristically(user_query)
                         intent_source = "LLM Intent (Experimental) + Schema Repair" if tool_call else None
 
-        if not tool_call and use_heuristic_router:
-            # 1. Fast-path for exact course codes / faculty IDs / room codes (~1ms)
+        if not tool_call:
+            # 1. Fast-path regex ONLY for exact course codes / faculty IDs / room codes (~1ms)
             tool_call = self._fast_path_match(user_query)
-            intent_source = "Fast-Path Matcher (~1ms)" if tool_call else None
-
-            # 2. High-Speed Fuzzy Normalized Router (~8ms)
-            if not tool_call:
-                tool_call = self._select_tool_heuristically(user_query)
-                if tool_call:
-                    intent_source = "High-Speed Normalized Router (~8ms)"
-
-        # 3. Qwen tool selection when heuristic router returns nothing (or router off)
-        if not tool_call and self.ollama_active and (not use_heuristic_router or use_llm_synthesis):
-            tool_call = self._select_tool_with_llm(user_query)
             if tool_call:
-                intent_source = "Qwen 2.5 Tool Selection Fallback"
+                intent_source = "Fast-Path Matcher (~1ms)"
+
+        # 2. Main Router: Qwen 2.5 Model-First Intent Classifier with multi-turn conversation context
+        should_use_llm_router = self.ollama_active and (
+            routing_mode in ("llm_intent", "llm_first") or (use_llm_synthesis and routing_mode == "hybrid")
+        )
+        if not tool_call and should_use_llm_router:
+            history_ctx = ConversationMemory.get_history(session_id, user_id=user_id) if session_id else None
+            tool_call = self._select_tool_with_llm(user_query, history=history_ctx)
+            if tool_call:
+                intent_source = "Qwen 2.5 Model-First Router"
+
+        # 3. High-Speed Fuzzy Normalized Router (Zero-Downtime Fallback Router)
+        if not tool_call and use_heuristic_router:
+            tool_call = self._select_tool_heuristically(user_query)
+            if tool_call:
+                intent_source = "High-Speed Normalized Router (Fallback)"
 
         self._last_stage_timings["routing_ms"] = round((time.perf_counter() - t_route0) * 1000.0, 1)
 
@@ -3575,7 +3590,7 @@ Answer:"""
                     "prompt": prompt,
                     "stream": False,
                     "keep_alive": keep_alive,
-                    "options": {"temperature": 0.35, "num_predict": 260}
+                    "options": {"temperature": 0.35, "num_predict": 260, "num_ctx": 4096}
                 },
                 timeout=synth_timeout
             )
@@ -3583,8 +3598,9 @@ Answer:"""
                 ans = resp.json().get("response", "").strip()
                 if ans and len(ans) > 15:
                     return ans
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.getLogger("qwen_agent").warning(f"[Qwen Router] Tool selection failed: {e}")
         return self._synthesize_grounded_answer(query, tool_name, result)
 
     def stream_query(
@@ -4198,7 +4214,7 @@ Answer:"""
                         "prompt": prompt,
                         "stream": True,
                         "keep_alive": keep_alive,
-                        "options": {"temperature": 0.35, "num_predict": 260}
+                        "options": {"temperature": 0.35, "num_predict": 260, "num_ctx": 4096}
                     },
                     stream=True,
                     timeout=synth_timeout

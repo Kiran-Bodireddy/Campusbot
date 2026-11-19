@@ -15,8 +15,12 @@ load_dotenv()
 JWT_SECRET = os.getenv("CAMPUS_JWT_SECRET")
 if not JWT_SECRET:
     raise ValueError("CAMPUS_JWT_SECRET environment variable is required.")
+if len(JWT_SECRET) < 16:
+    import warnings
+    warnings.warn("CAMPUS_JWT_SECRET is short (<16 chars); recommended >=32 chars for HMAC-SHA256 production security.")
 
 JWT_ALGORITHM = "HS256"
+JWT_ISSUER = "srmist-campus-knowledge-authority"
 DEFAULT_EXPIRATION_SECONDS = 86400  # 24 hours
 
 
@@ -72,7 +76,7 @@ def verify_access_token(token: str) -> Dict[str, Any]:
     if token.startswith("Bearer "):
         token = token[7:].strip()
     try:
-        decoded = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        decoded = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM], issuer=JWT_ISSUER)
         return decoded
     except jwt.ExpiredSignatureError:
         raise AuthenticationError("Authorization token has expired.")
@@ -118,9 +122,7 @@ def resolve_principal(
     return Principal(user_id=f"guest_{caller_ip}", role="student", caller_type="anonymous")
 
 
-# Standard pre-generated credentials for evaluation and testing
-TEST_TOKENS = {
-    "student": create_access_token("test_student_01", role="student"),
-    "faculty": create_access_token("test_faculty_01", role="faculty"),
-    "admin": create_access_token("test_admin_01", role="admin")
-}
+def get_test_token(role: str = "student", user_id: Optional[str] = None) -> str:
+    """Issues a verified signed token on demand for test fixtures without generating credentials at import time."""
+    uid = user_id or f"test_{role}_01"
+    return create_access_token(uid, role=role)

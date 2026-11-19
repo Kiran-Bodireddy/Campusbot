@@ -52,7 +52,7 @@ rate_limiting:
 llm:
   keep_alive: "30m"
   warmup_on_startup: true
-  intent_timeout_s: 25.0
+  intent_timeout_s: 45.0
   synthesis_timeout_s: 30.0
 
 small_talk:

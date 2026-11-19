@@ -135,6 +135,78 @@ TOOL_FUNC_MAP = {
     "run_governed_query": CampusKnowledgeTools.run_governed_query
 }
 
+def sanitize_tool_arguments(tool_name: str, args: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Sanitizes, coerces, and cleans tool arguments before schema validation:
+    - Drops None values.
+    - Coerces semester strings like 'Sem 3' or 'semester 4' -> integer 3 or 4.
+    - Coerces slot strings like 'Slot 1' -> integer 1.
+    - Coerces string numbers for min_capacity, max_depth, top_k, candidate_percentage.
+    - Splits string lists like '21CSC101T, 21CSC102T' into list of strings for completed_courses.
+    - Strips leading/trailing whitespace from string parameters.
+    """
+    import re as _re
+    sanitized: Dict[str, Any] = {}
+    for k, v in (args or {}).items():
+        if v is None:
+            continue
+        if isinstance(v, str):
+            v_stripped = v.strip()
+            if k == "semester":
+                m_sem = _re.search(r"(\d+)", v_stripped)
+                if m_sem:
+                    sanitized[k] = int(m_sem.group(1))
+                    continue
+            elif k == "slot":
+                m_slot = _re.match(r"^\s*slot\s*(\d+)\s*$", v_stripped, _re.IGNORECASE)
+                if m_slot:
+                    sanitized[k] = int(m_slot.group(1))
+                    continue
+                elif v_stripped.isdigit():
+                    sanitized[k] = int(v_stripped)
+                    continue
+            elif k in ("min_capacity", "max_depth", "top_k"):
+                m_int = _re.search(r"(\d+)", v_stripped)
+                if m_int:
+                    sanitized[k] = int(m_int.group(1))
+                    continue
+            elif k in ("candidate_percentage", "cutoff_score"):
+                try:
+                    sanitized[k] = float(v_stripped)
+                    continue
+                except ValueError:
+                    pass
+            elif k == "completed_courses":
+                sanitized[k] = [c.strip() for c in v_stripped.split(",") if c.strip()]
+                continue
+            sanitized[k] = v_stripped
+            continue
+
+        if k == "completed_courses" and isinstance(v, list):
+            sanitized[k] = [str(item).strip() for item in v if item is not None and str(item).strip()]
+            continue
+
+        sanitized[k] = v
+    return sanitized
+
+
+def mask_fields_recursive(obj: Any, hidden_fields: set) -> Any:
+    """Recursively masks sensitive fields across nested dictionaries and lists."""
+    if not hidden_fields:
+        return obj
+    if isinstance(obj, dict):
+        masked: Dict[str, Any] = {}
+        for k, v in obj.items():
+            if k in hidden_fields:
+                masked[k] = "[Hidden by Policy]"
+            else:
+                masked[k] = mask_fields_recursive(v, hidden_fields)
+        return masked
+    elif isinstance(obj, list):
+        return [mask_fields_recursive(item, hidden_fields) for item in obj]
+    return obj
+
+
 def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Principal] = None, chain_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Unified, single governed executor for all campus tools.
@@ -198,28 +270,8 @@ def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Princ
         )
         raise SecurityViolationError(err)
 
-    # 3. Pre-Validation Argument Sanitization (drop nulls, coerce semester strings like 'Sem 3' -> 3)
-    import re as _re
-    sanitized_args: Dict[str, Any] = {}
-    for k, v in (args or {}).items():
-        if v is None:
-            continue
-        if k == "semester" and isinstance(v, str):
-            m_sem = _re.search(r"(\d+)", v)
-            if m_sem:
-                sanitized_args[k] = int(m_sem.group(1))
-                continue
-        if k == "slot" and isinstance(v, str):
-            m_slot = _re.match(r"^\s*slot\s+(\d+)\s*$", v, _re.IGNORECASE)
-            if m_slot:
-                sanitized_args[k] = int(m_slot.group(1))
-                continue
-        if k in ("min_capacity", "max_depth", "top_k") and isinstance(v, str):
-            m_int = _re.search(r"(\d+)", v)
-            if m_int:
-                sanitized_args[k] = int(m_int.group(1))
-                continue
-        sanitized_args[k] = v
+    # 3. Pre-Validation Argument Sanitization
+    sanitized_args = sanitize_tool_arguments(tool_name, args)
 
     schema_cls = TOOL_SCHEMA_MAP[tool_name]
     try:
@@ -259,22 +311,12 @@ def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Princ
         )
         raise e
 
-    # 6. Field-Level Masking & Row Caps
+    # 6. Recursive Field-Level Masking & Row Caps
     hidden_fields = set(role_rules.get("hidden_fields", []))
     row_limit = role_rules.get("row_limit", 50)
 
-    if hidden_fields:
-        for k, v in raw_result.items():
-            if isinstance(v, list):
-                for item in v:
-                    if isinstance(item, dict):
-                        for hf in hidden_fields:
-                            if hf in item:
-                                item[hf] = "[Hidden by Policy]"
-            elif isinstance(v, dict):
-                for hf in hidden_fields:
-                    if hf in v:
-                        v[hf] = "[Hidden by Policy]"
+    if hidden_fields and isinstance(raw_result, dict):
+        raw_result = mask_fields_recursive(raw_result, hidden_fields)
 
     for list_key in ["courses", "faculty", "instructors", "rooms", "available_rooms", "schedules", "programs", "prerequisites", "classes", "allocations", "departments"]:
         if list_key in raw_result and isinstance(raw_result[list_key], list):

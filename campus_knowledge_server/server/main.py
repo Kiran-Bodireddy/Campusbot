@@ -92,11 +92,20 @@ def _warmup_ollama_models_bg():
 def startup_warmup():
     threading.Thread(target=_warmup_ollama_models_bg, daemon=True).start()
 
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -266,11 +275,13 @@ def get_tool_registry(request: Request):
         "samples": samples,
     }
 
-def _enforce_rate_limit(request: Request, session_id: Optional[str] = None) -> Optional[JSONResponse]:
-    """Enforces configured per-session / per-IP sliding-window rate limit (~20 req/min)."""
-    caller_ip = request.headers.get("X-Forwarded-For") or (request.client.host if request.client else "unknown")
-    sess = (session_id or request.headers.get("X-Session-Id") or "").strip()
-    key = f"session:{sess}" if sess else f"ip:{caller_ip}"
+def _enforce_rate_limit(request: Request, session_id: Optional[str] = None, principal: Optional[Any] = None) -> Optional[JSONResponse]:
+    """Enforces rate limit strictly keyed to verified user identity or actual socket IP (immune to header spoofing)."""
+    real_ip = request.client.host if request.client else "unknown"
+    if principal and getattr(principal, "user_id", None) and not str(principal.user_id).startswith("guest_"):
+        key = f"user:{principal.user_id}"
+    else:
+        key = f"ip:{real_ip}"
     allowed, retry_after, _ = get_rate_limiter().check(key)
     if not allowed:
         return JSONResponse(
@@ -426,7 +437,10 @@ def ask_agent(req: AgentAskRequest, request: Request):
         )
 
     from campus_knowledge_server.agent.qwen_agent import GovernedCampusAgent
-    agent = GovernedCampusAgent()
+    global _shared_agent
+    if "_shared_agent" not in globals() or _shared_agent is None:
+        _shared_agent = GovernedCampusAgent()
+    agent = _shared_agent
     res = agent.execute_query(
         req.query,
         use_llm_synthesis=req.use_qwen,
@@ -505,7 +519,10 @@ def ask_agent_stream(req: AgentAskRequest, request: Request):
         )
 
     from campus_knowledge_server.agent.qwen_agent import GovernedCampusAgent
-    agent = GovernedCampusAgent()
+    global _shared_agent
+    if "_shared_agent" not in globals() or _shared_agent is None:
+        _shared_agent = GovernedCampusAgent()
+    agent = _shared_agent
 
     def event_generator():
         for chunk in agent.stream_query(
@@ -540,7 +557,7 @@ def get_audit_logs(request: Request, limit: int = 50):
     except Exception as e:
         return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"detail": str(e)})
 
-    if principal.role != "admin" and caller_ip not in ("testclient", "127.0.0.1", "localhost", "::1"):
+    if principal.role != "admin" and caller_ip != "testclient":
         return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"detail": "Audit log access restricted to admin principal."})
 
     logs = []

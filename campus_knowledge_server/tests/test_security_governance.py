@@ -246,6 +246,92 @@ def test_grounding_guard_catches_factual_claim_contradictions():
     _, ok_course = agent._validate_and_guard_grounding("Tell me about Quantum Alchemy", bad_course_ans, "lookup_course", empty_course_res)
     assert ok_course is False
 
+
+def test_sanitize_tool_arguments_coercion():
+    """Verifies sanitize_tool_arguments coerces strings, drops nulls, and handles lists."""
+    from campus_knowledge_server.tools.governed_executor import sanitize_tool_arguments
+
+    raw_args = {
+        "semester": "Semester 4",
+        "slot": "Slot 2",
+        "min_capacity": "45",
+        "completed_courses": "21CSC101T, 21CSC102T",
+        "ignored_null": None,
+    }
+    sanitized = sanitize_tool_arguments("get_semester_curriculum", raw_args)
+    assert sanitized["semester"] == 4
+    assert sanitized["slot"] == 2
+    assert sanitized["min_capacity"] == 45
+    assert sanitized["completed_courses"] == ["21CSC101T", "21CSC102T"]
+    assert "ignored_null" not in sanitized
+
+
+def test_mask_fields_recursive_deep_nesting():
+    """Verifies that nested dictionary/list structures are deeply masked."""
+    from campus_knowledge_server.tools.governed_executor import mask_fields_recursive
+
+    deep_data = {
+        "faculty_name": "Dr. Rajesh",
+        "nested_profile": {
+            "cabin": "TP-402",
+            "contact": {
+                "phone": "9876543210",
+                "mobile": "9998887776",
+                "email": "rajesh@srmist.edu.in"
+            }
+        },
+        "history": [
+            {"session": "2024", "phone": "1234567890"}
+        ]
+    }
+    masked = mask_fields_recursive(deep_data, {"phone", "mobile"})
+    assert masked["nested_profile"]["contact"]["phone"] == "[Hidden by Policy]"
+    assert masked["nested_profile"]["contact"]["mobile"] == "[Hidden by Policy]"
+    assert masked["nested_profile"]["contact"]["email"] == "rajesh@srmist.edu.in"
+    assert masked["history"][0]["phone"] == "[Hidden by Policy]"
+
+
+def test_call_procedure_whitelist_blocks_apoc():
+    """Verifies ASTSecurityValidator blocks unauthorized CALL apoc / administrative procedures."""
+    from campus_knowledge_server.security.ast_validator import ASTSecurityValidator
+
+    # Malicious APOC procedures should be strictly blocked
+    is_safe, reason, _ = ASTSecurityValidator.validate_cypher("CALL apoc.export.csv.all('dump.csv', {})")
+    assert is_safe is False
+    assert "allowed procedure allowlist" in reason or "Forbidden clause" in reason
+
+    # Whitelisted system procedures (e.g. vector search) should be allowed
+    is_safe_vector, _, _ = ASTSecurityValidator.validate_cypher("CALL db.index.vector.queryNodes('vec_idx', 5, [0.1, 0.2]) YIELD node RETURN node")
+    assert is_safe_vector is True
+
+
+def test_audit_chain_hmac_and_thread_locking(tmp_path):
+    """Verifies thread-safe audit logging with HMAC key and integrity verification."""
+    from campus_knowledge_server.security.audit import AuditLogger
+    import concurrent.futures
+
+    log_file = str(tmp_path / "thread_test_audit.jsonl")
+    audit = AuditLogger(log_path=log_file, secret_key="super_secret_audit_key_for_testing")
+
+    def write_log(idx: int):
+        return audit.log_event(
+            caller=f"user_{idx}",
+            tool_name="lookup_course",
+            parameters={"query": f"COURSE_{idx}"},
+            status="SUCCESS",
+            latency_ms=5.0
+        )
+
+    # Concurrently write 20 entries
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(write_log, i) for i in range(20)]
+        concurrent.futures.wait(futures)
+
+    # Verify chain integrity: all 20 must form a seamless cryptographic chain without forking
+    is_intact, count, msg = audit.verify_chain()
+    assert is_intact is True
+    assert count == 20
+
 if __name__ == "__main__":
     pytest.main(["-v", __file__])
 

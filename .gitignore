@@ -8,6 +8,9 @@ __pycache__/
 .pytest_cache/
 scratch/
 *.log
+logs/*.jsonl
+campus_knowledge_server/logs/*.jsonl
+
 
 # Sensitive credentials & environment variables
 .env

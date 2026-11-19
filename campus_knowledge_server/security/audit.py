@@ -9,8 +9,13 @@ import os
 import json
 import time
 import hashlib
+import hmac
+import threading
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, Tuple
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOG_DIR = os.path.join(BASE_DIR, "logs")
@@ -18,10 +23,13 @@ os.makedirs(LOG_DIR, exist_ok=True)
 AUDIT_LOG_FILE = os.path.join(LOG_DIR, "audit_telemetry.jsonl")
 
 GENESIS_HASH = "0" * 64
+AUDIT_SECRET_KEY = os.getenv("CAMPUS_AUDIT_SECRET") or os.getenv("CAMPUS_JWT_SECRET")
 
 class AuditLogger:
-    def __init__(self, log_path: str = AUDIT_LOG_FILE):
+    def __init__(self, log_path: str = AUDIT_LOG_FILE, secret_key: Optional[str] = AUDIT_SECRET_KEY):
         self.log_path = log_path
+        self.secret_key = secret_key
+        self._lock = threading.RLock()
         self._last_hash = self._get_tail_hash()
 
     def _get_tail_hash(self) -> str:
@@ -57,41 +65,46 @@ class AuditLogger:
         role: str = "student",
         chain_id: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Appends a structured, SHA-256 hash-chained event entry to the JSONL log file."""
-        self._last_hash = self._get_tail_hash()
-        event: Dict[str, Any] = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "caller": caller,
-            "role": role,
-            "tool_name": tool_name,
-            "parameters": parameters,
-            "status": status,
-            "latency_ms": round(latency_ms, 2),
-            "result_count": result_count,
-            "cypher_executed": cypher_executed,
-            "violation_reason": violation_reason,
-            "prev_hash": self._last_hash
-        }
-        if chain_id is not None:
-            event["chain_id"] = chain_id
+        """Appends a structured, cryptographic hash-chained event entry to the JSONL log file under thread lock."""
+        with self._lock:
+            self._last_hash = self._get_tail_hash()
+            event: Dict[str, Any] = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "caller": caller,
+                "role": role,
+                "tool_name": tool_name,
+                "parameters": parameters,
+                "status": status,
+                "latency_ms": round(latency_ms, 2),
+                "result_count": result_count,
+                "cypher_executed": cypher_executed,
+                "violation_reason": violation_reason,
+                "prev_hash": self._last_hash
+            }
+            if chain_id is not None:
+                event["chain_id"] = chain_id
 
-        # Compute tamper-evident SHA-256 entry hash
-        canonical_str = json.dumps(event, sort_keys=True)
-        entry_hash = hashlib.sha256(canonical_str.encode("utf-8")).hexdigest()
-        event["entry_hash"] = entry_hash
-        self._last_hash = entry_hash
+            # Compute tamper-evident entry hash (HMAC-SHA256 if key available, else SHA-256)
+            canonical_str = json.dumps(event, sort_keys=True)
+            if self.secret_key:
+                entry_hash = hmac.new(self.secret_key.encode("utf-8"), canonical_str.encode("utf-8"), hashlib.sha256).hexdigest()
+            else:
+                entry_hash = hashlib.sha256(canonical_str.encode("utf-8")).hexdigest()
+            event["entry_hash"] = entry_hash
+            self._last_hash = entry_hash
 
-        try:
-            with open(self.log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps(event) + "\n")
-        except Exception as e:
-            print(f"Error writing to audit log: {e}")
+            try:
+                with open(self.log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(event) + "\n")
+            except Exception as e:
+                print(f"Error writing to audit log: {e}")
 
-        return event
+            return event
 
     def verify_chain(self) -> Tuple[bool, int, Optional[str]]:
         """
-        Verifies the cryptographic integrity of the SHA-256 audit log chain.
+        Verifies the cryptographic integrity of the audit log chain.
+        Supports both HMAC-SHA256 and legacy plain SHA-256 for backward compatibility.
         Returns:
             (is_intact: bool, verified_entries_count: int, error_message: Optional[str])
         """
@@ -126,10 +139,18 @@ class AuditLogger:
                 stored_hash = entry.get("entry_hash")
                 payload = {k: v for k, v in entry.items() if k != "entry_hash"}
                 canonical_str = json.dumps(payload, sort_keys=True)
-                computed_hash = hashlib.sha256(canonical_str.encode("utf-8")).hexdigest()
+                computed_sha = hashlib.sha256(canonical_str.encode("utf-8")).hexdigest()
+                computed_hmac = (
+                    hmac.new(self.secret_key.encode("utf-8"), canonical_str.encode("utf-8"), hashlib.sha256).hexdigest()
+                    if self.secret_key else None
+                )
 
-                if computed_hash != stored_hash:
-                    return False, count, f"Tampering detected at entry {idx}: payload altered. Stored '{stored_hash}', computed '{computed_hash}'."
+                valid_hashes = {computed_sha}
+                if computed_hmac:
+                    valid_hashes.add(computed_hmac)
+
+                if stored_hash not in valid_hashes:
+                    return False, count, f"Tampering detected at entry {idx}: payload altered. Stored '{stored_hash}'."
 
                 expected_prev = stored_hash
                 count += 1

@@ -24,8 +24,6 @@ roles:
       - find_course_schedule
     forbidden_tools:
       - run_governed_query
-      - get_faculty_contact
-      - detect_prereq_cycles
     hidden_fields:
       - mobile
       - personal_phone
@@ -52,9 +50,7 @@ roles:
       - lookup_building
       - find_course_schedule
       - run_governed_query
-      - get_faculty_contact
-    forbidden_tools:
-      - detect_prereq_cycles
+    forbidden_tools: []
     hidden_fields:
       - mobile
       - personal_phone
@@ -77,8 +73,6 @@ roles:
       - lookup_building
       - find_course_schedule
       - run_governed_query
-      - get_faculty_contact
-      - detect_prereq_cycles
     forbidden_tools: []
     hidden_fields: []
 
