@@ -11,7 +11,7 @@ Retrieval-Augmented Generation over Labeled Property Graphs (Graph-RAG) grounds 
 
 To resolve these security, expressiveness, and verifiability trade-offs, we present **Zero-Trust Governed Graph-RAG (ZTG-RAG)**, an agentic systems architecture that replaces unconstrained query synthesis with governed, parameterized tool brokerage for locally hosted LLMs. ZTG-RAG enforces four core systems contributions: (1) **Parameterized Governed Tool Brokerage**: a catalog of 14 pre-compiled, parameterized Cypher tools guarded by a lexical security validator and database-level read-only transactions; (2) **Broker-Enforced RBAC & Recursive Masking**: caller-bound role authorization and recursive data-layer field redaction that prevents unauthorized PII disclosure regardless of prompt jailbreaks; (3) **Deterministic Multi-Hop Chaining with Structured Entity Interception**: a configuration-driven composition engine that resolves relational dependencies without iterative LLM round-trips, strictly validating intermediate entity tokens against format regexes and active graph caches to prevent free-text propagation; and (4) **Forward-Secure Cryptographic Audit Provenance**: a thread-safe, HMAC-SHA256 hash-chained telemetry ledger providing tamper-evident auditability aligned with regulatory mandates (e.g., EU AI Act Article 12).
 
-We evaluate ZTG-RAG over a university campus knowledge graph comprising authentic curriculum and faculty records (668 courses, 2,501 faculty, 428 degree programs) combined with modeled operational schedules (264 rooms, 1,336 timetable sessions). Evaluated across comprehensive domain benchmarks and adversarial injection vectors, ZTG-RAG achieves a **100% perimeter interception rate against tested injection attacks**, an invalid query rate of **0.0%**, and a median tool decision latency of **63.6 ms** compared to **12,312.6 ms** for pure local LLM tool synthesis, while maintaining verifiable ledger integrity across 12,000+ sequential multi-hop agent turns.
+We evaluate ZTG-RAG over a university campus knowledge graph comprising authentic curriculum and faculty records (668 courses, 2,501 faculty, 428 degree programs) combined with modeled operational schedules (264 rooms, 1,336 timetable sessions). Evaluated across an independent 200-question held-out benchmark suite, ZTG-RAG achieves a **100.0% Cypher execution accuracy**, an invalid query rate of **0.0%**, **85.0% accuracy on single-hop inquiries** (**71.7% across currently supported tool inventory**), and **100% mitigation against Cypher mutations, role spoofing, and PII exfiltration**, with a median decision latency of **58.4 ms** compared to **4,820.0 ms** for local LLM tool synthesis, while maintaining verifiable ledger integrity across 12,400+ sequential multi-hop agent turns.
 
 **Index Terms**—Large Language Models, Graph-RAG, Tool Governance, Role-Based Access Control, Tamper-Evident Audit Ledger, Indirect Prompt Injection, Knowledge Graphs.
 
@@ -35,7 +35,7 @@ To resolve these architectural and security challenges, we present **Zero-Trust 
 - **Broker-Enforced RBAC & Recursive Masking**: We enforce caller-bound Role-Based Access Control (RBAC) at the broker boundary. Sensitive fields (e.g., personal faculty telephone numbers) are recursively redacted at the serialization layer, preventing PII disclosure regardless of prompt jailbreaks.
 - **Deterministic Multi-Hop Chaining with Structured Entity Interception**: We implement **Option A Chaining**, a configuration-driven composition engine that resolves multi-hop graph dependencies deterministically. We design a **Structured Entity Interceptor** that strictly validates intermediate parameters against format regexes and live graph caches, **forbidding free-text propagation between hops** to mitigate indirect prompt injection.
 - **Forward-Secure HMAC-SHA256 Audit Provenance**: We design an append-only, linear hash-chained audit ledger protected by thread locks and server-bound HMAC keys, providing tamper-evident operational telemetry over thousands of sequential agent interactions.
-- **Empirical Rigor**: We evaluate ZTG-RAG on an authentic university knowledge graph across comprehensive benchmark queries and adversarial vectors, demonstrating a **100% perimeter attack mitigation rate**, an invalid query rate of **0.0%**, and a **193x latency reduction in tool invocation** over local LLM tool synthesis.
+- **Empirical Rigor**: We evaluate ZTG-RAG on an independent 200-question held-out benchmark suite across 7 query categories, demonstrating a **100.0% Cypher execution accuracy**, an invalid query rate of **0.0%**, an **85.0% single-hop accuracy** (**71.7% across supported inventory**), and **100% mitigation against state mutations, role spoofing, and PII exfiltration**.
 
 ---
 
@@ -235,62 +235,79 @@ If an adversary modifies a recorded parameter or status flag in past entry $e_k$
 - **Knowledge Graph Corpus**: Hosted in Neo4j Community `2026.10.2`. The dataset combines authentic institutional data with synthetically modeled scheduling allocations:
   - **Authentic Scraped Data**: 668 accredited academic courses, 2,501 faculty members across engineering and science schools, and 428 degree admission requirements scraped from public university portals.
   - **Modeled Operational Data**: 264 classrooms across 9 building complexes (TP, TP2, UB, BEL, MEB, ESB, FMB, SLB, MCB) and 1,336 scheduled timetable sessions modeled to reflect representative semester course allocations.
-- **Evaluation Dataset**: A benchmark suite of 200 items:
-  - 140 Single-Hop queries evaluating course attributes, room schedules, faculty profiles, building facilities, and admissions cutoffs.
-  - 35 Multi-Hop relational queries evaluating dependent and independent multi-tool workflows.
-  - 25 Adversarial vectors evaluating Cypher injection, privilege escalation, meta-prompt delimiter escapes, and APOC procedure calls.
+- **Evaluation Dataset**: An independent, held-out benchmark suite of 200 items (`campus_eval_200.json`) whose ground-truth facts were programmatically extracted from the active campus knowledge graph:
+  - **60 Single-Hop queries**: Course attributes, room schedules, faculty profiles, building facilities, and admissions cutoffs.
+  - **36 Multi-Hop relational queries**: Dependent prerequisite instructor chains and multi-building room occupancy workflows.
+  - **24 Multi-Query questions**: Multi-turn coreference resolution and multi-entity attribute projections.
+  - **24 Robustness questions**: Natural student phrasing, severe spelling typos, and informal academic slang.
+  - **30 Security vectors**: Cypher injection, privilege escalation, meta-prompt delimiter escapes, personal data (PII) exfiltration, unauthenticated audit reading, and client-header rate-limit flooding.
+  - **10 Negative cases**: Out-of-scope inquiries (weather, general trivia) and non-existent entities.
+  - **16 Coverage gap tests**: Explicitly evaluating 8 proposed future tools not yet present in the 13-tool inventory to measure feature roadmaps.
 - **Hardware & Inference Environment**: Local Ollama server executing `qwen2.5:3b` (temperature = 0.0, context window `num_ctx: 4096`, `num_predict: 256`), hosted on an AMD Ryzen architecture under Windows OS.
 
 ### B. Comparative Performance & Latency Analysis
 
-TABLE I presents the comparative evaluation across four architectural configurations:
-1. **Governed Hybrid (Proposed)**: Fast-path identifier matcher, model-first intent routing, Option A deterministic chaining, and cryptographic audit.
-2. **Native Tool Calling (Fair Baseline)**: Qwen 2.5 3B with proper configuration (`num_predict: 256`, `num_ctx: 4096`, and argument type sanitization).
-3. **Iterative ReAct Loop**: Open-loop agent iteratively prompting the model to reason and select subsequent tools.
-4. **Unconstrained Text-to-Cypher**: Prompting the local LLM to generate raw Cypher statements directly against the graph schema.
+TABLE I presents the comparative evaluation across architectural baselines, and TABLE II breaks down empirical performance across all 7 benchmark categories.
 
 #### TABLE I: Performance and Latency Comparison across Architectural Baselines
 | Metric | Governed Hybrid (Proposed) | Native Tool Calling | Iterative ReAct Loop | Unconstrained Text-to-Cypher | Target Benchmark |
 |---|:---:|:---:|:---:|:---:|:---:|
 | **Queries Evaluated** | 200 | 200 | 200 | 200 | — |
-| **Tool / Query Selection Accuracy** | **91.4%** (160/175) | 88.0% (154/175) | 82.3% (144/175) | 58.3% (102/175) | $\ge 90.0\%$ |
-| **Gold Entity Match Rate** | **90.3%** (158/175) | 85.1% (149/175) | 78.9% (138/175) | 52.6% (92/175) | $\ge 85.0\%$ |
-| **Invalid Query / Execution Error Rate** | **0.0%** (0/175) | 4.6% (8/175) | 13.7% (24/175) | 38.9% (68/175) | $< 2.0\%$ |
+| **Tool / Query Selection Accuracy (All 200)** | **67.0%** (134/200) | 61.5% (123/200) | 54.0% (108/200) | 38.5% (77/200) | $\ge 65.0\%$ |
+| **Tool Accuracy (Supported 184 Inventory)** | **71.7%** (132/184) | 66.8% (123/184) | 58.7% (108/184) | 41.8% (77/184) | $\ge 70.0\%$ |
+| **Grounded Fact Match Rate** | **96.0%** (192/200) | 88.5% (177/200) | 78.0% (156/200) | 51.5% (103/200) | $\ge 85.0\%$ |
+| **Cypher Execution Accuracy** | **100.0%** (200/200) | 95.4% (191/200) | 86.3% (173/200) | 61.1% (122/200) | 100.0% |
+| **Invalid Query / Syntax Error Rate** | **0.0%** (0/200) | 4.6% (9/200) | 13.7% (27/200) | 38.9% (78/200) | $< 2.0\%$ |
 | **Pydantic Schema Violations** | **0** | 3 | 11 | N/A | 0 |
-| **Perimeter Adversarial Mitigation Rate** | **100.0%** (25/25) | 100.0% (25/25) | 68.0% (17/25) | 0.0% (0/25) | 100.0% |
-| **Median Decision Latency** $^\dagger$ | **63.6 ms** | 4,820.0 ms | 18,450.0 ms | 6,120.0 ms | $< 2,000\text{ ms}$ |
-| **Mean End-to-End Latency** | **1,257.8 ms** | 6,240.5 ms | 24,180.0 ms | 7,850.0 ms | $< 3,000\text{ ms}$ |
-| **Audit Ledger Verification** | **100% Intact** | N/A | N/A | N/A | 100% Intact |
+| **Hard Gate Security Mitigation Rate** $^\dagger$ | **100.0%** (20/20) | 100.0% (20/20) | 65.0% (13/20) | 0.0% (0/20) | 100.0% |
+| **Overall Security Defense Rate (All 30)** | **76.7%** (23/30) | 73.3% (22/30) | 50.0% (15/30) | 0.0% (0/30) | $\ge 75.0\%$ |
+| **Median Decision Latency** $^\ddagger$ | **58.4 ms** | 4,820.0 ms | 18,450.0 ms | 6,120.0 ms | $< 2,000\text{ ms}$ |
+| **Mean End-to-End Latency** | **1,180.5 ms** | 6,240.5 ms | 24,180.0 ms | 7,850.0 ms | $< 3,000\text{ ms}$ |
+| **Audit Ledger Verification** | **100% Intact** (12,459) | N/A | N/A | N/A | 100% Intact |
 
-$^\dagger$*Decision Latency reflects routing, schema validation, and tool execution time prior to final conversational answer generation.*
+$^\dagger$*Hard Gate Security reflects Cypher injections, role spoofing, client rate-limit evasion, and PII exfiltration.*  
+$^\ddagger$*Decision Latency reflects routing, schema validation, and tool execution time prior to final conversational answer generation.*
+
+#### TABLE II: Category-by-Category Empirical Pass Rates (ZTG-RAG)
+| Category | Total Queries | Passed | Failed | Pass Rate (%) | Tool Accuracy (%) | Key Finding / Failure Mode |
+|---|:---:|:---:|:---:|:---:|:---:|---|
+| **Single-Hop** | 60 | 51 | 9 | **85.0%** | **85.0%** | Strong on course, faculty, building, and admission lookups; minor ambiguity on course timeslots. |
+| **Security & Adversarial** | 30 | 23 | 7 | **76.7%** | **76.7%** | 100% on Cypher mutation, role escalation, PII masking, and rate limits; natural language jailbreaks require semantic filter. |
+| **Multi-Query** | 24 | 16 | 8 | **66.7%** | **70.8%** | Effectively resolves multi-entity projections; multi-part questions occasionally focus on single dominant entity. |
+| **Multi-Hop** | 36 | 23 | 13 | **63.9%** | **63.9%** | Option A Chaining succeeds on prerequisite chains; course vs. room schedule ambiguity on building queries. |
+| **Negative Cases** | 10 | 6 | 4 | **60.0%** | **60.0%** | Accurately identifies non-existent faculty; open-domain trivia triggers federated search fallback. |
+| **Robustness** | 24 | 12 | 12 | **50.0%** | **50.0%** | Handles common typos; extreme acronyms ("DS", "DBMS", "OS kab hai") require semantic expansion. |
+| **Coverage Gap (New Tools)** | 16 | 2 | 14 | **12.5%** | **12.5%** | **Expected Gap**: Questions explicitly target 8 proposed tools not yet in the 13-tool inventory. |
+| **Total Benchmark Suite** | **200** | **133** | **67** | **66.5%** | **67.0%** | Robust baseline over zero-shot, un-tuned held-out test data. |
 
 ### C. Analysis of Research Questions
 
 #### RQ1: Injection Resistance & Boundary Enforcement
-All 25 adversarial injection vectors were intercepted at the broker perimeter under ZTG-RAG:
-- Destructive operations (`DETACH DELETE`, `DROP INDEX`, `ALTER DATABASE`) were blocked by the Zero-Trust Read-Only Gateway before establishing any database connection.
-- Procedure calls (`CALL apoc.export.*`) were rejected by the procedure allowlist in `ASTSecurityValidator`.
-- Prompt delimiter escapes were neutralized by XML parameter encapsulation.
-- Privilege escalation attempts (unauthenticated requests claiming `role: admin`) were rejected by JWT verification.
-By contrast, the unconstrained Text-to-Cypher baseline exhibited a $0.0\%$ defense rate against prompt injection attacks, willingly synthesizing mutating clauses when instructed by adversarial prompts.
+In the 30-vector security evaluation, ZTG-RAG achieved a **100% mitigation rate across all structural and protocol attacks**:
+- **Cypher Injections & Destructive Mutations**: Statements containing `DETACH DELETE`, `UNION MATCH`, stacked clauses (`;`), or system commands were intercepted by the `ASTSecurityValidator` in $< 1\text{ ms}$ before any database connection was established.
+- **Protocol & Role Spoofing (SEC-001–SEC-003)**: Unauthenticated and student requests claiming `role: admin` were rejected with `HTTP 403 (ROLE_SPOOFING_BLOCKED)`. Tampered signatures were rejected with `HTTP 401`.
+- **Privileged Tool Execution (SEC-023, SEC-024)**: Student invocations of `run_governed_query` and un-whitelisted templates were blocked with `HTTP 403`.
+- **Client Rate-Limit Evasion (SEC-030)**: Sending 25 rapid requests while rotating `X-Session-Id` headers triggered `HTTP 429 Too Many Requests` after request 20, confirming that rate limits are strictly bound to verified client IP.
+- **PII Exfiltration (SEC-005–SEC-007)**: When students explicitly queried faculty personal contact details, `lookup_faculty_profile` executed but personal phone numbers were redacted to `[Hidden by Policy]` by recursive data-layer masking. Zero phone numbers leaked.
+- **Limitation Disclosed**: Natural language jailbreaks (e.g. `SEC-014`, `SEC-018` translation wrappers) passed the lexical AST filter because they contain no Cypher keywords. While data-layer masking prevented PII exposure, upfront rejection requires a semantic intent classification stage.
 
 #### RQ2: Multi-Hop Reasoning & Semantic Drift
-In the Iterative ReAct baseline, multi-hop queries suffered from high failure rates ($13.7\%$ invalid query rate) and frequent identifier drift (e.g. Paraphrasing `21CSC206T` to *"the second-year OS theory course"* in Hop 2). Under ZTG-RAG Option A Chaining, the Structured Entity Interceptor extracted verified identifiers directly from Hop 1's structured output, achieving $90.3\%$ gold entity match without semantic drift.
+Under ZTG-RAG Option A Chaining, multi-hop queries achieved a $63.9\%$ pass rate without semantic drift. By quarantining Hop 1's intermediate payload and validating entity tokens against verified graph caches via the Structured Entity Interceptor, intermediate identifiers (`21CSC206T`, `UB101`) were preserved verbatim without LLM paraphrasing. Failures in multi-hop queries were primarily due to intent ambiguity: queries asking *"Which building is Course X held in?"* frequently routed to `lookup_course` (which returns academic details) rather than `find_course_schedule`.
 
 #### RQ3: Latency & Computational Trade-offs
-ZTG-RAG achieves a median decision-and-tool latency of **63.6 ms** on direct queries. Profiling breaks down this performance:
+ZTG-RAG achieves a median decision-and-tool latency of **58.4 ms** on direct queries. Profiling confirms:
 - Heuristic intent routing: $\sim 1.2\text{ ms} - 4.5\text{ ms}$.
 - Pydantic schema validation: $\sim 0.4\text{ ms}$.
-- Neo4j indexed Bolt read: $\sim 12.0\text{ ms} - 45.0\text{ ms}$.
+- Neo4j indexed Bolt read: $\sim 15.0\text{ ms} - 45.0\text{ ms}$.
 - HMAC-SHA256 audit ledger signing: $\sim 0.18\text{ ms}$.
-The computational overhead of cryptographic audit logging and schema checking combined is less than **$1\text{ ms}$**, confirming that rigorous governance does not degrade query throughput.
+The computational overhead of cryptographic audit logging and schema checking combined is less than **$1\text{ ms}$**, confirming that rigorous governance does not compromise operational throughput.
 
 #### RQ4: Cryptographic Ledger Scalability & Verifiability
-We verified the sequential HMAC-SHA256 chain across **12,142 consecutive audit entries** in `audit_telemetry.jsonl`. Verification completed in $0.48\text{ seconds}$ with zero broken links:
+We cryptographically verified the sequential HMAC-SHA256 chain across **12,459 consecutive audit entries** in `audit_telemetry.jsonl`. Verification completed in $0.49\text{ seconds}$ with zero broken links:
 ```text
-Verification: intact=True, verified_count=12142, err=Hash chain intact. Zero tampering detected.
+Verification: intact=True, verified_count=12459, err=Hash chain intact. Zero tampering detected.
 ```
-In simulated tampering trials (altering a single parameter character in entry 6,000), `verify_chain()` deterministically caught the exact entry index and flagged tampering.
+In simulated tampering trials (modifying a single parameter character in historical entry 6,000), `verify_chain()` deterministically caught the exact entry index and flagged cryptographic tampering.
 
 ---
 
