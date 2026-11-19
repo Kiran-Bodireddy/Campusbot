@@ -10,40 +10,50 @@ The project is structured into three decoupled layers:
 
 ```
 courses/
-├── DataPreparation/                   # Stage 1: Extraction & Ingestion Pipeline
-│   ├── raw-sources/                   # Official Regulations 2021 curriculum & syllabus PDFs
-│   ├── blueprints/                    # Property graph schema & entity definitions
-│   ├── scrape-programs.py             # Scraper for university admissions portal
-│   ├── extract-courses.py             # PyMuPDF syllabus extractor (L-T-P-C, descriptions)
-│   ├── extract-curriculum.py          # Semester 1-8 curriculum map extractor
-│   ├── build-admissions.py            # Eligibility rules and fee structure builder
-│   ├── build-unified-graph.py         # Assembles entities into Neo4j graph format
-│   └── run-pipeline.py                # Master extraction pipeline runner
+├── campus_knowledge_server/           # Runtime Backend Engine
+│   ├── agent/                         # Qwen 2.5 hybrid router, claim-level grounding guard, Option A chaining
+│   ├── config/                        # policy.yaml (RBAC & PII masking), chain_config.yaml, matching_config.yaml
+│   ├── database/                      # Read-only Neo4j Bolt client, Cypher templates & vector search
+│   ├── eval/                          # Development benchmark dataset & evaluation runners
+│   ├── logs/                          # Cryptographically chained SHA-256 audit ledger (audit_telemetry.jsonl)
+│   ├── security/                      # JWT auth, lexical token validator, rate limiter, audit logger
+│   ├── server/                        # FastAPI REST/SSE API (port 8000) & FastMCP server
+│   ├── tests/                         # Full automated pytest test suite (118 tests)
+│   └── tools/                         # 14 governed campus tools (13 exposed via MCP)
+│
+├── docs/                              # Academic Papers, Surveys & Presentation Slides
+│   ├── IEEE_PAPER_DRAFT_ZERO_TRUST_GRAPH_RAG.md # IEEE format research paper draft
+│   ├── RESEARCH_PAPER_PROPOSAL_AND_LITERATURE_SURVEY.md # Literature review & proposal
+│   ├── INDEPENDENT_BENCHMARK_SCORECARD.md       # Evaluation methodology scorecard
+│   └── Neo4j_Campus_Tool_Server_Review_SRM.pptx # Review presentation slide deck
+│
+├── scripts/                           # Operational Utilities & Benchmark Runners
+│   ├── run_part_c_dev_benchmark.py    # Official Part C dev benchmark runner
+│   ├── make_demo_tokens.py            # Offline CLI helper to mint demo student/admin JWTs
+│   ├── verify_full_system.py          # Automated system integration verification
+│   └── ... (20+ operational utilities cataloged in scripts/README.md)
 │
 ├── Datasets/                          # Stage 2: Clean Datasets & Graph Blueprint
 │   ├── courses.json / courses.csv     # 668 source courses (669 in Neo4j incl. 190 detailed Reg-2021 syllabi)
-│   ├── prerequisites.csv              # 30 official Reg-2021 prerequisite edges (from 31 source rows; synthetic CSE201->CSE101 removed)
+│   ├── prerequisites.csv              # 30 official Reg-2021 prerequisite edges
 │   ├── curriculum.json                # 55 Reg-2021 programs & 3,498 semester course allocations
-│   ├── faculty.csv                    # 2,367 scraped faculty directory records
-│   ├── faculty-cabins.csv             # 2,501 faculty records with cabins, normalized departments & public directory phones
+│   ├── faculty-cabins.csv             # 2,501 faculty records with cabins, departments & phones
 │   ├── admissions.json                # Program cutoffs, entrance exams, and fees (429 canonical admission programs)
 │   ├── programs.json                  # Master academic program catalog
 │   └── graph-blueprint.json           # Assembled property graph blueprint for Neo4j
 │
-├── campus_knowledge_server/           # Stage 3: Runtime Backend Engine
-│   ├── agent/                         # Qwen 2.5 hybrid router, claim-level grounding guard, prompts, normalizer
-│   ├── config/                        # Frozen policy.yaml (RBAC & redaction) + matching_config.yaml
-│   ├── database/                      # Read-only Neo4j Bolt pool, Cypher queries & vector search
-│   ├── eval/                          # Development benchmark dataset & runner-generated JSON reports
-│   ├── security/                      # JWT auth, AST validator, sliding-window rate limiter, SHA-256 audit ledger
-│   ├── tools/                         # 13 governed campus tools (12 exposed via MCP)
-│   ├── server/                        # FastAPI REST/SSE API (port 8000) & FastMCP server
-│   └── tests/                         # Automated test suite (pytest)
+├── DataPreparation/                   # Stage 1: Extraction & Ingestion Pipeline
+│   ├── raw-sources/                   # Official Regulations 2021 curriculum & syllabus PDFs
+│   ├── blueprints/                    # Property graph schema & entity definitions
+│   └── run-pipeline.py                # Master extraction pipeline runner
 │
-├── campus_assistant.html              # Interactive web interface
-├── scripts/make_demo_tokens.py        # Offline CLI helper to mint demo student/admin JWTs
+├── campus_assistant.html              # Interactive Web Interface (Zero External CDN Dependencies)
+├── audit.html                         # Admin Cryptographic Audit Ledger Viewer
+├── cli.py                             # Interactive Terminal CLI (Instant & Generative Modes)
 ├── seed.py                            # Populates local Neo4j from Datasets/
-└── cli.py                             # Interactive terminal interface
+├── show_dataset.py                    # Interactive Dataset Navigator for Reviews & Vivas
+├── start_all.bat                      # One-click Master Launcher (Ollama, FastAPI, Web UI, CLI)
+└── start_cli.bat                      # One-click Terminal CLI Launcher
 ```
 
 ---

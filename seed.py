@@ -43,7 +43,7 @@ def main():
         print("    1. Open Neo4j Desktop.")
         print("    2. Click the green 'Start' button next to your project/DBMS.")
         print("    3. Ensure the password matches '.env' (default set to 'kiran223').")
-        print("    4. Run: python seed_neo4j_live.py\n")
+        print("    4. Run: python seed.py\n")
         return
 
     print("\n[✔] Connected successfully to live Neo4j instance!")

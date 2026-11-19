@@ -936,7 +936,8 @@ benchmark_items = [
     }
 ]
 
-out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "campus_knowledge_server", "eval", "benchmark_dataset.json")
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+out_path = os.path.join(ROOT_DIR, "campus_knowledge_server", "eval", "benchmark_dataset.json")
 with open(out_path, "w", encoding="utf-8") as f:
     json.dump(benchmark_items, f, indent=2)
 

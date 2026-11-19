@@ -144,7 +144,8 @@ report_lines.append("\n" + "=" * 70)
 report_lines.append(f"FINAL AUDIT RESULT: {'ALL VERIFICATIONS PASSED' if all_passed else 'SOME VERIFICATIONS FAILED'}")
 report_lines.append("=" * 70)
 
-summary_path = "campus_knowledge_server/data/system_verification_summary.txt"
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+summary_path = os.path.join(ROOT_DIR, "campus_knowledge_server", "data", "system_verification_summary.txt")
 with open(summary_path, "w", encoding="utf-8") as f:
     f.write("\n".join(report_lines) + "\n")
 
