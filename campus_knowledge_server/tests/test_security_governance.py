@@ -332,6 +332,60 @@ def test_audit_chain_hmac_and_thread_locking(tmp_path):
     assert is_intact is True
     assert count == 20
 
+
+def test_every_student_tool_scanned_for_hidden_fields():
+    """
+    Scans every governed tool available to a student principal.
+    Recursively asserts that no hidden field (phone, mobile, personal contact)
+    is ever leaked unmasked in the output structure.
+    """
+    from campus_knowledge_server.tools.governed_executor import execute_tool, get_governance_policy
+    from campus_knowledge_server.security.auth import Principal
+
+    student_principal = Principal(user_id="audit_tester_student", role="student")
+    policy = get_governance_policy()
+    student_cfg = policy["roles"]["student"]
+    allowed_tools = student_cfg["allowed_tools"]
+    hidden_fields = set(student_cfg["hidden_fields"])
+
+    sample_args_map = {
+        "lookup_course": {"course_code": "18CSC302J"},
+        "get_prerequisite_tree": {"course_code": "18CSC302J"},
+        "verify_prerequisites": {"target_course": "18CSC302J", "completed_courses": ["18CSC201J"]},
+        "find_faculty_for_course": {"course_code": "18CSC302J"},
+        "lookup_faculty_profile": {"faculty_name": "Kumar"},
+        "find_room_schedule": {"room_id": "UB101"},
+        "find_available_rooms": {"building_code": "UB", "min_capacity": 30},
+        "search_courses_semantic": {"query": "computer algorithms"},
+        "check_admission_eligibility": {"program_query": "Computer Science"},
+        "get_campus_statistics": {},
+        "get_semester_curriculum": {"program": "B.Tech Computer Science and Engineering", "semester": 3},
+        "lookup_building": {"building_query": "UB"},
+        "find_course_schedule": {"course_code": "18CSC302J"},
+    }
+
+    def assert_no_unmasked_fields(data, path=""):
+        if isinstance(data, dict):
+            for k, v in data.items():
+                cur_path = f"{path}.{k}" if path else k
+                if k in hidden_fields:
+                    assert v == "[Hidden by Policy]", f"LEAK DETECTED at {cur_path}: {v!r}"
+                assert_no_unmasked_fields(v, cur_path)
+        elif isinstance(data, list):
+            for idx, item in enumerate(data):
+                assert_no_unmasked_fields(item, f"{path}[{idx}]")
+
+    for tool_name in allowed_tools:
+        args = sample_args_map.get(tool_name, {})
+        try:
+            result = execute_tool(tool_name, args, principal=student_principal)
+            assert isinstance(result, dict), f"Tool {tool_name} returned non-dict: {type(result)}"
+            assert_no_unmasked_fields(result, path=tool_name)
+        except Exception as e:
+            # If database record doesn't exist for test entity, it should still fail safely
+            assert not any(h in str(e).lower() for h in hidden_fields), f"Error leaked hidden info: {e}"
+
+
 if __name__ == "__main__":
     pytest.main(["-v", __file__])
 

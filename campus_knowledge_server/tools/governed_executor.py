@@ -207,6 +207,24 @@ def mask_fields_recursive(obj: Any, hidden_fields: set) -> Any:
     return obj
 
 
+_cached_governance_policy: Optional[Dict[str, Any]] = None
+
+def get_governance_policy() -> Dict[str, Any]:
+    """Loads and caches governance policy once at startup with strict fail-closed validation."""
+    global _cached_governance_policy
+    if _cached_governance_policy is None:
+        import yaml
+        policy_path = os.path.join(BASE_DIR, "campus_knowledge_server", "config", "policy.yaml")
+        if not os.path.exists(policy_path):
+            raise SecurityViolationError("CRITICAL: Governance policy file 'policy.yaml' is missing. Failing closed.")
+        try:
+            with open(policy_path, "r", encoding="utf-8") as pf:
+                _cached_governance_policy = yaml.safe_load(pf) or {}
+        except Exception as e:
+            raise SecurityViolationError(f"CRITICAL: Governance policy file corrupted: {e}. Failing closed.")
+    return _cached_governance_policy
+
+
 def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Principal] = None, chain_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Unified, single governed executor for all campus tools.
@@ -239,24 +257,19 @@ def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Princ
         )
         raise SecurityViolationError(err)
 
-    # 2. RBAC Policy Enforcement
-    from campus_knowledge_server.agent.qwen_agent import GovernedCampusAgent
-    # Read policy rules
-    import yaml
-    policy_path = os.path.join(BASE_DIR, "campus_knowledge_server", "config", "policy.yaml")
-    policy_cfg = {}
-    if os.path.exists(policy_path):
-        try:
-            with open(policy_path, "r", encoding="utf-8") as pf:
-                policy_cfg = yaml.safe_load(pf) or {}
-        except Exception as e:
-            logger.warning(f"Could not load policy.yaml: {e}")
+    # 2. RBAC Policy Enforcement (Strict Fail-Closed)
+    policy_cfg = get_governance_policy()
+    roles_cfg = policy_cfg.get("roles", {})
+    if principal.role not in roles_cfg:
+        err = f"Access Policy Violation: Role '{principal.role}' is not declared in governance policy (Fail-Closed)."
+        audit.log_event(caller=caller_id, tool_name=tool_name, parameters=args, status="POLICY_VIOLATION", latency_ms=(time.time() - t0) * 1000, violation_reason=err, role=principal.role, chain_id=chain_id)
+        raise SecurityViolationError(err)
 
-    role_rules = policy_cfg.get("roles", {}).get(principal.role, {})
+    role_rules = roles_cfg[principal.role]
     allowed_tools = role_rules.get("allowed_tools", [])
     forbidden_tools = role_rules.get("forbidden_tools", [])
 
-    if tool_name in forbidden_tools or (allowed_tools and tool_name not in allowed_tools):
+    if not allowed_tools or tool_name in forbidden_tools or tool_name not in allowed_tools:
         err = f"Access Policy Violation: Role '{principal.role}' is forbidden from executing tool '{tool_name}'."
         audit.log_event(
             caller=caller_id,

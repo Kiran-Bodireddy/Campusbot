@@ -13,11 +13,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 JWT_SECRET = os.getenv("CAMPUS_JWT_SECRET")
-if not JWT_SECRET:
-    raise ValueError("CAMPUS_JWT_SECRET environment variable is required.")
-if len(JWT_SECRET) < 16:
-    import warnings
-    warnings.warn("CAMPUS_JWT_SECRET is short (<16 chars); recommended >=32 chars for HMAC-SHA256 production security.")
+INSECURE_SECRETS = {"secret", "changeme", "default", "dev_secret_key", "admin", "password"}
+if not JWT_SECRET or len(JWT_SECRET) < 32 or JWT_SECRET.lower() in INSECURE_SECRETS:
+    raise ValueError(
+        "Production security violation: CAMPUS_JWT_SECRET must be at least 32 characters "
+        "and cannot be a trivial default key."
+    )
 
 JWT_ALGORITHM = "HS256"
 JWT_ISSUER = "srmist-campus-knowledge-authority"

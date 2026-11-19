@@ -156,11 +156,11 @@ class ASTSecurityValidator:
         if re.search(r"\b(?:rm\s+-rf|sudo|system\(|exec\(|eval\(|__import__|;\s*bash)\b", q, re.IGNORECASE):
             return True, "Unauthorized system or shell execution command detected."
 
-        # 5. Prompt Injection & Delimiter Breakout Attempts
+        # 5. Prompt Injection & Generic Delimiter Breakout Attempts
         if re.search(
-            r"<<<(?:END_)?VERIFIED_CAMPUS_FACTS|"
+            r"<<<[A-Z0-9_]+>>>|\[/?(?:SYS|SYSTEM|INST)\]|```(?:system|instruction)|"
             r"\b(?:disregard|ignore|override|bypass)\s+(?:all\s+)?(?:prior|previous|above|system)\s+instructions?\b|"
-            r"\b(?:jwt\s+secret|secret\s+key|environment\s+passwords?|dump_server_environment)\b",
+            r"\b(?:dump\b.*?\b(?:env|environment|passwords?|secrets?)|jwt\s+secret|secret\s+key|api\s+keys?|environment\s+passwords?)\b",
             q,
             re.IGNORECASE
         ):

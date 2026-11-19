@@ -609,7 +609,12 @@ def get_admin_audit_logs(request: Request, limit: int = 100):
 
 @app.get("/audit/verify", tags=["Governance & Observability"])
 def verify_audit_chain():
-    """Cryptographically verifies the SHA-256 hash chain of the audit log."""
+    """
+    Public cryptographic integrity verification endpoint.
+    Allows independent external auditors, clients, and automated verifiers to
+    cryptographically prove that the append-only audit ledger has not been tampered
+    with, truncated, or forked, without exposing any confidential log records or PII.
+    """
     logger = get_audit_logger()
     is_intact, count, message = logger.verify_chain()
     return {
@@ -621,4 +626,6 @@ def verify_audit_chain():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("campus_knowledge_server.server.main:app", host="0.0.0.0", port=8000, reload=True)
+    server_host = os.getenv("CAMPUS_SERVER_HOST", "127.0.0.1")
+    server_port = int(os.getenv("CAMPUS_SERVER_PORT", "8000"))
+    uvicorn.run("campus_knowledge_server.server.main:app", host=server_host, port=server_port, reload=True)

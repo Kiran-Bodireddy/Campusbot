@@ -2024,7 +2024,9 @@ class GovernedCampusAgent:
             if want("email"):
                 bullets.append(f"- **Official Email:** `{email or 'Not listed'}`")
             if want("phone"):
-                if phone_val and phone_val != "[Hidden by Policy]":
+                if phone_val == "[Hidden by Policy]" or phone_note == "[Hidden by Policy]":
+                    bullets.append("- **Office Phone:** [Hidden by Policy]")
+                elif phone_val:
                     note_s = f" ({phone_note})" if phone_note else ""
                     bullets.append(f"- **Office Phone:** `{phone_val}`{note_s}")
                 elif phone_note:
@@ -2059,7 +2061,9 @@ class GovernedCampusAgent:
         if want("email") and email:
             bullets.append(f"- **Official Email:** `{email}`")
         if want("phone"):
-            if phone_val and phone_val != "[Hidden by Policy]":
+            if phone_val == "[Hidden by Policy]" or phone_note == "[Hidden by Policy]":
+                bullets.append("- **Office Phone:** [Hidden by Policy]")
+            elif phone_val:
                 note_s = f" ({phone_note})" if phone_note else ""
                 bullets.append(f"- **Office Phone:** `{phone_val}`{note_s}")
             elif phone_note:
@@ -3942,7 +3946,8 @@ Answer:"""
                 intent_source = "High-Speed Normalized Router (~8ms)"
 
         if not tool_call and self.ollama_active and use_llm_synthesis and not llm_intent_mode:
-            tool_call = self._select_tool_with_llm(user_query)
+            history_ctx = ConversationMemory.get_history(session_id, user_id=user_id) if session_id else None
+            tool_call = self._select_tool_with_llm(user_query, history=history_ctx)
             if tool_call:
                 intent_source = "Qwen 2.5 Tool Selection Fallback"
 

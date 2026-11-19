@@ -25,6 +25,19 @@ AUDIT_LOG_FILE = os.path.join(LOG_DIR, "audit_telemetry.jsonl")
 GENESIS_HASH = "0" * 64
 AUDIT_SECRET_KEY = os.getenv("CAMPUS_AUDIT_SECRET") or os.getenv("CAMPUS_JWT_SECRET")
 
+def _sanitize_logged_parameters(params: Any) -> Any:
+    """Recursively masks sensitive values (passwords, tokens, phone numbers) before writing to audit log."""
+    SENSITIVE_KEYS = {"password", "token", "secret", "jwt_secret", "phone", "mobile", "personal_phone"}
+    if isinstance(params, dict):
+        return {
+            k: ("[REDACTED_AUDIT]" if k.lower() in SENSITIVE_KEYS else _sanitize_logged_parameters(v))
+            for k, v in params.items()
+        }
+    elif isinstance(params, list):
+        return [_sanitize_logged_parameters(x) for x in params]
+    return params
+
+
 class AuditLogger:
     def __init__(self, log_path: str = AUDIT_LOG_FILE, secret_key: Optional[str] = AUDIT_SECRET_KEY):
         self.log_path = log_path
@@ -73,7 +86,7 @@ class AuditLogger:
                 "caller": caller,
                 "role": role,
                 "tool_name": tool_name,
-                "parameters": parameters,
+                "parameters": _sanitize_logged_parameters(parameters),
                 "status": status,
                 "latency_ms": round(latency_ms, 2),
                 "result_count": result_count,
@@ -124,13 +137,10 @@ class AuditLogger:
                 except Exception as e:
                     return False, count, f"Line {idx} corrupted JSON: {e}"
 
-                # 1. Verify prev_hash matches prior entry's hash
+                # 1. Verify prev_hash matches prior entry's hash (strict chaining: zero reset loopholes)
                 entry_prev = entry.get("prev_hash")
                 if entry_prev is None:
-                    # Legacy log entry without hash-chaining; allow upgrade
-                    expected_prev = entry.get("entry_hash", GENESIS_HASH)
-                    count += 1
-                    continue
+                    return False, count, f"Hash chain broken at entry {idx}: missing required cryptographic 'prev_hash' field."
 
                 if entry_prev != expected_prev:
                     return False, count, f"Hash chain broken at entry {idx}: prev_hash '{entry_prev}' does not match expected '{expected_prev}'."
