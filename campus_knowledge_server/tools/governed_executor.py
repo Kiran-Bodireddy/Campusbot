@@ -265,6 +265,27 @@ def mask_fields_recursive(obj: Any, hidden_fields: set) -> Any:
 
 _cached_governance_policy: Optional[Dict[str, Any]] = None
 
+def govern_output(obj: Any, role: str) -> Any:
+    """
+    Last-line privacy filter for anything leaving the agent (answers, tool_result, stream events).
+    Applies the role's hidden_fields even to data that did not pass through execute_tool
+    (e.g. the cross-entity fallback search). Fail-closed: an unknown role, or an unreadable policy,
+    gets every hidden field of every role masked.
+    """
+    try:
+        roles_cfg = get_governance_policy().get("roles", {})
+    except Exception:
+        roles_cfg = {}
+    if role in roles_cfg:
+        hidden = set(roles_cfg[role].get("hidden_fields", []))
+    else:
+        hidden = set()
+        for rules in roles_cfg.values():
+            hidden |= set(rules.get("hidden_fields", []))
+        hidden |= {"phone", "mobile", "personal_phone", "contact_number", "phone_note", "phone_shared_count"}
+    return mask_fields_recursive(obj, hidden) if hidden else obj
+
+
 def get_governance_policy() -> Dict[str, Any]:
     """Loads and caches governance policy once at startup with strict fail-closed validation."""
     global _cached_governance_policy

@@ -128,6 +128,7 @@ class AdmissionEligibilityRequest(BaseModel):
     candidate_percentage: Optional[float] = Field(default=None, ge=0.0, le=100.0, description="Candidate's percentage in qualifying examination.")
     is_reserved_category: bool = Field(default=False, description="Whether candidate qualifies for reserved category (SC/ST/OBC) criteria.")
     candidate_stream: Optional[str] = Field(default=None, description="Candidate stream or subjects (e.g. 'PCM', 'PCB', 'Commerce', 'Arts').")
+    score_basis: Optional[str] = Field(default=None, max_length=20, description="Exam the percentage comes from: '12th' (school) or 'degree'.")
 
 class SemesterCurriculumRequest(BaseModel):
     program_query: str = Field(..., min_length=2, max_length=150, description="Degree programme name or abbreviation (e.g. 'CSE', 'Computer Science', 'Artificial Intelligence', 'ECE', 'Mechanical', 'Aerospace').")
@@ -416,49 +417,62 @@ class CampusKnowledgeTools:
 
     @staticmethod
     def find_faculty_for_course(req: FacultyCourseRequest, caller: str = "agent") -> Dict[str, Any]:
-        """Retrieves verified faculty instructors teaching a specified course via Neo4j."""
+        """
+        "Who teaches / who could teach this course?"
+        SRM's official teacher-to-course allocation is not in the dataset (the TEACHES links built by
+        data/build_campus_dataset.py are random), so this tool does not use them. It returns real
+        faculty from the offering department(s) whose published specialization matches the course
+        topic, ranked by match strength (see tools/expertise.py).
+        """
+        from campus_knowledge_server.tools.expertise import experts_for_course, candidate_departments
         t0 = time.time()
         client = get_graph_client()
         audit = get_audit_logger()
         c_code = req.course_code.strip().upper()
+        course = client._course_by_code.get(c_code)
 
-        instructors = []
-        if client.is_connected and client.driver:
-            try:
-                cypher = """
-                    MATCH (f:FacultyMember)-[t:TEACHES]->(c:Course)
-                    WHERE toUpper(c.code) = $code
-                    RETURN f.id as id, f.name as name, f.designation as designation,
-                           coalesce(f.normalized_department, f.department) as department,
-                           f.normalized_department as normalized_department,
-                           f.department as raw_department,
-                           f.cabin as cabin, f.email as email,
-                           f.specialization as specialization, f.experience as experience,
-                           t.role as teaching_role
-                """
-                instructors = client.query_read(cypher, {"code": c_code})
-            except Exception as e:
-                logger.warning(f"Neo4j find_faculty_for_course error ({e}), falling back.")
-
-        if not instructors:
-            teaching = client._teaching_by_course.get(c_code, [])
-            for t in teaching:
-                fac = client._faculty_by_id.get(t["faculty_id"])
-                if fac:
-                    norm_dept = fac.get("normalized_department") or normalize_department_name(fac.get("department", ""))
-                    instructors.append({
-                        "id": fac["id"],
-                        "name": fac["name"],
-                        "designation": fac["designation"],
-                        "department": norm_dept or fac["department"],
-                        "normalized_department": norm_dept,
-                        "raw_department": fac["department"],
-                        "cabin": fac.get("cabin", "Staff Room (TBA)"),
-                        "email": fac["email"],
-                        "specialization": fac["specialization"],
-                        "experience": fac["experience"],
-                        "teaching_role": t.get("role", "Instructor")
-                    })
+        engine = "in_memory"
+        instructors: List[Dict[str, Any]] = []
+        depts: List[str] = []
+        topics: List[str] = []
+        basis = "none"
+        if course:
+            all_fac = client.in_memory_data.get("faculty", [])
+            depts = candidate_departments(course, (f.get("department") for f in all_fac))
+            pool = None
+            if client.is_connected and client.driver and depts:
+                try:
+                    rows = client.query_read(
+                        "MATCH (f:FacultyMember) WHERE f.department IN $depts RETURN DISTINCT f {.*} AS faculty LIMIT 2000",
+                        {"depts": depts})
+                    pool = [r["faculty"] for r in rows if r.get("faculty")]
+                    engine = "neo4j"
+                except Exception as e:
+                    logger.warning(f"Neo4j faculty pool query failed ({e}); using in-memory mirror.")
+            res = experts_for_course(course, pool if pool else all_fac)
+            topics, basis = res["topics"], res["match_basis"]
+            seen = set()
+            for sp in res["specialists"]:
+                if sp.get("id") in seen:
+                    continue
+                seen.add(sp.get("id"))
+                fac = client._faculty_by_id.get(sp.get("id"), {})
+                norm_dept = fac.get("normalized_department") or normalize_department_name(sp.get("department", ""))
+                instructors.append({
+                    "id": sp.get("id"),
+                    "name": sp.get("name"),
+                    "designation": sp.get("designation"),
+                    "department": norm_dept or sp.get("department"),
+                    "normalized_department": norm_dept,
+                    "raw_department": sp.get("department"),
+                    "cabin": sp.get("cabin") or fac.get("cabin", ""),
+                    "email": sp.get("email") or fac.get("email", ""),
+                    "specialization": sp.get("specialization", ""),
+                    "experience": fac.get("experience", ""),
+                    "matched_topics": sp.get("matched_topics", []),
+                    "match_score": sp.get("match_score", 0),
+                    "teaching_role": "Specialization match",
+                })
 
         latency = (time.time() - t0) * 1000
         audit.log_event(
@@ -472,10 +486,20 @@ class CampusKnowledgeTools:
 
         return {
             "course_code": c_code,
+            "course_name": (course or {}).get("name", ""),
+            "course_found": course is not None,
+            "official_allocation_available": False,
+            "allocation_note": ("SRM's official teacher-to-course allocation is not in this dataset, so these are faculty "
+                                "whose published specialization matches the course, not the assigned teacher."),
+            "match_basis": basis,
+            "matched_topics": topics,
+            "departments_searched": depts,
             "instructor_count": len(instructors),
             "instructors": instructors,
-            "source": "SRMIST Faculty Directory (Neo4j Community)" if client.is_connected else "SRMIST In-Memory Cache",
-            "grounding": f"Found {len(instructors)} instructors assigned to {c_code}."
+            "engine": engine,
+            "source": "SRMIST Faculty Directory (published specializations)",
+            "grounding": (f"{len(instructors)} faculty whose specialization matches {c_code}." if instructors
+                          else f"No faculty specialization match found for {c_code}."),
         }
 
     @staticmethod
@@ -542,6 +566,12 @@ class CampusKnowledgeTools:
                 # Tier 3: exact full-name match (after honorific stripping)
                 if q_phrase == f_phrase:
                     tier_exact.append(((raw_name.lower(), fid), fid, "exact", 100.0))
+                    continue
+
+                # Tier 3b: the full name sits inside a longer question
+                # ("Deepika D a professor or assistant professor" -> Dr. Deepika D)
+                if len(req_tokens) > len(f_tokens) >= 2 and (" " + f_phrase + " ") in (" " + q_phrase + " "):
+                    tier_exact.append(((raw_name.lower(), fid), fid, "exact", 95.0))
                     continue
 
                 # Tier 2: every query word matches a whole word in the name
@@ -818,6 +848,8 @@ class CampusKnowledgeTools:
         b_code = raw_b.upper()
         target_day = req.day.strip().capitalize()
         target_slot = req.slot.strip()
+        # Several slots may be given ("08:45-09:35,09:45-10:35"): a room must be free in all of them
+        target_slots = [x.strip() for x in target_slot.split(",") if x.strip()] or [target_slot]
 
         # Resolve building code against live Neo4j Building nodes (no silent fallback to TP)
         bmap = client.get_building_code_map()
@@ -856,7 +888,8 @@ class CampusKnowledgeTools:
                 cypher = """
                     MATCH (r:Room)-[:LOCATED_IN]->(b:Building {code: $b_code})
                     WHERE r.capacity >= $min_cap
-                    OPTIONAL MATCH (r)-[o:OCCUPIES {day: $day, slot: $slot}]-(:Course)
+                    OPTIONAL MATCH (r)-[o:OCCUPIES]-(:Course)
+                    WHERE o.day = $day AND o.slot IN $slots
                     WITH r, count(o) AS occ
                     WHERE occ = 0
                     RETURN r.id AS id, r.room_number AS room_number,
@@ -867,7 +900,7 @@ class CampusKnowledgeTools:
                 """
                 available = client.query_read(
                     cypher,
-                    {"b_code": b_code, "min_cap": req.min_capacity, "day": target_day, "slot": target_slot},
+                    {"b_code": b_code, "min_cap": req.min_capacity, "day": target_day, "slots": target_slots},
                 )
                 used_neo4j = True
             except Exception as e:
@@ -881,7 +914,7 @@ class CampusKnowledgeTools:
             ]
             occupied_room_ids = {
                 s["room_id"] for s in client.in_memory_data.get("schedules", [])
-                if s.get("day") == target_day and s.get("slot") == target_slot
+                if s.get("day") == target_day and s.get("slot") in target_slots
             }
             available = [r for r in candidate_rooms if r["id"] not in occupied_room_ids]
 
@@ -900,6 +933,7 @@ class CampusKnowledgeTools:
             "building_code": b_code,
             "day": target_day,
             "slot": target_slot,
+            "slots": target_slots,
             "min_capacity": req.min_capacity,
             "available_count": len(available),
             "available_rooms": available,
@@ -1105,7 +1139,18 @@ class CampusKnowledgeTools:
                 "category_evaluated": "Reserved (SC/ST/OBC)" if req.is_reserved_category else "General"
             }
 
-            if req.candidate_percentage is not None:
+            level = (p.get("degree_level") or "").lower()
+            is_pg = "postgraduate" in level or "(pg)" in level or "doctoral" in level or "ph.d" in level
+            if req.candidate_percentage is not None and is_pg and (req.score_basis or "").lower() == "12th":
+                # A school (12th) score cannot be checked against a postgraduate programme's degree-level cutoff
+                eval_item["candidate_percentage"] = req.candidate_percentage
+                eval_item["min_required_percentage"] = min_req
+                eval_item["eligibility_verdict"] = "NOT_ELIGIBLE_NEEDS_DEGREE"
+                eval_item["verdict_reason"] = (
+                    f"This is a postgraduate programme: it needs {p['min_education']} with at least {min_req}% "
+                    f"({p['mandatory_subjects']}). A 12th-grade score of {req.candidate_percentage}% does not qualify on its own."
+                )
+            elif req.candidate_percentage is not None:
                 has_percentage = req.candidate_percentage >= min_req
                 eval_item["candidate_percentage"] = req.candidate_percentage
                 eval_item["min_required_percentage"] = min_req
@@ -1627,6 +1672,17 @@ class CampusKnowledgeTools:
                 except Exception:
                     pass
 
+        if not building_record and matched_code:
+            for b in client.in_memory_data.get("buildings", []):
+                if b.get("code") == matched_code:
+                    rooms = [r for r in client.in_memory_data.get("rooms", []) if r.get("building_code") == matched_code]
+                    building_record = dict(b)
+                    building_record.update({
+                        "departments": [], "aliases": b.get("aliases", []), "total_rooms": len(rooms),
+                        "sample_rooms": [{"id": r.get("id"), "type": r.get("type"), "capacity": r.get("capacity")} for r in rooms[:6]],
+                    })
+                    break
+
         if not building_record:
             latency = (time.time() - t0) * 1000
             audit.log_event(
@@ -1658,8 +1714,8 @@ class CampusKnowledgeTools:
         b_code = building_record.get("code")
         b_name = building_record.get("name")
         floors = building_record.get("floors", 1)
-        facilities = building_record.get("facilities", [])
-        depts = building_record.get("departments", [])
+        facilities = building_record.get("facilities") or []
+        depts = [d for d in (building_record.get("departments") or []) if d]
 
         grounding = (
             f"[Building: {b_name}] ({b_code}) is a {floors}-floor facility at SRMIST Kattankulathur. "
@@ -1841,62 +1897,28 @@ class CampusKnowledgeTools:
         fid = matched_fac.get("id") if matched_fac else None
         fname = matched_fac.get("name") if matched_fac else q_name
 
+        # SRM's official allocation is not in the dataset (TEACHES links are random), so list the courses
+        # offered by this person's department whose topic matches their published specialization.
+        from campus_knowledge_server.tools.expertise import candidate_departments, topic_phrases, _matches
         courses = []
         slots_by_course = {}
-
-        if client.is_connected and client.driver:
-            cypher = """
-            MATCH (f:FacultyMember)-[t:TEACHES]->(c:Course)
-            WHERE (f.id = $fid) OR toLower(f.name) = toLower($name)
-            RETURN c.code as code, c.name as name, c.credits as credits, c.department as department
-            """
-            try:
-                rows = client.query_read(cypher, {"fid": fid or "", "name": fname})
-                unique_c = {}
-                for r in rows:
-                    ccode = r.get("code")
-                    if ccode and ccode not in unique_c:
-                        unique_c[ccode] = {"code": ccode, "name": r.get("name"), "credits": r.get("credits"), "department": r.get("department")}
-                courses = list(unique_c.values())
-            except Exception:
-                courses = []
-
-        if not courses and fid:
+        if matched_fac:
+            spec = (matched_fac.get("specialization") or "").lower()
+            fdept = matched_fac.get("department")
+            dept_names = {f.get("department") for f in all_faculty}
+            scored = []
             for c in client.in_memory_data.get("courses", []):
-                if fid in c.get("faculty_ids", []):
-                    courses.append({"code": c.get("code"), "name": c.get("name"), "credits": c.get("credits"), "department": c.get("department")})
-
-        # Resolve timetable slots for each course
-        for c in courses:
-            ccode = c["code"]
-            c_slots = []
-            if client.is_connected and client.driver:
-                try:
-                    s_rows = client.query_read("""
-                        MATCH (r:Room)-[o:OCCUPIES]->(c:Course)
-                        WHERE toUpper(c.code) = toUpper($code)
-                        RETURN r.id as room_id, o.day as day, o.slot as slot
-                        ORDER BY o.day, o.slot
-                    """, {"code": ccode})
-                    for sr in s_rows:
-                        rid = sr.get("room_id")
-                        day = sr.get("day")
-                        slot = sr.get("slot")
-                        if rid and day and slot:
-                            c_slots.append(f"{day} {slot} @ {rid}")
-                except Exception:
-                    pass
-            if not c_slots:
-                for sc in client._schedules_by_course.get(ccode, []):
-                    rid = sc.get("room_id")
-                    day = sc.get("day")
-                    slot = sc.get("slot")
-                    if rid and day and slot:
-                        c_slots.append(f"{day} {slot} @ {rid}")
-            if c_slots:
-                slots_by_course[ccode] = c_slots
-
-        courses.sort(key=lambda x: x.get("code", ""))
+                if fdept not in candidate_departments(c, dept_names):
+                    continue
+                hits = [p for p in topic_phrases(c) if spec and _matches(p, spec)]
+                if hits:
+                    title = (c.get("name") or "").lower().strip()
+                    bonus = 5 if len(title) > 5 and title in spec else 0      # course title listed in the specialization
+                    scored.append((len(hits) + bonus, c, hits))
+            scored.sort(key=lambda x: (-x[0], x[1].get("code", "")))
+            for n, c, hits in scored[:10]:
+                courses.append({"code": c.get("code"), "name": c.get("name"), "credits": c.get("credits"),
+                                "department": c.get("department"), "matched_topics": hits})
         audit.log_event(caller=caller, tool_name="get_faculty_courses", parameters={"faculty_name": fname}, status="SUCCESS", latency_ms=(time.time()-t0)*1000, result_count=len(courses))
         return {
             "faculty_id": fid,
@@ -1906,7 +1928,11 @@ class CampusKnowledgeTools:
             "course_details": courses,
             "slots": slots_by_course,
             "count": len(courses),
-            "source": "SRMIST Faculty Course Allocations"
+            "official_allocation_available": False,
+            "allocation_note": ("SRM's official teaching allocation is not in this dataset; these are courses from the "
+                                "faculty member's department that match their published specialization."),
+            "specialization": (matched_fac or {}).get("specialization", ""),
+            "source": "SRMIST Faculty Directory (published specializations) + Reg-2021 courses"
         }
 
     @staticmethod
@@ -2053,6 +2079,14 @@ class CampusKnowledgeTools:
                 rows = client.query_read(cypher, {"code": target_code})
             except Exception:
                 rows = []
+        if not rows:
+            seen = set()
+            for a in client.in_memory_data.get("curriculum_allocations", []):
+                if (a.get("course_code") or "").upper() == target_code.upper():
+                    key = (a.get("program_name"), a.get("semester"))
+                    if key not in seen:
+                        seen.add(key)
+                        rows.append({"program": a.get("program_name"), "semester": a.get("semester")})
 
         formatted = [f"{r['program']} (sem {r['semester']})" for r in rows if 'program' in r and 'semester' in r]
         audit.log_event(caller=caller, tool_name="find_programs_for_course", parameters={"course_code": target_code}, status="SUCCESS", latency_ms=(time.time()-t0)*1000, result_count=len(rows))

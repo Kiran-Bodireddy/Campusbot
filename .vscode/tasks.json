@@ -1,0 +1,12 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {"label": "1. Setup Python env", "type": "shell", "command": "powershell -ExecutionPolicy Bypass -File scripts/1_setup.ps1", "problemMatcher": []},
+    {"label": "2. Seed Neo4j", "type": "shell", "command": "powershell -ExecutionPolicy Bypass -File scripts/2_seed.ps1", "problemMatcher": []},
+    {"label": "3. Run tests", "type": "shell", "command": "powershell -ExecutionPolicy Bypass -File scripts/3_check_live.ps1", "problemMatcher": []},
+    {"label": "4. Run server", "type": "shell", "command": "powershell -ExecutionPolicy Bypass -File scripts/4_run_server.ps1", "isBackground": true, "problemMatcher": []},
+    {"label": "5. Run 200-question benchmark", "type": "shell", "command": "powershell -ExecutionPolicy Bypass -File scripts/5_benchmark.ps1", "problemMatcher": []},
+    {"label": "6. API security probe", "type": "shell", "command": "powershell -ExecutionPolicy Bypass -File scripts/6_api_probe.ps1", "problemMatcher": []},
+    {"label": "Setup + seed", "dependsOrder": "sequence", "dependsOn": ["1. Setup Python env", "2. Seed Neo4j"], "problemMatcher": []}
+  ]
+}

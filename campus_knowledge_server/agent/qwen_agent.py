@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from campus_knowledge_server.agent.prompts import SYSTEM_GROUNDING_PROMPT, TOOL_DEFINITIONS, INTENT_ROUTING_PROMPT
+from campus_knowledge_server.agent.time_slots import slots_for_query
 from campus_knowledge_server.agent.normalizer import normalize_user_query
 from campus_knowledge_server.config.matching_config import (
     load_matching_config,
@@ -106,6 +107,11 @@ def describe_cabin_location(cabin: str, building_map: Optional[Dict[str, str]] =
         return f"{raw} ({building_map[code]})"
     return raw
 
+
+# Tools whose answers must keep the exact wording of the template: the dataset has no official
+# teacher allocation, and free LLM prose turns "specialization match" into "is taught by".
+TEMPLATE_ONLY_TOOLS = {"find_faculty_for_course", "get_faculty_courses"}
+
 class ConversationMemory:
     """Lightweight session-scoped multi-turn conversation memory with principal isolation.
     Stores recent (query, tool_name, compact_answer) tuples per session_id.
@@ -186,7 +192,7 @@ class ConversationMemory:
         key = cls._make_key(session_id, user_id)
         if key in cls._pending_faculty:
             return cls._pending_faculty[key]
-        return cls._pending_faculty.get(session_id)
+        return None if user_id else cls._pending_faculty.get(session_id)
 
     @classmethod
     def clear_pending_faculty(cls, session_id: str, user_id: str = ""):
@@ -369,7 +375,12 @@ class ConversationMemory:
         key = cls._make_key(session_id, user_id)
         if key in cls._sessions:
             return cls._sessions[key]
-        return cls._sessions.get(session_id, [])
+        if user_id:
+            # Never fall back to another principal's copy of the same session id
+            owner = cls._session_owners.get(session_id)
+            if owner is not None and owner != user_id:
+                return []
+        return cls._sessions.get(session_id, []) if not user_id else []
 
     @classmethod
     def get_last_entities(cls, session_id: str, user_id: str = "") -> Dict[str, Any]:
@@ -384,6 +395,17 @@ class ConversationMemory:
         """Resolves pronoun-based follow-up queries using conversation history.
         E.g. 'what is his email?' -> resolves 'his' to last faculty entity."""
         q_lower = user_query.lower().strip()
+        # "and semester 7?" / "what about sem 6" after a semester-curriculum answer: same programme, new semester
+        m_sem = re.match(r"^(?:and|what\s+about|how\s+about|also)?\s*(?:for\s+)?(?:the\s+)?(?:sem|semester)\s*(\d{1,2})\s*\??$", q_lower)
+        if m_sem:
+            for turn in reversed(cls.get_history(session_id, user_id)):
+                if turn.get("tool") != "get_semester_curriculum":
+                    break
+                prev = turn.get("query") or ""
+                if re.match(r"^(?:and|what\s+about|how\s+about|also)?\s*(?:for\s+)?(?:the\s+)?(?:sem|semester)\s*\d{1,2}\s*\??$", prev.lower().strip()):
+                    continue                                                    # itself a short follow-up
+                if re.search(r"(?i)\b(?:sem|semester)\s*\d{1,2}", prev):      # skip "only the names"-style follow-ups
+                    return re.sub(r"(?i)\b(sem|semester)\s*\d{1,2}", lambda mm: f"{mm.group(1)} {m_sem.group(1)}", prev, count=1)
         pronouns = {"his", "her", "their", "them", "that", "this", "it", "its", "he", "she"}
         has_pronoun = any(p in q_lower.split() for p in pronouns)
 
@@ -489,6 +511,8 @@ class GovernedCampusAgent:
 
     def _select_tool_heuristically(self, user_query: str) -> Optional[tuple[str, Dict[str, Any]]]:
         """High-precision fuzzy & normalized router tolerant of typos, slang, and misspellings."""
+        # "tp1" / "tp-1" / "tech park 1" is the original Tech Park (graph code TP)
+        user_query = re.sub(r"(?i)\b(?:tp[\s-]?1|tech\s*park\s*1)\b", "TP", user_query)
         norm_query, meta = normalize_user_query(user_query)
         q_lower = norm_query.lower()
         codes = re.findall(r"\b(?:21[A-Z]{2,4}\d{3}[A-Z]?|[A-Za-z]{3,4}\d{3})\b", user_query.upper())
@@ -511,6 +535,50 @@ class GovernedCampusAgent:
                 if re.search(r"\b" + re.escape(name) + r"\b", raw_lower):
                     codes.append(c_code)
                     break
+            if not codes and re.search(r"\b(?:teach\w*|taught|instructors?|faculty|profs?|professors?|prereq\w*|credits?|credts?|creds?|syllabus|l-t-p-c|ltpc|held|meet|meets|timings?|classroom|class\s+room|which\s+room|what\s+room|room\s+type|type\s+of\s+room|kind\s+of\s+(?:room|building)|which\s+building|what\s+building|floors?|capacity\s+of\s+the\s+room|lab\s+or\s+(?:a\s+)?lecture\s+hall|taught\s+in|venue|when\s+and\s+where|where\s+(?:is|does|are)|when\s+is|kab|programs?|programmes?|branch(?:es)?|semesters?)\b", raw_lower):
+                from campus_knowledge_server.agent.course_titles import resolve_course_title
+                fuzzy_code = resolve_course_title(raw_lower, getattr(gc, "_course_by_code", {}))
+                if fuzzy_code:
+                    codes.append(fuzzy_code)
+
+        # 0.0 Topic questions ("which courses cover machine learning") list matching courses, not one title
+        m_topic = re.search(
+            r"\b(?:which|what|list|show|any)\s+(?:all\s+|the\s+)?(?:courses?|subjects?|papers?)\s+"
+            r"(?:cover|covers|teach|teaches|include|includes|are\s+(?:about|on|related\s+to)|deal\s+with|involve|have|on|about|related\s+to)\s+(.+?)[\s?.!]*$"
+            r"|\b(?:courses?|subjects?)\s+(?:on|about|covering|related\s+to|involving)\s+(.+?)[\s?.!]*$"
+            r"|^(?:is\s+there\s+)?anything\s+(?:on|about|related\s+to)\s+(.+?)[\s?.!]*$",
+            raw_lower,
+        )
+        if m_topic and not re.search(r"\b21[A-Z]{2,4}\d{3}[A-Z]?\b", user_query.upper()):
+            topic = (m_topic.group(1) or m_topic.group(2) or m_topic.group(3) or "").strip()
+            if len(topic) >= 2:
+                return "search_courses_semantic", {"query": topic, "top_k": 8}
+
+        # 0.0a Extra phrasings (reverse prerequisites, comparisons, faculty by topic, course listings, bare names)
+        from campus_knowledge_server.agent.extra_intents import route_extra
+        _gc = get_graph_client()
+        extra = route_extra(user_query, codes, _gc.in_memory_data.get("faculty", []), [])
+        if extra:
+            return extra
+
+        # 0.0b Where / when a course meets ("which room is Immunology held in", "21ECC101J timings")
+        if codes and re.search(r"\b(?:held|meet|meets|timings?|classroom|class\s+room|which\s+room|what\s+room|room\s+type|type\s+of\s+room|kind\s+of\s+(?:room|building)|which\s+building|what\s+building|floors?|capacity\s+of\s+the\s+room|lab\s+or\s+(?:a\s+)?lecture\s+hall|taught\s+in|venue|when\s+and\s+where|where\s+(?:is|does|are)|when\s+is|kab)\b", raw_lower) and not re.search(
+                r"\b(?:who\s+teach\w*|prereq\w*|credits?|credts?|eligib\w*|syllabus|semesters?\s+\d|professors?|profs?|faculty(?!\s+of)|teachers?|instructors?|lecturers?|sir|madam|ma'am)\b", raw_lower):
+            day_m = re.search(r"\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b", user_query, re.IGNORECASE)
+            return "find_course_schedule", {"course_code": codes[0], "day_of_week": day_m.group(1).capitalize() if day_m else None}
+
+        # 0.0c Which programmes / branches include a course
+        if codes and re.search(r"\b(?:which|what)\s+(?:branches|programs?|programmes?|degrees?|courses\s+of\s+study)\b|\bin\s+which\s+semester\b", raw_lower):
+            return "find_programs_for_course", {"course_code": codes[0]}
+
+        # 0.0d Slang faculty-for-course ("who's teachin DS", "which prof does DBMS")
+        if codes and re.search(r"\b(?:teachin|teachs|which\s+profs?|prof\s+does|who\s+takes|who's\s+teach\w*)\b", raw_lower):
+            return "find_faculty_for_course", {"course_code": codes[0]}
+
+        # 0.0e "completed none of the prerequisites, can I enroll in X"
+        if codes and re.search(r"\b(?:none\s+of\s+the\s+prereq\w*|no\s+prereq\w*|haven'?t\s+(?:completed|done|taken)|without\s+(?:any\s+)?prereq\w*)\b", raw_lower) \
+                and re.search(r"\b(?:enrol+|take|register|join|eligible)\b", raw_lower):
+            return "verify_prerequisites", {"target_course": codes[0], "completed_courses": []}
 
         # 0.A. Reverse Prerequisite / Dependent Courses
         m_after = re.search(r"\b(?:what(?:\s+courses?)?\s+can\s+i\s+take\s+after\s+(?:finishing\s+|completing\s+)?|courses?\s+(?:unlocked|eligible)\s+after\s+|which\s+courses\s+require\s+(.+?)\s+as\s+a\s+prerequisite)\b", raw_lower)
@@ -664,13 +732,16 @@ class GovernedCampusAgent:
             return "get_campus_statistics", {"category": "departments"}
 
         # 0. Campus Overview & Aggregation Statistics (e.g. 'number of courses offered at srmist', 'how many programs', 'total faculty')
-        is_credit_query = bool(re.search(r"\b(?:credit|credits|ltpc|l-t-p-c)\b", raw_lower))
+        is_credit_query = bool(re.search(r"\b(?:credit|credits|credts?|creds?|ltpc|l-t-p-c)\b", raw_lower))
         is_floor_query = bool(re.search(r"\b(?:floor|floors|level|levels)\b", raw_lower))
         is_person_or_cabin = bool(re.search(r"\b(?:dr\.?|prof\.?|professor|dean|hod)\b|(?:room|cabin|office)\s+(?:number\s+)?(?:of|for)\b", raw_lower))
+        # "phone number of dr X", "cabin number of", "room number of" ask about one record, not counts
+        is_record_number = bool(re.search(r"\b(?:phone|mobile|contact|cabin|room|roll|office|staff\s*room)\s+number\b|\bdr\.?\s|\bprof\.?\s", raw_lower))
         is_stat_intent = (
             not is_credit_query
             and not is_floor_query
             and not is_person_or_cabin
+            and not is_record_number
             and (
                 any(w in raw_lower or w in q_lower for w in [
                     "how many", "total number", "count of", "total count", "statistics",
@@ -706,19 +777,26 @@ class GovernedCampusAgent:
         # 1. Admission eligibility & Program Details (fees, intake, cutoffs, duration)
         # Matches queries like: 'eligibity for btech', 'how much fee for cse', 'admission for mbbs', 'cutoff for mba', 'scored 55% in 12th'
         has_percentage = bool(re.search(r"\d+\s*%", user_query))
-        is_admission_or_fee = meta.get("is_admission_intent") or meta.get("is_fee_intent") or any(
-            w in q_lower for w in ["admission", "admissions", "cutoff", "entrance exam", "srmjeee", "neet", "fee", "fees", "tuition", "cost", "criteria", "qualify", "eligible", "eligibility", "join", "can i join", "get into", "take admission"]
-        ) or (has_percentage and has_degree)
-        has_degree = (
+        def _pn(t: str) -> str:
+            return " ".join(re.findall(r"[a-z0-9]+", (t or "").lower().replace("&", " and ")))
+        _qpn = " " + _pn(user_query) + " "
+        programme_named = any(len(_pn(p_rec.get("program_name", ""))) >= 6 and (" " + _pn(p_rec.get("program_name", "")) + " ") in _qpn
+                              for p_rec in (getattr(get_graph_client(), "admission_eligibility", []) or []))
+        has_degree = programme_named or (
             meta.get("detected_degree") is not None
             or meta.get("detected_discipline") is not None
             or any(deg in q_lower for deg in ["b.tech", "m.tech", "mbbs", "bds", "mba", "mca", "b.sc", "bba", "b.com", "b.arch", "law", "ph.d", "diploma", "computer science"])
+        )
+        is_admission_or_fee = meta.get("is_admission_intent") or meta.get("is_fee_intent") or any(
+            w in q_lower for w in ["admission", "admissions", "cutoff", "entrance exam", "srmjeee", "neet", "fee", "fees", "tuition", "cost", "criteria", "qualify", "eligible", "eligibility", "join", "can i join", "get into", "take admission"]
+        ) or (has_percentage and has_degree) or bool(
+            re.search(r"\b(?:how\s+long|duration|how\s+many\s+years)\b", q_lower) and re.search(r"\b(?:programmes?|programs?|degree)\b", q_lower)
         )
 
         if (is_admission_or_fee and (has_degree or not codes)) and not (len(codes) >= 2):
             pct_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:%|percent)", user_query, re.IGNORECASE)
             cand_pct = float(pct_match.group(1)) if pct_match else None
-            is_reserved = any(cat in q_lower for cat in ["reserved", "sc", "st", "obc", "pwd"])
+            is_reserved = bool(re.search(r"\b(?:reserved|sc|st|obc|pwd|sc/st)\b", q_lower))
             cand_stream = None
             if "pcm" in q_lower: cand_stream = "PCM"
             elif "pcb" in q_lower: cand_stream = "PCB"
@@ -735,10 +813,24 @@ class GovernedCampusAgent:
                 norm_query,
             )
             prog_stripped = re.sub(r"[^\w\s\.\-&]", " ", prog_stripped)
-            prog_stripped = re.sub(r"\s+", " ", prog_stripped).strip()
+            prog_stripped = re.sub(r"(?i)\b(?:am|my|got|an|a|pcm|pcb|commerce|arts|humanities|stream|\d+(?:\.\d+)?)\b", " ", prog_stripped)
+            prog_stripped = re.sub(r"\s+", " ", prog_stripped).strip(" .-")
+
+            # Prefer an exact programme name from the graph when the question contains one
+            def _pnorm(t: str) -> str:
+                t = (t or "").lower().replace("&", " and ")
+                return " ".join(re.findall(r"[a-z0-9]+", t))
+            q_pn = " " + _pnorm(user_query) + " "
+            exact_prog = None
+            for p_rec in getattr(get_graph_client(), "admission_eligibility", []) or []:
+                pn = _pnorm(p_rec.get("program_name", ""))
+                if len(pn) >= 6 and (" " + pn + " ") in q_pn and (exact_prog is None or len(pn) > len(_pnorm(exact_prog))):
+                    exact_prog = p_rec.get("program_name")
 
             canonical_prog = meta.get("canonical_program")
-            if canonical_prog and meta.get("detected_discipline"):
+            if exact_prog:
+                prog_clean = exact_prog
+            elif canonical_prog and meta.get("detected_discipline"):
                 prog_clean = canonical_prog
             elif prog_stripped and len(prog_stripped.split()) >= 2:
                 prog_clean = prog_stripped
@@ -753,7 +845,10 @@ class GovernedCampusAgent:
                 "program_query": prog_clean,
                 "candidate_percentage": cand_pct,
                 "is_reserved_category": is_reserved,
-                "candidate_stream": cand_stream
+                "candidate_stream": cand_stream,
+                "score_basis": ("12th" if re.search(r"\b(?:12th|12\s*th|class\s*12|xii|plus\s*two|\+2|hsc|higher\s+secondary|board)\b", q_lower)
+                                else "degree" if re.search(r"\b(?:ug|degree|graduation|bachelor'?s?|cgpa|b\.?\s?tech|b\.?\s?sc|bot|b\.?\s?ot)\b.*\b(?:score|scored|got|with|marks|%)", q_lower)
+                                else None),
             }
 
         # 1. Course Prerequisite eligibility check (handles both "passed Y take X" AND "register for X having passed Y")
@@ -840,7 +935,7 @@ class GovernedCampusAgent:
 
         if (is_building_intent or bare_bldg) and not (codes and any(w in raw_lower for w in ["host", "class", "classes", "held", "lecture", "course", "schedule", "timetable"])):
             is_availability_query = any(w in raw_lower for w in [
-                "available", "vacant", "free room", "free classroom", "empty", "slot", "occupancy",
+                "available", "vacant", "free room", "free classroom", "empty", "slot", "occupancy", "are free", "free in", "rooms free", "unoccupied",
                 "room in", "rooms in", "any room", "hall in", "fits", "seats", "capacity"
             ])
             if is_availability_query:
@@ -852,8 +947,13 @@ class GovernedCampusAgent:
                 single_time_match = re.search(r"\b(\d{1,2}:\d{2})\s*(?:am|pm)?\b", user_query, re.IGNORECASE)
                 period_match = re.search(r"\b(?:first|1st)\s+period\b", raw_lower)
 
-                if slot_time_match:
-                    slot_val: Any = slot_time_match.group(1).replace(" ", "")
+                parsed_slots = slots_for_query(user_query)
+                if slot_num_match:
+                    slot_val: Any = int(slot_num_match.group(1))
+                elif parsed_slots:
+                    slot_val = ",".join(parsed_slots)
+                elif slot_time_match:
+                    slot_val = slot_time_match.group(1).replace(" ", "")
                 elif slot_num_match:
                     slot_val = int(slot_num_match.group(1))
                 elif period_match:
@@ -892,7 +992,7 @@ class GovernedCampusAgent:
         # 5. Vacant / available rooms in building (never silently fall back unknown building names to TP)
         if (
             meta.get("is_room_intent")
-            or any(w in q_lower for w in ["available room", "available classroom", "free room", "vacant", "classroom in", "rooms in", "room in"])
+            or any(w in q_lower for w in ["available room", "available classroom", "free room", "free classroom", "vacant", "empty room", "empty class", "unoccupied", "classroom in", "rooms in", "room in"])
         ) and not (codes and any(w in q_lower for w in ["host", "class", "classes", "held", "lecture", "course", "schedule", "timetable"])):
             b_code = matched_bldg_code or meta.get("detected_building")
             if not b_code:
@@ -902,7 +1002,7 @@ class GovernedCampusAgent:
             if not b_code:
                 # Extract explicit unknown building/block name after 'in'/'at' instead of silently substituting TP
                 unk_m = re.search(
-                    r"(?i)\b(?:in|at)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s\-]{1,40}?)(?:\s+(?:on|for|at|during|with|slot|monday|tuesday|wednesday|thursday|friday|saturday|sunday|where)\b|[?.!]|$)",
+                    r"(?i)\b(?:in|at)\s+(?:the\s+)?([A-Za-z][A-Za-z0-9\s\-]{1,40}?)(?:\s+(?:on|for|at|during|with|from|between|slot|monday|tuesday|wednesday|thursday|friday|saturday|sunday|where)\b|[?.!]|$)",
                     user_query,
                 )
                 if unk_m:
@@ -912,10 +1012,13 @@ class GovernedCampusAgent:
                 day_val = day_match.group(1).capitalize() if day_match else "Monday"
                 slot_time_match = re.search(r"\b(\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})\b", user_query)
                 slot_num_match = re.search(r"\bslot\s*(\d+)\b", user_query, re.IGNORECASE)
-                if slot_time_match:
-                    slot_val = slot_time_match.group(1).replace(" ", "")
-                elif slot_num_match:
+                parsed_slots = slots_for_query(user_query)
+                if slot_num_match:
                     slot_val = int(slot_num_match.group(1))
+                elif parsed_slots:
+                    slot_val = ",".join(parsed_slots)
+                elif slot_time_match:
+                    slot_val = slot_time_match.group(1).replace(" ", "")
                 else:
                     slot_val = "08:45-09:35"
                 cap_match = re.search(r"\b(?:capacity|cap|seats?|students?)\s*(?:of\s*)?(\d{1,3})\b|\b(?:for\s*)?(\d{1,3})\s*(?:seats?|students?|capacity)\b", user_query, re.IGNORECASE)
@@ -1769,6 +1872,42 @@ class GovernedCampusAgent:
         has_pronoun = bool(q_words & pronouns)
         has_include_marker = any(m in q_lower for m in include_markers if m)
 
+        # Semester list follow-ups: "list these courses without the number of credits", "only the names"
+        if last_tool == "get_semester_curriculum" and isinstance(last_res.get("courses"), list) and last_res["courses"]:
+            drop_credits = is_exclude and re.search(r"\b(?:credits?|ltpc|l-t-p-c|numbers?)\b", q_lower)
+            drop_category = is_exclude and re.search(r"\b(?:categor\w*|types?)\b", q_lower)
+            names_only = re.search(r"\b(?:only|just)\s+(?:the\s+)?(?:course\s+)?(?:names?|titles?|codes?)\b", q_lower)
+            if drop_credits or drop_category or names_only:
+                show_credits = not (drop_credits or names_only)
+                show_category = not (drop_category or names_only)
+                lines = [f"**{last_res.get('program_name', 'Programme')} - Semester {last_res.get('semester', '')}** "
+                         f"({len(last_res['courses'])} courses):"]
+                for c in last_res["courses"]:
+                    extra = []
+                    if show_category and c.get("category"):
+                        extra.append(c["category"])
+                    if show_credits and c.get("credits") is not None:
+                        extra.append(f"{c['credits']} credits")
+                    lines.append(f"- **[Course: {c.get('course_code')}]** {c.get('course_name')}" + (f" — {', '.join(extra)}" if extra else ""))
+                answer = "\n".join(lines)
+                ConversationMemory.add_turn(session_id, q_strip, "get_semester_curriculum", answer[:200],
+                                            last_turn.get("entities", {}), user_id=user_id, tool_result=last_res)
+                return {
+                    "user_query": q_strip,
+                    "tool_selected": "get_semester_curriculum",
+                    "parameters": {"followup_mode": "exclude", "fields": [f for f, on in (("credits", not show_credits), ("category", not show_category)) if on]},
+                    "status": "SUCCESS",
+                    "intent": "followup_projection",
+                    "suggestions": [],
+                    "tool_result": dict(last_res, projection={"mode": "exclude", "excluded_fields": ["credits"] if not show_credits else []}),
+                    "answer": answer,
+                    "grounded": True,
+                    "engine_mode": engine_mode,
+                    "intent_source": "Process 004 Schema-Driven Follow-Up Projection",
+                    "source": last_res.get("source", "SRMIST Regulations 2021 Unified Curriculum"),
+                    "synthesizer": "Grounded Follow-Up Composer",
+                }
+
         # Match requested fields from config for the active entity type
         if last_tool == "lookup_course" and isinstance(last_res.get("courses"), list) and len(last_res["courses"]) == 1:
             field_map = proj_cfg.get("course_fields", {})
@@ -2375,6 +2514,21 @@ class GovernedCampusAgent:
         Treats a message as small talk ONLY when it is a greeting, thanks, or 'how are you'
         AND contains NO remaining content words or entity-like tokens.
         """
+        oos = re.search(
+            r"(?i)\b(?:weather|temperature\s+(?:in|today)|forecast|ipl|cricket|football|match\s+score|who\s+won|world\s+cup|"
+            r"movie|film|song|lyrics|recipe|stock\s+price|share\s+price|bitcoin|news\s+today|prime\s+minister|president\s+of|chief\s+minister|"
+            r"book\s+(?:me\s+)?(?:an?\s+)?(?:cab|taxi|uber|ola|ticket|flight|train|hotel)|order\s+(?:me\s+)?food|play\s+(?:some\s+)?music|"
+            r"write\s+(?:me\s+)?(?:an?\s+)?(?:essay|poem|story|song|letter|code)|tell\s+me\s+a\s+joke|joke)\b",
+            user_query,
+        )
+        if oos and not re.search(r"(?i)\b(?:srm|srmist|campus|course|faculty|professor|dr\.?|semester|admission|room|building|21[A-Z]{2,4}\d{3})", user_query):
+            return {
+                "category": "out_of_scope",
+                "status": "OUT_OF_SCOPE",
+                "intent": "out_of_scope",
+                "reply": ("That's outside what I can answer. I only answer from SRMIST campus data: courses, prerequisites, "
+                          "faculty, rooms and timetables, semester curricula, admissions and campus buildings."),
+            }
         st_cfg = load_matching_config().get("small_talk") or {}
         templates = st_cfg.get("templates") or {}
         fillers = {str(w).strip().lower() for w in st_cfg.get("filler_words", []) if w}
@@ -2461,6 +2615,15 @@ class GovernedCampusAgent:
         # Must contain a separator ('and', '&', or ',')
         if not re.search(r"(?:\band\b|&|,)", user_query, re.IGNORECASE):
             return []
+        # Course titles and programme names contain "and" too ("Environmental Engineering And Design")
+        if re.search(r"(?i)\b(?:syllabus|credits?|course|subject|prereq\w*|semester|programme|program|fee|eligib\w*)\b", user_query):
+            return []
+        try:
+            from campus_knowledge_server.agent.course_titles import resolve_course_title
+            if resolve_course_title(user_query, get_graph_client()._course_by_code):
+                return []
+        except Exception:
+            pass
         # Never split course/room code queries or building/curriculum/admission queries
         if re.search(r"\b(?:21[A-Z]{2,4}\d{3}[A-Z]?|[A-Z]{2,4}-\d{3}|FAC-\d+)\b", user_query.upper()):
             return []
@@ -2651,6 +2814,11 @@ class GovernedCampusAgent:
                 if re.search(r"\b" + re.escape(name) + r"\b", q_lower):
                     codes.append(c_code)
                     break
+            if not codes and re.search(r"\b(?:teach\w*|taught|instructors?|faculty|profs?|professors?|prereq\w*|credits?|credts?|creds?|syllabus|l-t-p-c|ltpc|held|meet|meets|timings?|classroom|class\s+room|which\s+room|what\s+room|room\s+type|type\s+of\s+room|kind\s+of\s+(?:room|building)|which\s+building|what\s+building|floors?|capacity\s+of\s+the\s+room|lab\s+or\s+(?:a\s+)?lecture\s+hall|taught\s+in|venue|when\s+and\s+where|where\s+(?:is|does|are)|when\s+is|kab|programs?|programmes?|branch(?:es)?|semesters?)\b", q_lower):
+                from campus_knowledge_server.agent.course_titles import resolve_course_title
+                fuzzy_code = resolve_course_title(q_lower, getattr(gc, "_course_by_code", {}))
+                if fuzzy_code:
+                    codes.append(fuzzy_code)
 
         if not codes:
             return None
@@ -2900,6 +3068,11 @@ class GovernedCampusAgent:
         use_heuristic_router: bool = True,
         routing_mode: str = "hybrid"
     ) -> Dict[str, Any]:
+        routing_mode = "hybrid"  # single routing mode: LLM-intent mode removed
+        if isinstance(user_query, str) and len(user_query) > 1000:
+            return {"user_query": user_query[:80] + "...", "tool_selected": "input_guard", "parameters": {}, "status": "INPUT_TOO_LONG",
+                    "intent": "input_too_long", "tool_result": {}, "grounded": True,
+                    "answer": "That question is too long (limit: 1,000 characters). Please shorten it."}
         t0 = time.perf_counter()
         self._last_grounding_info = None
         self._last_stage_timings = {"routing_ms": 0.0, "tool_ms": 0.0, "generation_ms": 0.0}
@@ -2931,6 +3104,8 @@ class GovernedCampusAgent:
                 explicit_options=res.get("options"),
             )
             res.update(meta25)
+            from campus_knowledge_server.tools.governed_executor import govern_output
+            res = govern_output(res, effective_role)
         return res
 
     def _execute_query_core(
@@ -3232,7 +3407,8 @@ class GovernedCampusAgent:
                     "source": tool_result.get("source", "SRMIST Space Allocation Matrix"),
                 }
             # Check across other catalogs (non-faculty when lookup_faculty_profile returned 0 matches)
-            fed_res = self._federated_cross_entity_search(user_query, role=role, engine_mode=engine_mode, attempted_tool=tool_name)
+            named_person = tool_name == "lookup_faculty_profile" and re.search(r"\b(?:dr|prof|professor|mr|mrs|ms)\b\.?\s+[a-z]", user_query.lower())
+            fed_res = None if named_person else self._federated_cross_entity_search(user_query, role=role, engine_mode=engine_mode, attempted_tool=tool_name)
             if fed_res:
                 return fed_res
 
@@ -3277,7 +3453,7 @@ class GovernedCampusAgent:
             else:
                 if tool_name == "lookup_faculty_profile" and session_id:
                     ConversationMemory.clear_pending_faculty(session_id, user_id=user_id)
-                if use_llm_synthesis and self.ollama_active:
+                if use_llm_synthesis and self.ollama_active and tool_name not in TEMPLATE_ONLY_TOOLS:
                     t_gen0 = time.perf_counter()
                     raw_llm_ans = self._synthesize_with_qwen(user_query, tool_name, tool_result, session_id=session_id, principal=principal)
                     self._last_stage_timings["generation_ms"] = round((time.perf_counter() - t_gen0) * 1000.0, 1)
@@ -3331,6 +3507,12 @@ class GovernedCampusAgent:
         """Determines whether a tool execution produced verified records from the graph."""
         if not result or not isinstance(result, dict):
             return False
+        if tool_name == "find_faculty_for_course" and result.get("course_found"):
+            return True
+        if tool_name == "get_faculty_courses" and result.get("faculty_id"):
+            return True
+        if tool_name in ("list_courses", "find_programs_for_course", "search_faculty", "find_dependent_courses") and "count" in result:
+            return True                                                   # a valid empty answer ("none found"), not a routing miss
         if "programs" in result and result["programs"]:
             return True
         if "faculty" in result and result["faculty"]:
@@ -3734,6 +3916,11 @@ Answer:"""
         session_id: str = "",
         routing_mode: str = "hybrid"
     ):
+        routing_mode = "hybrid"  # single routing mode: LLM-intent mode removed
+        if isinstance(user_query, str) and len(user_query) > 1000:
+            yield {"event": "error", "status": "INPUT_TOO_LONG", "tool": "input_guard",
+                   "detail": "That question is too long (limit: 1,000 characters). Please shorten it."}
+            return
         """
         Server-Sent Events generator streaming stage progress, tool metadata,
         real-time tokens, and enriched Item 25 final completion/error events.
@@ -3753,6 +3940,8 @@ Answer:"""
             session_id=session_id,
             routing_mode=routing_mode,
         ):
+            from campus_knowledge_server.tools.governed_executor import govern_output
+            chunk = govern_output(chunk, effective_role)
             ev = chunk.get("event")
             if ev == "meta":
                 last_meta = chunk
@@ -4178,7 +4367,8 @@ Answer:"""
                     yield {"event": "delta", "token": word + " "}
                 yield {"event": "done", "answer": grounded_answer, "status": "NOT_FOUND"}
                 return
-            fed_res = self._federated_cross_entity_search(user_query, role=role, engine_mode=engine_mode, attempted_tool=tool_name)
+            named_person = tool_name == "lookup_faculty_profile" and re.search(r"\b(?:dr|prof|professor|mr|mrs|ms)\b\.?\s+[a-z]", user_query.lower())
+            fed_res = None if named_person else self._federated_cross_entity_search(user_query, role=role, engine_mode=engine_mode, attempted_tool=tool_name)
             if fed_res:
                 yield {
                     "event": "meta",
@@ -4326,7 +4516,7 @@ Answer:"""
 
         # Token Streaming
         tokens_emitted = []
-        if use_llm_synthesis and self.ollama_active:
+        if use_llm_synthesis and self.ollama_active and tool_name not in TEMPLATE_ONLY_TOOLS:
             t_gen0 = time.perf_counter()
             try:
                 llm_cfg = load_matching_config().get("llm") or {}
@@ -4430,16 +4620,24 @@ Answer:"""
         elif tool_name == "find_faculty_for_course":
             code = result.get("course_code", "")
             instructors = result.get("instructors", [])
+            cname = result.get("course_name", "")
             if not instructors:
-                return f"No instructor assignments currently registered for [Course: {code}]."
-            lines = [f"Instructors assigned to [Course: {code}]:"]
+                return (f"SRM's official teacher allocation is not in the dataset, and no faculty specialization matches "
+                        f"[Course: {code}] {cname}.")
+            if result.get("match_basis") == "department":
+                lines = [f"No published specialization explicitly matches [Course: {code}] {cname}; senior faculty of the offering department:"]
+            else:
+                lines = [f"Faculty whose published specialization matches [Course: {code}] {cname}:"]
             for i in instructors:
                 fid = i.get("id", "N/A")
                 dept = i.get("normalized_department") or i.get("department") or "Department not listed"
                 cabin_disp = describe_cabin_location(i.get("cabin", ""))
+                topics = ", ".join(i.get("matched_topics", [])[:3])
                 lines.append(
-                    f"- [Faculty: {i['name']}] (ID: `{fid}`, {i.get('designation', 'Faculty')}, {dept}) — Cabin: **{cabin_disp}** | Email: {i.get('email', 'N/A')}"
+                    f"- [Faculty: {i['name']}] (ID: `{fid}`, {i.get('designation', 'Faculty')}, {dept}) — matches: {topics} — Cabin: **{cabin_disp}** | Email: {i.get('email', 'N/A')}"
                 )
+            lines.append("")
+            lines.append("_SRM's official teacher-to-course allocation is not in this dataset, so these are specialization matches, not the assigned teacher._")
             return "\n".join(lines)
 
         elif tool_name == "lookup_faculty_profile":
@@ -4599,12 +4797,17 @@ Answer:"""
                 lines.append(f"\nWould you like to check available classrooms in **{full_name}** for a specific day and time?")
                 return "\n".join(lines)
 
+            slot_list = result.get("slots") or [slot]
+            slot_disp = f"**{slot}**"
+            if len(slot_list) > 1:
+                slot_disp = (f"**{slot_list[0].split('-')[0]}-{slot_list[-1].split('-')[1]}** "
+                             f"(free in all {len(slot_list)} class slots: {', '.join(slot_list)})")
             if not avail:
-                return f"No unoccupied classrooms found in **{full_name}** for **{day}** at slot **{slot}** with minimum capacity {result.get('min_capacity', 30)}.{assumed_note}"
+                return f"No unoccupied classrooms found in **{full_name}** for **{day}** at slot {slot_disp} with minimum capacity {result.get('min_capacity', 30)}.{assumed_note}"
 
             cap_note = f" (showing {len(avail)} due to role row cap)" if result.get("row_cap_applied") else ""
             lines = [
-                f"Found **{count} available classrooms** in **{full_name}** for **{day}** at slot **{slot}**{cap_note}:\n"
+                f"Found **{count} available classrooms** in **{full_name}** for **{day}** at slot {slot_disp}{cap_note}:\n"
             ]
             for r in avail[:6]:
                 lines.append(f"- **[Room: {r['id']}]**: {r.get('type', 'Classroom')} (Capacity: **{r.get('capacity', 'N/A')}** seats)")
@@ -4855,15 +5058,16 @@ Answer:"""
             fname = result.get("faculty_name", "Faculty")
             courses = result.get("course_details", [])
             slots = result.get("slots", {})
+            spec = result.get("specialization", "")
             if not courses:
-                return f"No active teaching courses or class schedules found for [Faculty: {fname}]."
-            lines = [f"Teaching allocations and weekly timetable for [Faculty: {fname}]:"]
+                return (f"SRM's official teaching allocation is not in the dataset, and no course from the department of "
+                        f"[Faculty: {fname}] matches their published specialization ({spec or 'not listed'}).")
+            lines = [f"Courses matching the published specialization of [Faculty: {fname}] ({spec}):"]
             for c in courses:
-                ccode = c["code"]
-                cname = c.get("name", "")
-                c_slots = slots.get(ccode, [])
-                slot_info = "; ".join(c_slots) if c_slots else "No scheduled room slots"
-                lines.append(f"- **[Course: {ccode}] {cname}** ({c.get('credits', 'N/A')} credits): {slot_info}")
+                topics = ", ".join(c.get("matched_topics", [])[:3])
+                lines.append(f"- **[Course: {c['code']}] {c.get('name', '')}** ({c.get('credits', 'N/A')} credits) — matches: {topics}")
+            lines.append("")
+            lines.append("_SRM's official teaching allocation is not in this dataset, so this is a specialization match, not the assigned timetable._")
             return "\n".join(lines)
 
         elif tool_name == "list_courses":

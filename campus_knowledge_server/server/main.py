@@ -101,6 +101,15 @@ ALLOWED_ORIGINS = [
     if o.strip()
 ]
 
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -387,9 +396,9 @@ def find_course_schedule(req: CourseScheduleRequest, request: Request):
     return dispatch_governed_tool("find_course_schedule", req.model_dump(), request)
 
 class AgentAskRequest(BaseModel):
-    query: str = Field(..., description="Natural language question about courses, admissions, faculty, or rooms")
+    query: str = Field(..., min_length=1, max_length=1000, description="Natural language question about courses, admissions, faculty, or rooms (max 1,000 characters)")
     use_qwen: bool = Field(True, description="Whether to use local Qwen 2.5 (via Ollama) to synthesize the grounded answer")
-    routing_mode: Optional[str] = Field("hybrid", description="Routing mode: 'hybrid' (fast smart gate) or 'llm_intent' (Qwen understands input first)")
+    routing_mode: Optional[str] = Field("hybrid", description="Ignored: the server always uses router-first ('hybrid') routing.")
     role: Optional[str] = Field(None, description="Optional role claim (must match verified JWT token or default to student)")
     engine_mode: Optional[str] = Field("neo4j", description="Active knowledge engine: 'neo4j' (default) or 'backup'")
     session_id: Optional[str] = Field(None, description="Client session ID for multi-turn conversational context")
@@ -456,7 +465,7 @@ def ask_agent(req: AgentAskRequest, request: Request):
         role=principal.role,
         engine_mode=req.engine_mode or "neo4j",
         session_id=req.session_id or "",
-        routing_mode=req.routing_mode or "hybrid"
+        routing_mode="hybrid"  # LLM-intent mode removed
     )
     if res.get("status") == "POLICY_VIOLATION":
         return JSONResponse(
@@ -540,7 +549,7 @@ def ask_agent_stream(req: AgentAskRequest, request: Request):
             role=principal.role,
             engine_mode=req.engine_mode or "neo4j",
             session_id=req.session_id or "",
-            routing_mode=req.routing_mode or "hybrid"
+            routing_mode="hybrid"  # LLM-intent mode removed
         ):
             event_type = chunk.get("event", "message")
             yield f"event: {event_type}\ndata: {json.dumps(chunk)}\n\n"

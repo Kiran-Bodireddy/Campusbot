@@ -1038,10 +1038,6 @@
         </div>
 
         <div class="topbar-right">
-          <div class="mode-switch" role="group" aria-label="Routing mode">
-            <button class="mode-btn active" id="modeHybridBtn" type="button" title="Default router-first: heuristic router -> Qwen fallback -> clarification">Router-First</button>
-            <button class="mode-btn" id="modeIntentBtn" type="button" title="Optional experimental mode: Qwen intent classification first">LLM Intent (Experimental)</button>
-          </div>
           <button class="btn" id="proseToggleBtn" type="button" style="font-size:12px;padding:5px 9px;" title="Toggle Qwen 2.5 conversational prose writing">Prose: Off</button>
         </div>
       </header>
@@ -1087,7 +1083,7 @@
       let sessions = [];
       let activeSessionId = null;
       let isSending = false;
-      let routingMode = "hybrid";
+      const routingMode = "hybrid";                                      // single routing mode (LLM-intent mode removed)
       let useQwenProse = false;
       let dynamicStarters = [];
       let currentEngineLabel = "Fallback (not graph data)";
@@ -1102,8 +1098,6 @@
       const themeBtn = document.getElementById("themeBtn");
       const engineBadgeEl = document.getElementById("engineBadge");
       const engineBadgeTextEl = document.getElementById("engineBadgeText");
-      const modeHybridBtn = document.getElementById("modeHybridBtn");
-      const modeIntentBtn = document.getElementById("modeIntentBtn");
       const proseToggleBtn = document.getElementById("proseToggleBtn");
       const modeHintEl = document.getElementById("modeHint");
       const chatScrollEl = document.getElementById("chatScroll");
@@ -1179,17 +1173,11 @@
       }
 
       function applyModeUI() {
-        const isIntent = routingMode === "llm_intent";
-        modeHybridBtn.classList.toggle("active", !isIntent);
-        modeIntentBtn.classList.toggle("active", isIntent);
         proseToggleBtn.textContent = useQwenProse ? "Prose: On" : "Prose: Off";
         proseToggleBtn.style.borderColor = useQwenProse ? "var(--accent)" : "";
         proseToggleBtn.style.color = useQwenProse ? "var(--accent)" : "";
-        modeHintEl.textContent = isIntent
-          ? ("Mode: LLM Intent (Experimental — Qwen intent first" + (useQwenProse ? " + Qwen prose)" : ")"))
-          : ("Mode: Router-First (Default — heuristic -> Qwen fallback -> clarify" + (useQwenProse ? " + Qwen prose)" : ")"));
+        modeHintEl.textContent = useQwenProse ? "Answers written by Qwen 2.5 from the retrieved facts" : "";
         try {
-          localStorage.setItem(STORAGE_ROUTING_KEY, routingMode);
           localStorage.setItem(STORAGE_PROSE_KEY, useQwenProse ? "1" : "0");
         } catch (_) {}
       }
@@ -1447,7 +1435,9 @@
         const tr = msg.toolResult;
 
         // If Qwen Prose mode produced streamed prose, show escaped prose + verbatim phone_note if any
-        if (msg.useQwen && msg.answer) {
+        // Specialization-match tools always use the structured card (the server never sends Qwen prose for them)
+        const templateOnly = (tool === "find_faculty_for_course" || tool === "get_faculty_courses");
+        if (msg.useQwen && msg.answer && !templateOnly) {
           let extra = "";
           if (tool === "lookup_faculty_profile" && tr && Array.isArray(tr.faculty) && tr.faculty.length === 1) {
             const note = tr.faculty[0].phone_note;
@@ -1607,13 +1597,15 @@
         // Structured Course Instructors Table
         if (tool === "find_faculty_for_course" && tr && Array.isArray(tr.instructors) && tr.instructors.length > 0) {
           let html = '<div class="tpl-card">';
-          html += '<div class="tpl-head"><span class="tpl-title">Instructors for ' + escapeHtml(tr.course_code || "") + '</span>' +
-            '<span class="pill">' + escapeHtml(tr.instructors.length) + ' listed</span></div>';
-          html += '<div class="table-wrap"><table class="data-tbl"><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Cabin</th></tr></thead><tbody>';
+          html += '<div class="tpl-head"><span class="tpl-title">Faculty matching ' + escapeHtml(tr.course_code || "") + (tr.course_name ? (' · ' + escapeHtml(tr.course_name)) : '') + '</span>' +
+            '<span class="pill">' + escapeHtml(tr.instructors.length) + ' by specialization</span></div>';
+          html += '<div style="font-size:12px;color:var(--text-muted);margin:4px 0 8px;">' + escapeHtml(tr.allocation_note || "") + '</div>';
+          html += '<div class="table-wrap"><table class="data-tbl"><thead><tr><th>Name</th><th>Specialization (matched)</th><th>Department</th><th>Cabin</th></tr></thead><tbody>';
           tr.instructors.forEach(function (ins) {
+            var topics = (ins.matched_topics || []).slice(0, 3).join(", ");
             html += '<tr>' +
-              '<td><code>' + escapeHtml(ins.id || "—") + '</code></td>' +
-              '<td><strong>' + escapeHtml(ins.name || "") + '</strong>' + (ins.designation ? ('<br><span style="color:var(--text-muted);font-size:11.5px;">' + escapeHtml(ins.designation) + '</span>') : '') + '</td>' +
+              '<td><strong>' + escapeHtml(ins.name || "") + '</strong>' + (ins.designation ? ('<br><span style="color:var(--text-muted);font-size:11.5px;">' + escapeHtml(ins.designation) + '</span>') : '') + '<br><code style="font-size:11px;">' + escapeHtml(ins.id || "") + '</code></td>' +
+              '<td>' + escapeHtml(ins.specialization || "—") + (topics ? ('<br><span class="pill" style="margin-top:4px;display:inline-block;">' + escapeHtml(topics) + '</span>') : '') + '</td>' +
               '<td>' + escapeHtml(ins.normalized_department || ins.department || "—") + '</td>' +
               '<td>' + escapeHtml(ins.cabin || "—") + '</td>' +
             '</tr>';
@@ -1747,7 +1739,7 @@
       function renderStepsHtml(activeStage, completedStages, stageLabels) {
         const labels = stageLabels || {};
         const defs = [
-          { key: "choosing_tool", label: labels["choosing_tool"] || (routingMode === "llm_intent" ? "Understanding intent (Qwen)" : "Choosing tool") },
+          { key: "choosing_tool", label: labels["choosing_tool"] || "Choosing tool" },
           { key: "retrieving_data", label: labels["retrieving_data"] || "Retrieving data" },
           { key: "writing_answer", label: labels["writing_answer"] || "Writing answer" }
         ];
@@ -2094,14 +2086,6 @@
         applyTheme(cur === "dark" ? "light" : "dark");
       });
 
-      modeHybridBtn.addEventListener("click", function () {
-        routingMode = "hybrid";
-        applyModeUI();
-      });
-      modeIntentBtn.addEventListener("click", function () {
-        routingMode = "llm_intent";
-        applyModeUI();
-      });
       proseToggleBtn.addEventListener("click", function () {
         useQwenProse = !useQwenProse;
         applyModeUI();
@@ -2124,8 +2108,7 @@
       let savedTheme = "light";
       try {
         savedTheme = localStorage.getItem(STORAGE_THEME_KEY) || "light";
-        const sr = localStorage.getItem(STORAGE_ROUTING_KEY);
-        if (sr === "hybrid" || sr === "llm_intent") routingMode = sr;
+        localStorage.removeItem(STORAGE_ROUTING_KEY);                     // old saved routing-mode choice
         useQwenProse = localStorage.getItem(STORAGE_PROSE_KEY) === "1";
       } catch (_) {}
 

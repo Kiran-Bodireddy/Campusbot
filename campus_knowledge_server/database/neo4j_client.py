@@ -82,6 +82,12 @@ class CampusGraphClient:
             for f in fac_list
             if (f.get("phone") or "").strip()
         )
+        try:
+            from campus_knowledge_server.database.directory_reconcile import reconcile_faculty
+            n_fixed = reconcile_faculty(fac_list, os.path.dirname(UNIFIED_JSON_PATH), normalize_department_name)
+            logger.info(f"Faculty directory reconciliation: {n_fixed} records corrected from official profile pages.")
+        except Exception as e:
+            logger.warning(f"Faculty directory reconciliation skipped ({e}).")
         for fac in fac_list:
             raw_dept = fac.get("department", "")
             if not fac.get("normalized_department"):
@@ -544,6 +550,7 @@ class CampusGraphClient:
                         f.experience = row.experience,
                         f.email = row.email,
                         f.cabin = row.cabin,
+                        f.normalized_department = row.normalized_department,
                         f.source = 'official'
                 """, {"batch": chunk})
             counts["faculty"] = len(fac_batch)
