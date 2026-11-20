@@ -950,10 +950,10 @@ class GovernedCampusAgent:
                 parsed_slots = slots_for_query(user_query)
                 if slot_num_match:
                     slot_val: Any = int(slot_num_match.group(1))
-                elif parsed_slots:
-                    slot_val = ",".join(parsed_slots)
                 elif slot_time_match:
                     slot_val = slot_time_match.group(1).replace(" ", "")
+                elif parsed_slots:
+                    slot_val = ",".join(parsed_slots)
                 elif slot_num_match:
                     slot_val = int(slot_num_match.group(1))
                 elif period_match:
