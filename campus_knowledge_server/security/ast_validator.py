@@ -159,16 +159,19 @@ class ASTSecurityValidator:
         # 5. Prompt Injection & Generic Delimiter Breakout Attempts
         if re.search(
             r"<<<[A-Z0-9_]+>>>|\[/?(?:SYS|SYSTEM|INST)\]|```(?:system|instruction)|"
-            r"\b(?:disregard|ignore|override|bypass)\s+(?:all\s+)?(?:prior|previous|above|system)\s+instructions?\b|"
-            r"\b(?:dump\b.*?\b(?:env|environment|passwords?|secrets?)|jwt\s+secret|secret\s+key|api\s+keys?|environment\s+passwords?)\b",
+            r"\b(?:disregard|ignore|override|bypass)\s+(?:all\s+)?(?:(?:prior|previous|above|system|your)\s+)?(?:instructions?|rules?|guidelines?|policies)\b|"
+            r"\b(?:dump|print|reveal|show|display|cat|echo)\b.*?\b(?:env|environment|passwords?|secrets?|api[_\s]keys?|credentials?)\b|"
+            r"\b(?:jwt\s+secret|secret\s+key|api\s+keys?|environment\s+(?:passwords?|variables?))\b|"
+            r"\b(?:switch|change|elevate|set)\s+(?:me|my\s+role|user)\s+(?:to\s+)?(?:admin|root|superuser)\b|"
+            r"\bI\s+am\s+(?:the\s+)?admin\b.*?\b(?:switch|mode|everything)\b",
             q,
             re.IGNORECASE
         ):
             return True, "Prompt injection, delimiter breakout, or credential exfiltration attempt detected."
 
-        # 6. SQL Injection & Raw Restricted Query / PII Exfiltration
+        # 6. SQL/Cypher Injection & Raw Restricted Query / PII Exfiltration
         if re.search(
-            r"\bUNION\s+SELECT\b|'\s*OR\s+1\s*=\s*1\b|"
+            r"\bUNION\s+(?:ALL\s+)?(?:SELECT|MATCH|RETURN)\b|'\s*OR\s+1\s*=\s*1\b|"
             r"^\s*SELECT\s+.+\s+FROM\s+\w+|"
             r"\brun_governed_query\b",
             q,

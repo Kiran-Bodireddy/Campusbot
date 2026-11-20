@@ -168,7 +168,6 @@ class CampusGraphClient:
     def _init_neo4j_connection(self):
         """Attempts connection to Neo4j database and loads graph-derived reference metadata."""
         self._graph_buildings: Dict[str, str] = {}
-        self._graph_buildings: Dict[str, str] = {}
         self._graph_building_meta: Dict[str, Dict[str, Any]] = {}
         self._graph_departments: List[str] = []
         self._graph_faculty_index: List[Dict[str, str]] = []
@@ -491,7 +490,7 @@ class CampusGraphClient:
         return results
 
     # Governed Query Primitives
-    def query_read(self, cypher: str, parameters: Optional[Dict[str, Any]] = None, timeout: float = 3.0) -> List[Dict[str, Any]]:
+    def query_read(self, cypher: str, parameters: Optional[Dict[str, Any]] = None, timeout: float = 10.0) -> List[Dict[str, Any]]:
         """Executes a governed read-only Cypher query against Neo4j with AST security validation, READ_ACCESS session, and enforced transaction timeout."""
         if not self.is_connected or not self.driver:
             raise ConnectionError("Live Neo4j instance not connected.")

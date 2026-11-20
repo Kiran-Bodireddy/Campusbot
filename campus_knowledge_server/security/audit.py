@@ -55,12 +55,18 @@ class AuditLogger:
                 size = f.tell()
                 if size == 0:
                     return GENESIS_HASH
-                buffer_size = min(8192, size)
+                buffer_size = min(65536, size)
                 f.seek(size - buffer_size)
-                lines = [line.strip() for line in f.read().decode("utf-8", errors="ignore").splitlines() if line.strip()]
-                if lines:
-                    last_entry = json.loads(lines[-1])
-                    return last_entry.get("entry_hash", GENESIS_HASH)
+                raw_chunk = f.read().decode("utf-8", errors="ignore")
+                lines = [line.strip() for line in raw_chunk.splitlines() if line.strip()]
+                # Search backwards for the last valid JSON entry with an entry_hash
+                for line in reversed(lines):
+                    try:
+                        entry = json.loads(line)
+                        if "entry_hash" in entry:
+                            return entry["entry_hash"]
+                    except Exception:
+                        continue
         except Exception:
             pass
         return GENESIS_HASH

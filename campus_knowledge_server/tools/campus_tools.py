@@ -4,6 +4,7 @@ Implements least-privilege, parameterized query execution for courses,
 prerequisites, faculty, rooms, and schedules with schema validation and audit logging.
 """
 
+import os
 import time
 import math
 import re
@@ -273,13 +274,14 @@ class CampusKnowledgeTools:
         if client.is_connected and client.driver:
             try:
                 cypher = """
-                    MATCH path = (target:Course {code: $code})-[:REQUIRES_PREREQUISITE*1..4]->(prereq:Course)
-                    UNWIND relationships(path) as rel
-                    WITH startNode(rel) as t, endNode(rel) as p, rel, length(path) as d
-                    WHERE d <= $max_depth
-                    RETURN DISTINCT d as depth, t.code as target_course, p.code as prerequisite_code,
-                                    p.name as prerequisite_name, rel.condition as condition
-                    ORDER BY depth ASC
+                    MATCH path = shortestPath((target:Course {code: $code})-[:REQUIRES_PREREQUISITE*1..4]->(prereq:Course))
+                    WHERE length(path) <= $max_depth
+                    RETURN length(path) AS depth,
+                           startNode(last(relationships(path))).code AS target_course,
+                           prereq.code AS prerequisite_code,
+                           prereq.name AS prerequisite_name,
+                           last(relationships(path)).condition AS condition
+                    ORDER BY depth ASC, prerequisite_code ASC
                 """
                 tree = client.query_read(cypher, {"code": target, "max_depth": req.max_depth})
             except Exception as e:
@@ -542,6 +544,27 @@ class CampusKnowledgeTools:
                     avg_sim = sum(token_sims) / len(token_sims)
                     if avg_sim >= min_sim:
                         tier_partial.append(((-round(avg_sim, 4), raw_name.lower(), fid), fid, "partial_fuzzy", round(avg_sim * 70.0, 2)))
+
+        if not tier_exact and not tier_whole and not tier_partial:
+            q_clean = req.faculty_name.strip()
+            mem_fac = client.in_memory_data.get("faculty", [])
+            if q_clean.lower() in ("faculty", "all faculty", "every faculty", "all"):
+                for fac in mem_fac[:100]:
+                    fid = fac.get("id", "")
+                    raw_name = (fac.get("name") or "").strip()
+                    tier_whole.append(((raw_name.lower(), fid), fid, "bulk", 80.0))
+            else:
+                q_clean_lower = q_clean.lower()
+                for fac in mem_fac:
+                    f_dept = (fac.get("department") or "").lower()
+                    f_norm_dept = (fac.get("normalized_department") or "").lower()
+                    f_short_dept = (fac.get("short_department") or "").lower()
+                    if (q_clean_lower in f_dept) or (q_clean_lower in f_norm_dept) or (q_clean_lower == f_short_dept):
+                        fid = fac.get("id", "")
+                        raw_name = (fac.get("name") or "").strip()
+                        tier_whole.append(((raw_name.lower(), fid), fid, "department", 80.0))
+                        if len(tier_whole) >= 100:
+                            break
 
         tier_exact.sort(key=lambda item: item[0])
         tier_whole.sort(key=lambda item: item[0])
@@ -883,8 +906,9 @@ class CampusKnowledgeTools:
         if client.is_connected and client.driver:
             try:
                 import requests
+                ollama_base = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
                 embed_resp = requests.post(
-                    "http://localhost:11434/api/embeddings",
+                    f"{ollama_base}/api/embeddings",
                     json={"model": "nomic-embed-text", "prompt": req.query},
                     timeout=10
                 )
@@ -1566,18 +1590,21 @@ class CampusKnowledgeTools:
                     pass
 
         if not building_record:
-            # Fallback default to TP-1 if query mentioned building
-            building_record = {
-                "code": "TP",
-                "name": "Tech Park 1 (TP-1)",
-                "floors": 15,
-                "campus": "Kattankulathur (KTR)",
-                "focus": "School of Computing & Advanced Engineering",
-                "description": "Tech Park 1 (TP-1) is a 15-story computing and engineering landmark at SRMIST Kattankulathur housing the School of Computing.",
-                "facilities": ["Apple Mac Lab", "NVIDIA AI Lab", "Cisco Networking Lab", "Smart Seminar Halls"],
-                "departments": ["Department of Computing Technologies", "Department of Networking And Communications"],
-                "sample_rooms": [{"id": "TP-101", "type": "Smart Classroom", "capacity": 50}],
-                "total_rooms": 30
+            latency = (time.time() - t0) * 1000
+            audit.log_event(
+                caller=caller,
+                tool_name="lookup_building",
+                parameters=req.model_dump(),
+                status="NOT_FOUND",
+                latency_ms=latency,
+                result_count=0
+            )
+            return {
+                "status": "NOT_FOUND",
+                "building_code": None,
+                "building_name": None,
+                "error": f"Campus building '{raw_query}' was not found in verified infrastructure records.",
+                "source": "SRMIST Official Campus Infrastructure Directory"
             }
 
         latency = (time.time() - t0) * 1000

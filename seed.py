@@ -26,8 +26,8 @@ def main():
 
     uri = os.getenv("NEO4J_URI", "bolt://127.0.0.1:7687")
     user = os.getenv("NEO4J_USER", "neo4j")
-    pwd = os.getenv("NEO4J_PASSWORD", "Jeevan@223")
-    db = os.getenv("NEO4J_DATABASE", "rai")
+    pwd = os.getenv("NEO4J_PASSWORD", "")
+    db = os.getenv("NEO4J_DATABASE", "neo4j")
 
     print(f"\n[+] Target URI      : {uri}")
     print(f"[+] User            : {user}")
@@ -42,7 +42,7 @@ def main():
         print("[*] To connect:")
         print("    1. Open Neo4j Desktop.")
         print("    2. Click the green 'Start' button next to your project/DBMS.")
-        print("    3. Ensure the password matches '.env' (default set to 'kiran223').")
+        print("    3. Ensure NEO4J_PASSWORD in '.env' matches your DBMS credentials.")
         print("    4. Run: python seed.py\n")
         return
 

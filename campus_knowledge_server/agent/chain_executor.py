@@ -48,7 +48,7 @@ def load_chain_config() -> Dict[str, Any]:
 CODE_PATTERNS = {
     "COURSE_CODE": re.compile(r"^[0-9]{2}[A-Z]{2,3}[0-9]{3}[A-Z0-9]?$", re.IGNORECASE),
     "ROOM_ID": re.compile(r"^[A-Z0-9]+-[0-9A-Z]+$", re.IGNORECASE),
-    "FACULTY_ID": re.compile(r"^FAC[0-9]+$", re.IGNORECASE),
+    "FACULTY_ID": re.compile(r"^FAC-?[0-9]+$", re.IGNORECASE),
     "BUILDING_CODE": re.compile(r"^[A-Z0-9]{2,10}$", re.IGNORECASE)
 }
 
@@ -165,7 +165,8 @@ class GovernedChainExecutor:
                 res = execute_tool(tool_name, args, principal=principal, chain_id=chain_id)
                 lat_hop = (time.perf_counter() - t_hop0) * 1000.0
 
-                rows_count = len(res.get("entities", [])) or len(res.get("courses", [])) or len(res.get("instructors", [])) or len(res.get("schedules", [])) or 1
+                candidates = [len(res.get(k, [])) for k in ("entities", "courses", "instructors", "schedules", "prerequisites", "available_rooms") if k in res and isinstance(res[k], list)]
+                rows_count = max(candidates) if candidates else (1 if res and not res.get("error") else 0)
                 hops_evidence.append({
                     "hop": idx,
                     "tool": tool_name,

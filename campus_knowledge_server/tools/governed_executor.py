@@ -331,7 +331,7 @@ def execute_tool(tool_name: str, args: Dict[str, Any], principal: Optional[Princ
     if hidden_fields and isinstance(raw_result, dict):
         raw_result = mask_fields_recursive(raw_result, hidden_fields)
 
-    for list_key in ["courses", "faculty", "instructors", "rooms", "available_rooms", "schedules", "programs", "prerequisites", "classes", "allocations", "departments"]:
+    for list_key in ["courses", "faculty", "instructors", "rooms", "available_rooms", "schedules", "programs", "prerequisites", "classes", "allocations", "departments", "records"]:
         if list_key in raw_result and isinstance(raw_result[list_key], list):
             orig_len = len(raw_result[list_key])
             if orig_len > row_limit:
@@ -402,7 +402,7 @@ def extract_standardized_entities(tool_name: str, result: Dict[str, Any]) -> Lis
     elif tool_name == "find_room_schedule":
         if "room_id" in result:
             entities.append({"type": "room", "id": result["room_id"]})
-        for s in result.get("schedule", []):
+        for s in (result.get("schedules") or result.get("schedule") or []):
             if isinstance(s, dict) and "course_code" in s:
                 entities.append({"type": "course", "id": s["course_code"]})
 

@@ -191,6 +191,30 @@ TOOL_DEFINITIONS = [
             },
             "required": ["query"]
         }
+    },
+    {
+        "name": "find_course_schedule",
+        "description": "Retrieve classroom allocations and weekly timetable slots for a given course code.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "course_code": {"type": "string", "description": "Canonical course code (e.g. 21CSC206T)"},
+                "day_of_week": {"type": "string", "description": "Optional filter by day (e.g. Monday)"}
+            },
+            "required": ["course_code"]
+        }
+    },
+    {
+        "name": "run_governed_query",
+        "description": "Executes pre-approved, whitelisted Cypher templates with AST safety gating (Faculty/Admin only).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "template_id": {"type": "string", "description": "Whitelisted template ID"},
+                "parameters": {"type": "object", "description": "Query parameters dictionary"}
+            },
+            "required": ["template_id"]
+        }
     }
 ]
 

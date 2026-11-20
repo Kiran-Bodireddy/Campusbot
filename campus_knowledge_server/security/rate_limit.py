@@ -29,6 +29,12 @@ class SlidingWindowRateLimiter:
         now = time.monotonic()
         cutoff = now - window_s
         with self._lock:
+            # Periodic cleanup of expired bucket keys to prevent memory leak
+            if len(self._buckets) > 1000:
+                expired = [k for k, dq in self._buckets.items() if not dq or dq[-1] <= cutoff]
+                for k in expired:
+                    self._buckets.pop(k, None)
+
             q = self._buckets.setdefault(key, deque())
             while q and q[0] <= cutoff:
                 q.popleft()

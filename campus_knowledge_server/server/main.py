@@ -160,8 +160,14 @@ def health_check():
         "indexed_rooms": len(client._room_by_id)
     }
 
+_CACHED_GRAPH_SAMPLES: Optional[Dict[str, Any]] = None
+
 def _sample_graph_entities() -> Dict[str, Any]:
-    """Queries live Neo4j (with offline graph fallback) for one sample entity per category — zero hardcoding."""
+    """Queries live Neo4j (with offline graph fallback) for one sample entity per category — cached in memory."""
+    global _CACHED_GRAPH_SAMPLES
+    if _CACHED_GRAPH_SAMPLES is not None:
+        return dict(_CACHED_GRAPH_SAMPLES)
+
     client = get_graph_client()
     samples: Dict[str, Any] = {}
     if client.is_connected and client.driver:
@@ -231,6 +237,8 @@ def _sample_graph_entities() -> Dict[str, Any]:
         a0 = client._curriculum_allocations[0]
         samples["program_name"] = a0.get("program_name")
         samples["semester"] = a0.get("semester")
+    if samples:
+        _CACHED_GRAPH_SAMPLES = samples
     return samples
 
 @app.get("/tools/registry", tags=["System"])
@@ -557,7 +565,7 @@ def get_audit_logs(request: Request, limit: int = 50):
     except Exception as e:
         return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"detail": str(e)})
 
-    if principal.role != "admin" and caller_ip != "testclient":
+    if principal.role != "admin" and not (os.getenv("PYTEST_CURRENT_TEST") and caller_ip == "testclient"):
         return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content={"detail": "Audit log access restricted to admin principal."})
 
     logs = []

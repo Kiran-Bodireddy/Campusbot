@@ -168,21 +168,21 @@ def expand_acronyms(query: str) -> Tuple[str, Dict[str, Any]]:
             q_out = re.sub(pattern, code, q_out, flags=re.IGNORECASE)
             break
             
-    # Degree check (case-insensitive word boundary)
-    for slang, full_degree in DEGREE_ACRONYM_MAP.items():
+    # Degree check (case-insensitive word boundary, longest acronyms first)
+    for slang, full_degree in sorted(DEGREE_ACRONYM_MAP.items(), key=lambda x: len(x[0]), reverse=True):
         pattern = r"\b" + re.escape(slang) + r"\b"
         if re.search(pattern, q_out, re.IGNORECASE):
-            detected_degree = full_degree
+            if not detected_degree:
+                detected_degree = full_degree
             q_out = re.sub(pattern, full_degree, q_out, flags=re.IGNORECASE)
-            break
             
-    # Discipline check
-    for slang, full_discipline in DISCIPLINE_ACRONYM_MAP.items():
+    # Discipline check (longest acronyms first)
+    for slang, full_discipline in sorted(DISCIPLINE_ACRONYM_MAP.items(), key=lambda x: len(x[0]), reverse=True):
         pattern = r"\b" + re.escape(slang) + r"\b"
         if re.search(pattern, q_out, re.IGNORECASE):
-            detected_discipline = full_discipline
+            if not detected_discipline:
+                detected_discipline = full_discipline
             q_out = re.sub(pattern, full_discipline, q_out, flags=re.IGNORECASE)
-            break
 
     metadata = {
         "detected_degree": detected_degree,

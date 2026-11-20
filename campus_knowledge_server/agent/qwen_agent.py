@@ -25,7 +25,8 @@ from campus_knowledge_server.config.matching_config import (
 from campus_knowledge_server.database.neo4j_client import get_graph_client
 from campus_knowledge_server.tools.campus_tools import (
     CampusKnowledgeTools,
-      CourseLookupRequest,
+    CourseLookupRequest,
+    CourseScheduleRequest,
     PrerequisiteTreeRequest,
     PrerequisiteVerifyRequest,
     FacultyCourseRequest,
@@ -36,7 +37,8 @@ from campus_knowledge_server.tools.campus_tools import (
     AdmissionEligibilityRequest,
     CampusStatisticsRequest,
     SemesterCurriculumRequest,
-    BuildingLookupRequest
+    BuildingLookupRequest,
+    GovernedQueryTemplateRequest
 )
 
 def extract_unambiguous_building_code(cabin: str, building_map: Optional[Dict[str, str]] = None) -> Optional[str]:
@@ -101,10 +103,13 @@ class ConversationMemory:
     Stores recent (query, tool_name, compact_answer) tuples per session_id.
     Keys history by (user_id, session_id) and flushes previous history when the principal changes (P3)."""
 
+    import threading as _threading
+    _lock = _threading.RLock()
     _sessions: Dict[str, List[Dict[str, Any]]] = {}
     _session_owners: Dict[str, str] = {}  # session_id -> user_id
     _pending_faculty: Dict[str, Dict[str, Any]] = {}  # key -> {candidates, query, total_matches}
     MAX_TURNS = 6  # Keep last 6 exchanges per session
+    MAX_SESSIONS = 2000  # Cap active sessions to prevent unbounded memory growth
 
     @classmethod
     def _make_key(cls, session_id: str, user_id: str = "") -> str:
@@ -117,23 +122,30 @@ class ConversationMemory:
         """Flushes session history if the principal/user_id associated with session_id changes (P3)."""
         if not session_id:
             return
-        current_owner = cls._session_owners.get(session_id)
-        if current_owner is not None and user_id and current_owner != user_id:
-            # Principal changed: flush previous session context
-            cls.clear_session(session_id)
-        if user_id:
-            cls._session_owners[session_id] = user_id
+        with cls._lock:
+            # Enforce max sessions cap (LRU/oldest eviction)
+            if len(cls._session_owners) >= cls.MAX_SESSIONS and session_id not in cls._session_owners:
+                oldest_keys = list(cls._session_owners.keys())[: max(1, cls.MAX_SESSIONS // 10)]
+                for old_sess in oldest_keys:
+                    cls.clear_session(old_sess)
+
+            current_owner = cls._session_owners.get(session_id)
+            if current_owner is not None and user_id and current_owner != user_id:
+                # Principal changed: flush previous session context
+                cls.clear_session(session_id)
+            if user_id:
+                cls._session_owners[session_id] = user_id
 
     @classmethod
     def clear_session(cls, session_id: str):
-        to_del = [k for k in cls._sessions if k == session_id or k.endswith(f"::{session_id}")]
-        for k in to_del:
-            del cls._sessions[k]
-        p_del = [k for k in cls._pending_faculty if k == session_id or k.endswith(f"::{session_id}")]
-        for k in p_del:
-            del cls._pending_faculty[k]
-        if session_id in cls._session_owners:
-            del cls._session_owners[session_id]
+        with cls._lock:
+            to_del = [k for k in cls._sessions if k == session_id or k.endswith(f"::{session_id}")]
+            for k in to_del:
+                cls._sessions.pop(k, None)
+            p_del = [k for k in cls._pending_faculty if k == session_id or k.endswith(f"::{session_id}")]
+            for k in p_del:
+                cls._pending_faculty.pop(k, None)
+            cls._session_owners.pop(session_id, None)
 
     @classmethod
     def set_pending_faculty(
@@ -455,6 +467,8 @@ class GovernedCampusAgent:
             "get_campus_statistics": lambda args: CampusKnowledgeTools.get_campus_statistics(CampusStatisticsRequest(**args), caller="qwen_agent"),
             "get_semester_curriculum": lambda args: CampusKnowledgeTools.get_semester_curriculum(SemesterCurriculumRequest(**args), caller="qwen_agent"),
             "lookup_building": lambda args: CampusKnowledgeTools.lookup_building(BuildingLookupRequest(**args), caller="qwen_agent"),
+            "find_course_schedule": lambda args: CampusKnowledgeTools.find_course_schedule(CourseScheduleRequest(**args), caller="qwen_agent"),
+            "run_governed_query": lambda args: CampusKnowledgeTools.run_governed_query(GovernedQueryTemplateRequest(**args), caller="qwen_agent"),
         }
 
     def _select_tool_heuristically(self, user_query: str) -> Optional[tuple[str, Dict[str, Any]]]:
@@ -557,7 +571,7 @@ class GovernedCampusAgent:
         clean_dept_q = re.sub(r"[^\w\s]", " ", raw_lower).strip()
         is_dept_list_intent = (
             not codes
-            and not any(w in raw_lower for w in ["dr.", "dr ", "professor", "prof.", "prof ", "cabin", "teaches", "who teaches"])
+            and not any(w in raw_lower for w in ["dr.", "dr ", "professor", "prof.", "prof ", "cabin", "teaches", "who teaches", "faculty", "phone", "contact", "email", "mobile"])
             and (
                 clean_dept_q in {"departments", "department", "all departments", "srm departments", "srmist departments", "list departments", "list all departments"}
                 or bool(re.search(r"\b(?:list|show|what\s+are|give\s+me|all|tell\s+me)\b.*\bdepartments?\b", clean_dept_q))
@@ -911,6 +925,13 @@ class GovernedCampusAgent:
                 cleaned = re.sub(r"(?i)\b(?:can\s+(?:you|u)\s+)?(?:please\s+)?(?:tell\s+(?:me|us)\s+about|know\s+about|information\s+about|who\s+is|who\'s|where\s+is|where\s+does|which\s+building\s+is|what\s+building\s+is|which\s+block\s+is|cabin\s+of|profile\s+of|details\s+of|contact\s+of|email\s+of|about)\b", "", user_query)
                 clean_name = re.sub(rf"(?i)\b(?:{stop_alt})\b.*", "", cleaned).strip()
             clean_name = re.sub(r"^[^\w]+|[^\w]+$", "", clean_name).strip()
+            clean_name = re.sub(r"(?i)\b(?:members?|staff|personnel|with\s+their.*|and\s+their.*)\b", "", clean_name).strip()
+            if not clean_name:
+                dept_m = re.search(r"\b(?:department\s+of|dept\s+of)\s+([A-Za-z\s]+)", user_query, re.IGNORECASE)
+                if dept_m:
+                    clean_name = dept_m.group(1).strip()
+                elif any(w in raw_query_lower for w in ["all faculty", "every faculty", "faculty members", "faculty member"]):
+                    clean_name = "faculty"
             if clean_name:
                 return "lookup_faculty_profile", {"faculty_name": clean_name}
 
