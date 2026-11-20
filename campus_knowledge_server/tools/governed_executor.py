@@ -34,7 +34,15 @@ from campus_knowledge_server.tools.campus_tools import (
     CampusStatisticsRequest,
     SemesterCurriculumRequest,
     GovernedQueryTemplateRequest,
-    BuildingLookupRequest
+    BuildingLookupRequest,
+    DependentCoursesRequest,
+    FacultySearchRequest,
+    FacultyCoursesRequest,
+    CourseListRequest,
+    ProgramSearchRequest,
+    ProgramsForCourseRequest,
+    CompareProgramsRequest,
+    DepartmentOverviewRequest
 )
 
 logger = logging.getLogger("governed_executor")
@@ -96,6 +104,38 @@ TOOL_ENTITY_REGISTRY: Dict[str, Dict[str, Dict[str, str]]] = {
     "run_governed_query": {
         "accepts": {"template_id": "TEMPLATE_ID", "parameters": "OBJECT"},
         "returns": {"records": "RECORD_LIST"}
+    },
+    "find_dependent_courses": {
+        "accepts": {"course_code": "COURSE_CODE"},
+        "returns": {"code": "COURSE_CODE", "unlocks": "COURSE_CODE_LIST"}
+    },
+    "search_faculty": {
+        "accepts": {"specialization": "TOPIC_STRING", "department": "DEPARTMENT_NAME"},
+        "returns": {"faculty": "FACULTY_LIST"}
+    },
+    "get_faculty_courses": {
+        "accepts": {"faculty_name": "FACULTY_NAME"},
+        "returns": {"courses": "COURSE_CODE_LIST", "slots": "SLOT_MAP"}
+    },
+    "list_courses": {
+        "accepts": {"department": "DEPARTMENT_NAME", "category": "CATEGORY_STRING", "credits": "CREDIT_INT"},
+        "returns": {"courses": "COURSE_LIST", "codes": "COURSE_CODE_LIST"}
+    },
+    "search_programs": {
+        "accepts": {"degree_level": "DEGREE_LEVEL_STRING", "sort": "SORT_STRING"},
+        "returns": {"programs": "PROGRAM_LIST"}
+    },
+    "find_programs_for_course": {
+        "accepts": {"course_code": "COURSE_CODE"},
+        "returns": {"programs": "PROGRAM_LIST"}
+    },
+    "compare_programs": {
+        "accepts": {"program_a": "PROGRAM_NAME", "program_b": "PROGRAM_NAME"},
+        "returns": {"comparison": "COMPARISON_OBJECT"}
+    },
+    "get_department_overview": {
+        "accepts": {"department": "DEPARTMENT_NAME"},
+        "returns": {"department": "DEPARTMENT_NAME", "faculty_count": "COUNT_INT", "heads": "HEAD_LIST"}
     }
 }
 
@@ -114,7 +154,15 @@ TOOL_SCHEMA_MAP = {
     "get_campus_statistics": CampusStatisticsRequest,
     "get_semester_curriculum": SemesterCurriculumRequest,
     "lookup_building": BuildingLookupRequest,
-    "run_governed_query": GovernedQueryTemplateRequest
+    "run_governed_query": GovernedQueryTemplateRequest,
+    "find_dependent_courses": DependentCoursesRequest,
+    "search_faculty": FacultySearchRequest,
+    "get_faculty_courses": FacultyCoursesRequest,
+    "list_courses": CourseListRequest,
+    "search_programs": ProgramSearchRequest,
+    "find_programs_for_course": ProgramsForCourseRequest,
+    "compare_programs": CompareProgramsRequest,
+    "get_department_overview": DepartmentOverviewRequest
 }
 
 # Tool implementation dispatch table
@@ -132,7 +180,15 @@ TOOL_FUNC_MAP = {
     "get_campus_statistics": CampusKnowledgeTools.get_campus_statistics,
     "get_semester_curriculum": CampusKnowledgeTools.get_semester_curriculum,
     "lookup_building": CampusKnowledgeTools.lookup_building,
-    "run_governed_query": CampusKnowledgeTools.run_governed_query
+    "run_governed_query": CampusKnowledgeTools.run_governed_query,
+    "find_dependent_courses": CampusKnowledgeTools.find_dependent_courses,
+    "search_faculty": CampusKnowledgeTools.search_faculty,
+    "get_faculty_courses": CampusKnowledgeTools.get_faculty_courses,
+    "list_courses": CampusKnowledgeTools.list_courses,
+    "search_programs": CampusKnowledgeTools.search_programs,
+    "find_programs_for_course": CampusKnowledgeTools.find_programs_for_course,
+    "compare_programs": CampusKnowledgeTools.compare_programs,
+    "get_department_overview": CampusKnowledgeTools.get_department_overview
 }
 
 def sanitize_tool_arguments(tool_name: str, args: Optional[Dict[str, Any]]) -> Dict[str, Any]:

@@ -147,6 +147,40 @@ class BuildingLookupRequest(BaseModel):
             raise ValueError("Query must contain at least 2 non-whitespace characters.")
         return s
 
+class DependentCoursesRequest(BaseModel):
+    course_code: str = Field(..., min_length=2, max_length=150, description="Course code or course name (e.g. '21AIP302L', 'Minor Project').")
+
+class FacultySearchRequest(BaseModel):
+    specialization: Optional[str] = Field(default=None, description="Topic or research area (e.g. 'Machine Learning', 'Power Electronics').")
+    department: Optional[str] = Field(default=None, description="Department name or keyword (e.g. 'Computing Technologies', 'Electrical').")
+    query: Optional[str] = Field(default=None, description="General search query.")
+
+class FacultyCoursesRequest(BaseModel):
+    faculty_name: str = Field(..., min_length=2, max_length=150, description="Faculty member's name.")
+
+class CourseListRequest(BaseModel):
+    department: Optional[str] = Field(default=None, description="Department or school name.")
+    category: Optional[str] = Field(default=None, description="Course category: 'Open Elective', 'Professional Core', 'Professional Elective', etc.")
+    credits: Optional[int] = Field(default=None, ge=1, le=10, description="Credit count.")
+    level: Optional[str] = Field(default=None, description="Course level (e.g. 'UG', 'PG').")
+
+class ProgramSearchRequest(BaseModel):
+    degree_level: Optional[str] = Field(default=None, description="Degree level (e.g. 'Undergraduate (UG)', 'Postgraduate (PG)').")
+    sort: Optional[str] = Field(default="fee_asc", description="Sort order: 'fee_asc', 'fee_desc', 'name'.")
+    query: Optional[str] = Field(default=None, description="Program name keyword.")
+
+class ProgramsForCourseRequest(BaseModel):
+    course_code: str = Field(..., min_length=2, max_length=150, description="Course code or course title (e.g. '21MHC305J').")
+
+class CompareProgramsRequest(BaseModel):
+    program_a: Optional[str] = Field(None, min_length=2, max_length=200, description="First program name.")
+    program_b: Optional[str] = Field(None, min_length=2, max_length=200, description="Second program name.")
+    program_1: Optional[str] = Field(None, min_length=2, max_length=200, description="First program name alias.")
+    program_2: Optional[str] = Field(None, min_length=2, max_length=200, description="Second program name alias.")
+
+class DepartmentOverviewRequest(BaseModel):
+    department: str = Field(..., min_length=2, max_length=150, description="Department name or keyword.")
+
 # ----------------- Pre-Approved Cypher Templates (Immutable) -----------------
 
 WHITELISTED_TEMPLATES = MappingProxyType({
@@ -1642,5 +1676,479 @@ class CampusKnowledgeTools:
             "entities": [{"type": "building", "id": b_code, "name": b_name}],
             "grounding": grounding,
             "source": "SRMIST Official Campus Infrastructure Directory"
+        }
+
+    @staticmethod
+    def find_dependent_courses(req: DependentCoursesRequest, caller: str = "agent") -> Dict[str, Any]:
+        """Finds courses that list this target course as a prerequisite (reverse prerequisite tree)."""
+        t0 = time.time()
+        client = get_graph_client()
+        audit = get_audit_logger()
+
+        c_code = req.course_code.strip()
+        all_courses = client.in_memory_data.get("courses", [])
+
+        target_codes = [c.get("code") for c in all_courses if c.get("code", "").upper() == c_code.upper()]
+        if not target_codes:
+            target_codes = [c.get("code") for c in all_courses if c_code.lower() == (c.get("name") or "").lower()]
+        if not target_codes:
+            target_codes = [c.get("code") for c in all_courses if c_code.lower() in (c.get("name") or "").lower()]
+        if not target_codes:
+            target_codes = [c_code.upper()]
+
+        target_name = c_code
+        for c in all_courses:
+            if c.get("code") in target_codes:
+                target_name = c.get("name")
+                break
+
+        cypher = """
+        MATCH (target:Course)<-[:REQUIRES_PREREQUISITE]-(dep:Course)
+        WHERE target.code IN $codes
+        RETURN DISTINCT dep.code as code, dep.name as name, dep.department as department, dep.credits as credits
+        """
+        rows = []
+        if client.is_connected and client.driver:
+            try:
+                rows = client.query_read(cypher, {"codes": target_codes})
+            except Exception:
+                rows = []
+
+        if not rows:
+            seen_dep = set()
+            for c in all_courses:
+                prereqs = c.get("prerequisites", [])
+                if any(any(tc.upper() in str(p).upper() for tc in target_codes) for p in prereqs):
+                    ccode = c.get("code")
+                    if ccode and ccode not in seen_dep:
+                        seen_dep.add(ccode)
+                        rows.append({
+                            "code": ccode,
+                            "name": c.get("name"),
+                            "department": c.get("department"),
+                            "credits": c.get("credits")
+                        })
+
+        unlocks = [r["code"] for r in rows if "code" in r]
+        audit.log_event(caller=caller, tool_name="find_dependent_courses", parameters={"course_code": target_codes[0]}, status="SUCCESS", latency_ms=(time.time()-t0)*1000, result_count=len(rows))
+        return {
+            "course_code": target_codes[0],
+            "course_name": target_name,
+            "status": "SUCCESS" if rows else "NOT_FOUND",
+            "dependent_courses": rows,
+            "unlocks": unlocks,
+            "count": len(rows),
+            "source": "SRMIST Prerequisite Graph"
+        }
+
+    @staticmethod
+    def search_faculty(req: FacultySearchRequest, caller: str = "agent") -> Dict[str, Any]:
+        """Searches faculty by specialization/research topic and department."""
+        t0 = time.time()
+        client = get_graph_client()
+        audit = get_audit_logger()
+
+        spec = (req.specialization or "").strip().lower()
+        dept = (req.department or "").strip().lower()
+        q = (req.query or "").strip().lower()
+
+        all_faculty = client.in_memory_data.get("faculty", [])
+        matched = []
+        exact_dept_matches = [f for f in all_faculty if dept and dept in (f.get("department") or "").lower()]
+        for f in all_faculty:
+            f_spec = (f.get("specialization") or "").lower()
+            f_dept = (f.get("department") or "").lower()
+            f_norm_dept = (f.get("normalized_department") or "").lower()
+            f_name = (f.get("name") or "").lower()
+
+            dept_ok = True
+            if dept:
+                if exact_dept_matches:
+                    dept_ok = (dept in f_dept)
+                else:
+                    dept_ok = (dept in f_dept) or (dept in f_norm_dept)
+
+            spec_ok = True
+            if spec:
+                spec_ok = (spec in f_spec)
+
+            q_ok = True
+            if q:
+                if dept:
+                    q_ok = (q in f_spec) or (q in (f.get("research") or "").lower())
+                else:
+                    q_ok = (q in f_spec) or (q in f_dept) or (q in f_name)
+
+            if dept_ok and spec_ok and q_ok and (spec or dept or q):
+                matched.append({
+                    "id": f.get("id"),
+                    "name": f.get("name"),
+                    "designation": f.get("designation"),
+                    "department": f.get("department"),
+                    "specialization": f.get("specialization"),
+                    "cabin": f.get("cabin"),
+                    "email": f.get("email"),
+                    "phone": f.get("phone"),
+                    "phone_shared_count": f.get("phone_shared_count")
+                })
+
+        matched.sort(key=lambda x: x.get("name", ""))
+        sample_names = [f["name"] for f in matched[:10]]
+        audit.log_event(caller=caller, tool_name="search_faculty", parameters=req.model_dump(), status="SUCCESS", latency_ms=(time.time()-t0)*1000, result_count=len(matched))
+        return {
+            "status": "SUCCESS" if matched else "NOT_FOUND",
+            "faculty": matched,
+            "count": len(matched),
+            "sample_names": sample_names,
+            "source": "SRMIST Faculty Directory"
+        }
+
+    @staticmethod
+    def get_faculty_courses(req: FacultyCoursesRequest, caller: str = "agent") -> Dict[str, Any]:
+        """Finds courses and timetable slots taught by a given faculty member."""
+        t0 = time.time()
+        client = get_graph_client()
+        audit = get_audit_logger()
+
+        q_name = req.faculty_name.strip()
+        all_faculty = client.in_memory_data.get("faculty", [])
+        matched_fac = None
+
+        # Clean honorifics for exact name matching
+        clean_q = re.sub(r"^(?:dr\.|dr|prof\.|prof|mr\.|mr|mrs\.|mrs|ms\.|ms)\s+", "", q_name.lower()).strip()
+        for f in all_faculty:
+            fn = f.get("name") or ""
+            clean_fn = re.sub(r"^(?:dr\.|dr|prof\.|prof|mr\.|mr|mrs\.|mrs|ms\.|ms)\s+", "", fn.lower()).strip()
+            if clean_q == clean_fn or q_name.lower() == fn.lower():
+                matched_fac = f
+                break
+        if not matched_fac:
+            pat = re.compile(r"\b" + re.escape(clean_q) + r"\b", re.IGNORECASE)
+            for f in all_faculty:
+                if pat.search(f.get("name") or ""):
+                    matched_fac = f
+                    break
+        if not matched_fac:
+            for f in all_faculty:
+                if q_name.lower() in (f.get("name") or "").lower():
+                    matched_fac = f
+                    break
+
+        fid = matched_fac.get("id") if matched_fac else None
+        fname = matched_fac.get("name") if matched_fac else q_name
+
+        courses = []
+        slots_by_course = {}
+
+        if client.is_connected and client.driver:
+            cypher = """
+            MATCH (f:FacultyMember)-[t:TEACHES]->(c:Course)
+            WHERE (f.id = $fid) OR toLower(f.name) = toLower($name)
+            RETURN c.code as code, c.name as name, c.credits as credits, c.department as department
+            """
+            try:
+                rows = client.query_read(cypher, {"fid": fid or "", "name": fname})
+                unique_c = {}
+                for r in rows:
+                    ccode = r.get("code")
+                    if ccode and ccode not in unique_c:
+                        unique_c[ccode] = {"code": ccode, "name": r.get("name"), "credits": r.get("credits"), "department": r.get("department")}
+                courses = list(unique_c.values())
+            except Exception:
+                courses = []
+
+        if not courses and fid:
+            for c in client.in_memory_data.get("courses", []):
+                if fid in c.get("faculty_ids", []):
+                    courses.append({"code": c.get("code"), "name": c.get("name"), "credits": c.get("credits"), "department": c.get("department")})
+
+        # Resolve timetable slots for each course
+        for c in courses:
+            ccode = c["code"]
+            c_slots = []
+            if client.is_connected and client.driver:
+                try:
+                    s_rows = client.query_read("""
+                        MATCH (r:Room)-[o:OCCUPIES]->(c:Course)
+                        WHERE toUpper(c.code) = toUpper($code)
+                        RETURN r.id as room_id, o.day as day, o.slot as slot
+                        ORDER BY o.day, o.slot
+                    """, {"code": ccode})
+                    for sr in s_rows:
+                        rid = sr.get("room_id")
+                        day = sr.get("day")
+                        slot = sr.get("slot")
+                        if rid and day and slot:
+                            c_slots.append(f"{day} {slot} @ {rid}")
+                except Exception:
+                    pass
+            if not c_slots:
+                for sc in client._schedules_by_course.get(ccode, []):
+                    rid = sc.get("room_id")
+                    day = sc.get("day")
+                    slot = sc.get("slot")
+                    if rid and day and slot:
+                        c_slots.append(f"{day} {slot} @ {rid}")
+            if c_slots:
+                slots_by_course[ccode] = c_slots
+
+        courses.sort(key=lambda x: x.get("code", ""))
+        audit.log_event(caller=caller, tool_name="get_faculty_courses", parameters={"faculty_name": fname}, status="SUCCESS", latency_ms=(time.time()-t0)*1000, result_count=len(courses))
+        return {
+            "faculty_id": fid,
+            "faculty_name": fname,
+            "status": "SUCCESS" if courses else "NOT_FOUND",
+            "courses": [c["code"] for c in courses],
+            "course_details": courses,
+            "slots": slots_by_course,
+            "count": len(courses),
+            "source": "SRMIST Faculty Course Allocations"
+        }
+
+    @staticmethod
+    def list_courses(req: CourseListRequest, caller: str = "agent") -> Dict[str, Any]:
+        """Lists courses filtered by department, category, credits, and academic level."""
+        t0 = time.time()
+        client = get_graph_client()
+        audit = get_audit_logger()
+
+        all_courses = client.in_memory_data.get("courses", [])
+        dept = (req.department or "").strip().lower()
+        cat = (req.category or "").strip().lower()
+        creds = req.credits
+        lvl = (req.level or "").strip().lower()
+
+        matched = []
+        for c in all_courses:
+            c_dept = (c.get("department") or "").lower()
+            c_coll = (c.get("college") or "").lower()
+            code = c.get("code", "")
+            c_creds = c.get("credits")
+            c_lvl = (c.get("level") or "").lower()
+
+            dept_ok = True
+            if dept:
+                dept_ok = (dept in c_dept) or (dept in c_coll) or ("computing" in dept and "computing" in c_coll) or ("physics" in dept and "physics" in c_dept)
+
+            creds_ok = True
+            if creds is not None:
+                creds_ok = (c_creds == creds)
+
+            cat_ok = True
+            if cat:
+                if cat in ("o", "open", "open elective") or "open" in cat:
+                    cat_ok = (len(code) >= 6 and code[5] == 'O') or ("open elective" in (c.get("category") or "").lower())
+                elif cat in ("c", "core", "professional core") or "core" in cat:
+                    cat_ok = (len(code) >= 6 and code[5] == 'C') or ("core" in (c.get("category") or "").lower())
+                elif cat in ("e", "p", "elective") or "elective" in cat:
+                    cat_ok = (len(code) >= 6 and code[5] in ('E', 'P', 'O')) or ("elective" in (c.get("category") or "").lower())
+
+            lvl_ok = True
+            if lvl:
+                lvl_ok = (lvl in c_lvl)
+
+            if dept_ok and creds_ok and cat_ok and lvl_ok:
+                matched.append({
+                    "code": code,
+                    "name": c.get("name"),
+                    "credits": c_creds,
+                    "department": c.get("department"),
+                    "level": c.get("level")
+                })
+
+        codes = [c["code"] for c in matched]
+        audit.log_event(caller=caller, tool_name="list_courses", parameters=req.model_dump(), status="SUCCESS", latency_ms=(time.time()-t0)*1000, result_count=len(matched))
+        return {
+            "status": "SUCCESS" if matched else "NOT_FOUND",
+            "courses": matched,
+            "codes": codes,
+            "count": len(matched),
+            "source": "SRMIST Course Catalog"
+        }
+
+    @staticmethod
+    def search_programs(req: ProgramSearchRequest, caller: str = "agent") -> Dict[str, Any]:
+        """Searches academic degree programs sorted by tuition fee or name."""
+        t0 = time.time()
+        client = get_graph_client()
+        audit = get_audit_logger()
+
+        adms = client.admission_eligibility
+        d_lvl = (req.degree_level or "").strip().lower()
+        q = (req.query or "").strip().lower()
+        sort_mode = (req.sort or "fee_asc").strip().lower()
+
+        filtered = []
+        for p in adms:
+            p_dlvl = (p.get("degree_level") or "").lower()
+            p_name = (p.get("program_name") or "").lower()
+
+            lvl_ok = True
+            if d_lvl:
+                if "ug" in d_lvl or "undergraduate" in d_lvl:
+                    lvl_ok = ("undergraduate" in p_dlvl) or ("(ug)" in p_dlvl)
+                elif "pg" in d_lvl or "postgraduate" in d_lvl:
+                    lvl_ok = ("postgraduate" in p_dlvl) or ("(pg)" in p_dlvl)
+                else:
+                    lvl_ok = (d_lvl in p_dlvl)
+
+            q_ok = True
+            if q:
+                q_ok = (q in p_name)
+
+            if lvl_ok and q_ok:
+                filtered.append(p)
+
+        if sort_mode == "fee_asc":
+            filtered.sort(key=lambda p: float(p.get("annual_fee_inr") or 99999999))
+        elif sort_mode == "fee_desc":
+            filtered.sort(key=lambda p: float(p.get("annual_fee_inr") or -1), reverse=True)
+
+        top_prog = filtered[0]["program_name"] if filtered else None
+        top_fee = filtered[0].get("annual_fee_inr") if filtered else None
+
+        audit.log_event(caller=caller, tool_name="search_programs", parameters=req.model_dump(), status="SUCCESS", latency_ms=(time.time()-t0)*1000, result_count=len(filtered))
+        return {
+            "status": "SUCCESS" if filtered else "NOT_FOUND",
+            "program": top_prog,
+            "annual_fee_inr": top_fee,
+            "programs": filtered[:25],
+            "count": len(filtered),
+            "source": "SRMIST Academic Program Directory"
+        }
+
+    @staticmethod
+    def find_programs_for_course(req: ProgramsForCourseRequest, caller: str = "agent") -> Dict[str, Any]:
+        """Finds degree programs and semesters that include this course in their curriculum."""
+        t0 = time.time()
+        client = get_graph_client()
+        audit = get_audit_logger()
+
+        c_code = req.course_code.strip()
+        all_courses = client.in_memory_data.get("courses", [])
+        matched_course = None
+        for c in all_courses:
+            if c.get("code", "").upper() == c_code.upper() or c_code.lower() == (c.get("name") or "").lower():
+                matched_course = c
+                break
+        if not matched_course:
+            for c in all_courses:
+                if c_code.lower() in (c.get("name") or "").lower():
+                    matched_course = c
+                    break
+        target_code = matched_course.get("code") if matched_course else c_code.upper()
+
+        rows = []
+        if client.is_connected and client.driver:
+            cypher = """
+            MATCH (p:Program)-[r:OFFERS_IN_SEMESTER]->(c:Course)
+            WHERE toUpper(c.code) = toUpper($code)
+            RETURN p.name as program, r.semester as semester
+            """
+            try:
+                rows = client.query_read(cypher, {"code": target_code})
+            except Exception:
+                rows = []
+
+        formatted = [f"{r['program']} (sem {r['semester']})" for r in rows if 'program' in r and 'semester' in r]
+        audit.log_event(caller=caller, tool_name="find_programs_for_course", parameters={"course_code": target_code}, status="SUCCESS", latency_ms=(time.time()-t0)*1000, result_count=len(rows))
+        return {
+            "course_code": target_code,
+            "status": "SUCCESS" if rows else "NOT_FOUND",
+            "programs": formatted,
+            "details": rows,
+            "count": len(rows),
+            "source": "SRMIST Curriculum Matrix"
+        }
+
+    @staticmethod
+    def compare_programs(req: CompareProgramsRequest, caller: str = "agent") -> Dict[str, Any]:
+        """Compares two degree programmes side-by-side on fees, duration, and admission requirements."""
+        t0 = time.time()
+        client = get_graph_client()
+        audit = get_audit_logger()
+
+        adms = client.admission_eligibility
+
+        def _match_prog(q_name):
+            if not q_name:
+                return None
+            import difflib
+            q_clean = q_name.strip().lower()
+            for p in adms:
+                if p.get("program_name", "").lower() == q_clean:
+                    return p
+            best = None
+            best_r = 0.0
+            for p in adms:
+                r = difflib.SequenceMatcher(None, p.get("program_name", "").lower(), q_clean).ratio()
+                if r > best_r:
+                    best_r = r
+                    best = p
+            return best if best_r >= 0.60 else None
+
+        name_a = req.program_a or req.program_1 or ""
+        name_b = req.program_b or req.program_2 or ""
+        p_a = _match_prog(name_a)
+        p_b = _match_prog(name_b)
+
+        res_dict = {}
+        if p_a:
+            res_dict[p_a["program_name"]] = {
+                "fee": p_a.get("annual_fee_inr"),
+                "duration": p_a.get("duration"),
+                "degree_level": p_a.get("degree_level"),
+                "min_percentage": p_a.get("min_percentage_general")
+            }
+        if p_b:
+            res_dict[p_b["program_name"]] = {
+                "fee": p_b.get("annual_fee_inr"),
+                "duration": p_b.get("duration"),
+                "degree_level": p_b.get("degree_level"),
+                "min_percentage": p_b.get("min_percentage_general")
+            }
+
+        audit.log_event(caller=caller, tool_name="compare_programs", parameters=req.model_dump(), status="SUCCESS", latency_ms=(time.time()-t0)*1000, result_count=len(res_dict))
+        return {
+            "status": "SUCCESS" if (p_a and p_b) else "PARTIAL_MATCH",
+            "comparison": res_dict,
+            "program_a": res_dict.get(p_a["program_name"]) if p_a else None,
+            "program_b": res_dict.get(p_b["program_name"]) if p_b else None,
+            "program_1": res_dict.get(p_a["program_name"]) if p_a else None,
+            "program_2": res_dict.get(p_b["program_name"]) if p_b else None,
+            "source": "SRMIST Official Program Admissions"
+        }
+
+    @staticmethod
+    def get_department_overview(req: DepartmentOverviewRequest, caller: str = "agent") -> Dict[str, Any]:
+        """Provides an authoritative overview of a campus department including faculty count and department heads."""
+        t0 = time.time()
+        client = get_graph_client()
+        audit = get_audit_logger()
+
+        dept_name = req.department.strip()
+        all_faculty = client.in_memory_data.get("faculty", [])
+
+        # Match exact raw department string first, then fallback to case-insensitive
+        dept_fac = [f for f in all_faculty if f.get("department", "").strip() == dept_name]
+        if not dept_fac:
+            dept_fac = [f for f in all_faculty if dept_name.lower() in (f.get("department") or "").lower()]
+        if not dept_fac:
+            dept_fac = [f for f in all_faculty if dept_name.lower() in (f.get("normalized_department") or "").lower()]
+
+        heads = []
+        for f in dept_fac:
+            desig = (f.get("designation") or "").lower()
+            if "head" in desig or "hod" in desig:
+                heads.append(f.get("name"))
+
+        audit.log_event(caller=caller, tool_name="get_department_overview", parameters={"department": dept_name}, status="SUCCESS", latency_ms=(time.time()-t0)*1000, result_count=len(dept_fac))
+        return {
+            "department": dept_name,
+            "status": "SUCCESS" if dept_fac else "NOT_FOUND",
+            "faculty_count": len(dept_fac),
+            "heads": heads,
+            "sample_faculty": [f["name"] for f in dept_fac[:5]],
+            "source": "SRMIST Academic Directory"
         }
 

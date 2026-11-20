@@ -38,7 +38,15 @@ from campus_knowledge_server.tools.campus_tools import (
     CampusStatisticsRequest,
     SemesterCurriculumRequest,
     BuildingLookupRequest,
-    GovernedQueryTemplateRequest
+    GovernedQueryTemplateRequest,
+    DependentCoursesRequest,
+    FacultySearchRequest,
+    FacultyCoursesRequest,
+    CourseListRequest,
+    ProgramSearchRequest,
+    ProgramsForCourseRequest,
+    CompareProgramsRequest,
+    DepartmentOverviewRequest
 )
 
 def extract_unambiguous_building_code(cabin: str, building_map: Optional[Dict[str, str]] = None) -> Optional[str]:
@@ -469,6 +477,14 @@ class GovernedCampusAgent:
             "lookup_building": lambda args: CampusKnowledgeTools.lookup_building(BuildingLookupRequest(**args), caller="qwen_agent"),
             "find_course_schedule": lambda args: CampusKnowledgeTools.find_course_schedule(CourseScheduleRequest(**args), caller="qwen_agent"),
             "run_governed_query": lambda args: CampusKnowledgeTools.run_governed_query(GovernedQueryTemplateRequest(**args), caller="qwen_agent"),
+            "find_dependent_courses": lambda args: CampusKnowledgeTools.find_dependent_courses(DependentCoursesRequest(**args), caller="qwen_agent"),
+            "search_faculty": lambda args: CampusKnowledgeTools.search_faculty(FacultySearchRequest(**args), caller="qwen_agent"),
+            "get_faculty_courses": lambda args: CampusKnowledgeTools.get_faculty_courses(FacultyCoursesRequest(**args), caller="qwen_agent"),
+            "list_courses": lambda args: CampusKnowledgeTools.list_courses(CourseListRequest(**args), caller="qwen_agent"),
+            "search_programs": lambda args: CampusKnowledgeTools.search_programs(ProgramSearchRequest(**args), caller="qwen_agent"),
+            "find_programs_for_course": lambda args: CampusKnowledgeTools.find_programs_for_course(ProgramsForCourseRequest(**args), caller="qwen_agent"),
+            "compare_programs": lambda args: CampusKnowledgeTools.compare_programs(CompareProgramsRequest(**args), caller="qwen_agent"),
+            "get_department_overview": lambda args: CampusKnowledgeTools.get_department_overview(DepartmentOverviewRequest(**args), caller="qwen_agent"),
         }
 
     def _select_tool_heuristically(self, user_query: str) -> Optional[tuple[str, Dict[str, Any]]]:
@@ -495,6 +511,72 @@ class GovernedCampusAgent:
                 if re.search(r"\b" + re.escape(name) + r"\b", raw_lower):
                     codes.append(c_code)
                     break
+
+        # 0.A. Reverse Prerequisite / Dependent Courses
+        m_after = re.search(r"\b(?:what(?:\s+courses?)?\s+can\s+i\s+take\s+after\s+(?:finishing\s+|completing\s+)?|courses?\s+(?:unlocked|eligible)\s+after\s+|which\s+courses\s+require\s+(.+?)\s+as\s+a\s+prerequisite)\b", raw_lower)
+        if m_after or ("after finishing" in raw_lower) or ("take after" in raw_lower and "course" in raw_lower):
+            target = None
+            if codes:
+                target = codes[0]
+            else:
+                m_t = re.search(r"(?:after\s+finishing|after\s+completing|after|require)\s+([A-Za-z0-9\s/–-]+?)(?:\?|$|\s+as\s+a\s+prereq)", user_query, re.IGNORECASE)
+                if m_t:
+                    target = m_t.group(1).strip()
+            if target:
+                return "find_dependent_courses", {"course_code": target}
+
+        # 0.B. Compare Academic Programs on Fees, Duration, Eligibility
+        if "compare" in raw_lower and ("fee" in raw_lower or "duration" in raw_lower or "and" in raw_lower):
+            clean_comp = re.sub(r"(?i)\s+on\s+(?:fees?\s+and\s+duration|fees?|duration).*", "", user_query).strip()
+            content_comp = re.sub(r"(?i)^compare\s+", "", clean_comp).strip()
+            parts_comp = re.split(r"\s+and\s+(?=(?:B\.Tech|M\.Tech|M\.Sc|D\.M|B\.Sc|MBA|MBBS|B\.Arch|[A-Z][a-zA-Z\s.–-]+))", content_comp, maxsplit=1)
+            if len(parts_comp) == 2:
+                pa = parts_comp[0].strip()
+                pb = parts_comp[1].strip()
+                return "compare_programs", {"program_a": pa, "program_b": pb, "program_1": pa, "program_2": pb}
+
+        # 0.C. Cheapest / Most Affordable Programs
+        m_cheap = re.search(r"\b(?:cheapest|lowest\s+fee|most\s+affordable)\s+(ug|pg|undergraduate|postgraduate)?\s*(?:programme|program|degree|course)?\b", raw_lower)
+        if m_cheap:
+            lvl_match = m_cheap.group(1) or ("ug" if "ug" in raw_lower else ("pg" if "pg" in raw_lower else None))
+            dlvl = "Undergraduate (UG)" if (lvl_match and "ug" in lvl_match) else ("Postgraduate (PG)" if (lvl_match and "pg" in lvl_match) else None)
+            return "search_programs", {"degree_level": dlvl, "sort_by": "fee_asc"}
+
+        # 0.D. Department Overview
+        m_dept_ov = re.search(r"\b(?:give\s+me\s+an\s+)?overview\s+of\s+(?:the\s+)?(?:department\s+of\s+|dept\s+of\s+)?([A-Za-z\s&]+?)(?:\?|$)", user_query, re.IGNORECASE)
+        if m_dept_ov and any(w in raw_lower for w in ["department", "dept", "overview"]):
+            dept_target = m_dept_ov.group(1).strip()
+            if not dept_target.lower().startswith("department of") and "department of " + dept_target.lower() in raw_lower:
+                dept_target = "Department of " + dept_target
+            return "get_department_overview", {"department": dept_target}
+
+        # 0.E. Programs / Branches Offering a Course & Semester
+        m_prog_course = re.search(r"\b(?:which\s+(?:branches|programs?|programmes?|departments?)\s+study\s+(.+?)\s+and\s+in\s+which\s+semester|which\s+(?:branches|programs?)\s+(?:study|take|offer)\s+(.+?))(?:\?|$)", user_query, re.IGNORECASE)
+        if m_prog_course:
+            c_target = (m_prog_course.group(1) or m_prog_course.group(2) or "").strip()
+            return "find_programs_for_course", {"course_code": c_target}
+
+        # 0.F. Filter / List Courses by Credits, Category, and Department
+        m_list_c = re.search(r"\blist\s+(?:all\s+)?(\d+)[-\s]credit\s+(open\s+elective|professional\s+core|elective|core)?\s*courses?\s+(?:from|in)\s+([A-Za-z\s&]+?)(?:\?|$)", user_query, re.IGNORECASE)
+        if m_list_c:
+            creds_val = int(m_list_c.group(1))
+            cat_str = (m_list_c.group(2) or "").strip().lower()
+            cat_code = "O" if "open" in cat_str else ("C" if "core" in cat_str else None)
+            dept_val = m_list_c.group(3).strip()
+            return "list_courses", {"department": dept_val, "credits": creds_val, "category": cat_code}
+
+        # 0.G. Faculty Teaching Schedule & Allocated Courses (e.g. "what courses does Dr. X teach", "when are Dr. X's classes")
+        m_teach = re.search(r"\b(?:what\s+courses?\s+(?:does|do)\s+(.+?)\s+teach|when\s+are\s+(.+?)['’]s?\s+classes|classes\s+of\s+(.+?)|teaching\s+schedule\s+for\s+(.+?))\b", user_query, re.IGNORECASE)
+        if m_teach:
+            fac_name = m_teach.group(1) or m_teach.group(2) or m_teach.group(3) or m_teach.group(4)
+            return "get_faculty_courses", {"faculty_name": fac_name.strip()}
+
+        # 0.H. Faculty Specialization / Research Area Search (e.g. "which faculty in Computing Technologies work on Machine Learning?")
+        m_fac_search = re.search(r"\b(?:which\s+faculty|professors?|teachers?)\s+in\s+([A-Za-z\s&]+?)\s+(?:work\s+on|research\s+in|specialize\s+in)\s+([A-Za-z\s&]+?)(?:\?|$)", user_query, re.IGNORECASE)
+        if m_fac_search:
+            dept_part = m_fac_search.group(1).strip()
+            topic_part = m_fac_search.group(2).strip()
+            return "search_faculty", {"department": dept_part, "query": topic_part}
 
         # 0. Official Semester Curriculum & Implementation Plan
         # Matches queries like: '3rd sem subjects for cse', 'what courses in semester 4 AI', 'curriculum for mechanical', 'subjects in sem 1'
@@ -3267,6 +3349,12 @@ class GovernedCampusAgent:
             return True
         if tool_name == "lookup_building" and result.get("building_code"):
             return True
+        if "dependent_courses" in result or "unlocks" in result:
+            return True
+        if "comparison" in result:
+            return True
+        if tool_name == "get_department_overview" and "department" in result and result.get("faculty_count", 0) > 0:
+            return True
         return False
 
     def _extract_entities_from_result(self, tool_name: str, tool_result: Dict[str, Any], has_data: bool) -> Dict[str, Any]:
@@ -4723,6 +4811,111 @@ Answer:"""
                 lines.append(f"\nWould you like to drill down into the exact course codes and syllabus for any specific semester?")
                 result["suggestions"] = [f"{prog_name} Semester 1", f"{prog_name} Semester 3", f"{prog_name} Semester 5", "Eligibility for B.Tech"]
                 return "\n".join(lines)
+
+        elif tool_name == "find_dependent_courses":
+            target = result.get("course_code") or result.get("course_name", "")
+            deps = result.get("dependent_courses", [])
+            if not deps:
+                return f"No downstream dependent courses currently list [Course: {target}] as a prerequisite."
+            lines = [f"Courses that require [Course: {target}] as a prerequisite:"]
+            for d in deps:
+                lines.append(f"- **[Course: {d['code']}]** {d.get('name')} ({d.get('department')}, {d.get('credits')} credits)")
+            return "\n".join(lines)
+
+        elif tool_name == "search_faculty":
+            fac = result.get("faculty", [])
+            cnt = result.get("count", len(fac))
+            if not fac:
+                return "No faculty members matching the search criteria were found."
+            lines = [f"Found **{cnt}** faculty member(s):"]
+            for f in fac[:15]:
+                desig = f.get("designation") or "Faculty"
+                dept = f.get("department") or "Department not listed"
+                spec = f.get("specialization") or "Not listed"
+                cabin = describe_cabin_location(f.get("cabin", ""))
+                lines.append(f"- **[Faculty: {f['name']}]** ({desig}, {dept}) — Specialization: {spec} | Cabin: **{cabin}**")
+            if cnt > 15:
+                lines.append(f"\n*(Showing 15 of {cnt} faculty members)*")
+            return "\n".join(lines)
+
+        elif tool_name == "get_faculty_courses":
+            fname = result.get("faculty_name", "Faculty")
+            courses = result.get("course_details", [])
+            slots = result.get("slots", {})
+            if not courses:
+                return f"No active teaching courses or class schedules found for [Faculty: {fname}]."
+            lines = [f"Teaching allocations and weekly timetable for [Faculty: {fname}]:"]
+            for c in courses:
+                ccode = c["code"]
+                cname = c.get("name", "")
+                c_slots = slots.get(ccode, [])
+                slot_info = "; ".join(c_slots) if c_slots else "No scheduled room slots"
+                lines.append(f"- **[Course: {ccode}] {cname}** ({c.get('credits', 'N/A')} credits): {slot_info}")
+            return "\n".join(lines)
+
+        elif tool_name == "list_courses":
+            courses = result.get("courses", [])
+            cnt = result.get("count", len(courses))
+            if not courses:
+                return "No courses found matching the specified filters."
+            lines = [f"Found **{cnt}** course(s):"]
+            for c in courses:
+                lines.append(f"- **[Course: {c['code']}]** {c.get('name')} — {c.get('credits')} credits ({c.get('department')})")
+            return "\n".join(lines)
+
+        elif tool_name == "search_programs":
+            progs = result.get("programs", [])
+            top_p = result.get("program")
+            top_f = result.get("annual_fee_inr")
+            if not progs:
+                return "No academic programs found matching the query."
+            lines = ["Found academic programs (sorted by annual fee):"]
+            if top_p and top_f is not None:
+                lines.append(f"Most affordable: **[Program: {top_p}]** with annual fee of **INR {top_f:,}**.\n")
+            for p in progs[:10]:
+                pname = p.get("program_name")
+                fee = p.get("annual_fee_inr", "N/A")
+                dur = p.get("duration", "N/A")
+                dlvl = p.get("degree_level", "UG/PG")
+                fee_str = f"INR {fee:,}" if isinstance(fee, (int, float)) else str(fee)
+                lines.append(f"- **[Program: {pname}]** ({dlvl}, {dur}) — Annual Fee: **{fee_str}**")
+            return "\n".join(lines)
+
+        elif tool_name == "find_programs_for_course":
+            ccode = result.get("course_code", "")
+            progs = result.get("programs", [])
+            if not progs:
+                return f"No degree programs found that offer [Course: {ccode}]."
+            lines = [f"Degree programs offering [Course: {ccode}]:"]
+            for p in progs:
+                lines.append(f"- **{p}**")
+            return "\n".join(lines)
+
+        elif tool_name == "compare_programs":
+            comp = result.get("comparison", {})
+            if not comp:
+                return "Could not retrieve program details for comparison."
+            lines = ["**Academic Program Comparison:**\n"]
+            for pname, pdata in comp.items():
+                fee = pdata.get("fee", "N/A")
+                fee_str = f"INR {fee:,}" if isinstance(fee, (int, float)) else str(fee)
+                dur = pdata.get("duration", "N/A")
+                dlvl = pdata.get("degree_level", "N/A")
+                min_pct = pdata.get("min_percentage", "N/A")
+                lines.append(f"### [Program: {pname}]\n- **Degree Level**: {dlvl}\n- **Duration**: {dur}\n- **Annual Fee**: {fee_str}\n- **Eligibility Minimum**: {min_pct}%\n")
+            return "\n".join(lines)
+
+        elif tool_name == "get_department_overview":
+            dept = result.get("department", "")
+            fcnt = result.get("faculty_count", 0)
+            heads = result.get("heads", [])
+            heads_str = ", ".join(heads) if heads else "Not specifically designated in directory"
+            return (
+                f"**Department Overview: {dept}**\n"
+                f"- **Total Faculty Members**: **{fcnt}**\n"
+                f"- **Department Head(s) / HOD**: {heads_str}\n"
+                f"- **Affiliation**: SRM Institute of Science and Technology, Kattankulathur"
+            )
 
         return str(result)
 

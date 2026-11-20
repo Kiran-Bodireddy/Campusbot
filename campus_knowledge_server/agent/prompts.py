@@ -215,6 +215,103 @@ TOOL_DEFINITIONS = [
             },
             "required": ["template_id"]
         }
+    },
+    {
+        "name": "find_dependent_courses",
+        "description": "Find downstream courses that require a given course code or title as a prerequisite (e.g. what can I take after finishing X?).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "course_code": {"type": "string", "description": "Course code (e.g. 21CSC101T) or course title"}
+            },
+            "required": ["course_code"]
+        }
+    },
+    {
+        "name": "search_faculty",
+        "description": "Search faculty members by research specialization, department, or keyword (e.g. faculty in Computing Technologies working on Machine Learning).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Keyword or topic (e.g. Machine Learning, Power Electronics)"},
+                "department": {"type": "string", "description": "Department name or school"},
+                "specialization": {"type": "string", "description": "Research area"},
+                "limit": {"type": "integer", "description": "Max results to return"}
+            }
+        }
+    },
+    {
+        "name": "get_faculty_courses",
+        "description": "Find all courses taught by a professor along with their weekly schedule, timetable slots, and room locations (e.g. when are Dr. X's classes?).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "faculty_name": {"type": "string", "description": "Faculty name or partial name"}
+            },
+            "required": ["faculty_name"]
+        }
+    },
+    {
+        "name": "list_courses",
+        "description": "List and filter courses by department, credits, level, category ('O' for Open Elective, 'C' for Core, 'E' for Elective), or keyword.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "department": {"type": "string", "description": "Department or school name"},
+                "credits": {"type": "integer", "description": "Exact credit count (e.g. 3)"},
+                "level": {"type": "integer", "description": "Course level (e.g. 100, 200, 300)"},
+                "category": {"type": "string", "description": "Category code ('O' for Open Elective, 'C' for Professional Core)"},
+                "query": {"type": "string", "description": "Keyword search string"},
+                "limit": {"type": "integer", "description": "Max results"}
+            }
+        }
+    },
+    {
+        "name": "search_programs",
+        "description": "Search and sort academic degree programs by degree level (UG, PG, PhD), department/stream, or annual fee (e.g. cheapest UG/PG program).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "degree_level": {"type": "string", "description": "Degree level: 'Undergraduate (UG)' or 'Postgraduate (PG)'"},
+                "department": {"type": "string", "description": "Department or stream filter"},
+                "sort_by": {"type": "string", "enum": ["fee_asc", "fee_desc", "duration_asc"], "description": "Sorting criterion"},
+                "limit": {"type": "integer", "description": "Max results"}
+            }
+        }
+    },
+    {
+        "name": "find_programs_for_course",
+        "description": "Find which degree programs offer or require a specific course, and in which semester (e.g. which branches study Manufacturing Processes?).",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "course_code": {"type": "string", "description": "Course code or title"}
+            },
+            "required": ["course_code"]
+        }
+    },
+    {
+        "name": "compare_programs",
+        "description": "Compare two degree programs side-by-side on annual fees, duration, degree level, and eligibility requirements.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "program_1": {"type": "string", "description": "First program name"},
+                "program_2": {"type": "string", "description": "Second program name"}
+            },
+            "required": ["program_1", "program_2"]
+        }
+    },
+    {
+        "name": "get_department_overview",
+        "description": "Retrieve comprehensive overview of an academic department including HOD/heads, faculty count, and degree programs.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "department": {"type": "string", "description": "Department name or abbreviation"}
+            },
+            "required": ["department"]
+        }
     }
 ]
 
@@ -241,6 +338,14 @@ Tools Catalog:
 - get_semester_curriculum(program_query, semester): Semester-wise subjects/curriculum plan for a branch (e.g. CSE Sem 3)
 - lookup_building(query): Campus building overview, floors, departments, or facility location (e.g. TP1, TP2, UB, BEL)
 - find_course_schedule(course_code, day_of_week): Class schedule / timetable timing for a specific course
+- find_dependent_courses(course_code): Courses unlocked or that can be taken after finishing a given course
+- search_faculty(query, department, specialization, limit): Find faculty by research domain or department (e.g. faculty in Computing Technologies work on Machine Learning)
+- get_faculty_courses(faculty_name): Courses taught by a professor and when their classes are scheduled
+- list_courses(department, credits, level, category, query, limit): Filter courses by credits, department, category (O=Open Elective, C=Core)
+- search_programs(degree_level, department, sort_by, limit): Search or sort degree programs by fees (cheapest UG/PG) or level
+- find_programs_for_course(course_code): Which branches/programs study a course and in which semester
+- compare_programs(program_1, program_2): Compare two programs on fees, duration, and eligibility
+- get_department_overview(department): Department overview, faculty count, HOD/heads, and programs
 
 Few-Shot Examples:
 Q: "Can I register for 21CSC205P if I passed 21CSC101T?"

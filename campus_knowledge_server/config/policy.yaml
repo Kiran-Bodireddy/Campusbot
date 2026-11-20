@@ -22,6 +22,14 @@ roles:
       - get_semester_curriculum
       - lookup_building
       - find_course_schedule
+      - find_dependent_courses
+      - search_faculty
+      - get_faculty_courses
+      - list_courses
+      - search_programs
+      - find_programs_for_course
+      - compare_programs
+      - get_department_overview
     forbidden_tools:
       - run_governed_query
     hidden_fields:
@@ -49,6 +57,14 @@ roles:
       - get_semester_curriculum
       - lookup_building
       - find_course_schedule
+      - find_dependent_courses
+      - search_faculty
+      - get_faculty_courses
+      - list_courses
+      - search_programs
+      - find_programs_for_course
+      - compare_programs
+      - get_department_overview
       - run_governed_query
     forbidden_tools: []
     hidden_fields:
@@ -72,6 +88,14 @@ roles:
       - get_semester_curriculum
       - lookup_building
       - find_course_schedule
+      - find_dependent_courses
+      - search_faculty
+      - get_faculty_courses
+      - list_courses
+      - search_programs
+      - find_programs_for_course
+      - compare_programs
+      - get_department_overview
       - run_governed_query
     forbidden_tools: []
     hidden_fields: []
