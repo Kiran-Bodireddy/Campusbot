@@ -416,6 +416,45 @@ class ConversationMemory:
         if not last_ent:
             return None
 
+        # ── Guard: if the query mentions new explicit names, don't override cached entity ──
+        # Strip pronouns + common function words, see if real new-name tokens remain
+        _strip_words = {
+            "his", "her", "their", "them", "that", "this", "it", "its", "he", "she",
+            "and", "also", "tell", "me", "about", "who", "is", "what", "the", "a",
+            "an", "of", "for", "are", "was", "were", "has", "have", "had", "will",
+            "please", "can", "you", "u", "do", "does", "i", "in", "to", "from",
+            "specialization", "email", "cabin", "department", "profile", "experience",
+            "research", "designation", "phone", "contact", "details", "info",
+        }
+        cached_tokens = set((last_ent.get("faculty_name") or "").lower().split())
+        remaining = [
+            w for w in re.sub(r"[^a-z\s]", " ", q_lower).split()
+            if w not in _strip_words and len(w) >= 3 and w not in cached_tokens
+        ]
+        if remaining:
+            # Cross-check remaining tokens against the faculty name index to avoid
+            # false positives like "computer networks" being treated as names.
+            try:
+                from campus_knowledge_server.database.neo4j_client import get_graph_client
+                gc = get_graph_client()
+                known_tokens = getattr(gc, "_cached_faculty_whole_tokens", None)
+                if not known_tokens:
+                    _hon = {"dr", "prof", "professor", "mr", "mrs", "ms"}
+                    known_tokens = set()
+                    for f in gc.in_memory_data.get("faculty", []):
+                        for t in f.get("name", "").lower().split():
+                            t = t.strip(".,")
+                            if t not in _hon and len(t) >= 3:
+                                known_tokens.add(t)
+                    gc._cached_faculty_whole_tokens = known_tokens
+                # Only skip cached entity if remaining tokens include a real faculty name
+                if any(w in known_tokens for w in remaining):
+                    return None
+            except Exception:
+                # Fallback: if >= 2 non-attribute tokens remain, assume new people
+                if len(remaining) >= 2:
+                    return None
+
         # Faculty follow-up: resolve 'his/her <attribute>' using exact faculty_id when known
         if last_ent.get("faculty_id") or last_ent.get("faculty_name"):
             fref = last_ent.get("faculty_id") or last_ent["faculty_name"]
@@ -1864,6 +1903,47 @@ class GovernedCampusAgent:
         if re.sub(r"[^\w\s]", "", q_lower).strip() in ("departments", "department"):
             return None
 
+        # Guard: if last tool was faculty lookup, do not project if the query asks about new/other faculty
+        if last_tool == "lookup_faculty_profile":
+            multi_names = self._extract_multiple_faculty_names(user_query)
+            if len(multi_names) >= 2:
+                return None
+            cached_faculty_name = ""
+            if isinstance(last_res.get("faculty"), list) and last_res["faculty"]:
+                cached_faculty_name = last_res["faculty"][0].get("name", "")
+            cached_tokens = set(cached_faculty_name.lower().split())
+            _strip_words = {
+                "his", "her", "their", "them", "that", "this", "it", "its", "he", "she",
+                "and", "also", "alos", "tell", "me", "about", "abot", "who", "is", "what", "the", "a",
+                "an", "of", "for", "are", "was", "were", "has", "have", "had", "will",
+                "please", "can", "you", "u", "do", "does", "i", "in", "to", "from",
+                "specialization", "email", "cabin", "department", "profile", "experience",
+                "research", "designation", "phone", "contact", "details", "info",
+            }
+            remaining = [
+                w for w in re.sub(r"[^a-z\s]", " ", q_lower).split()
+                if w not in _strip_words and len(w) >= 3 and w not in cached_tokens
+            ]
+            if remaining:
+                try:
+                    gc = get_graph_client()
+                    known_tokens = getattr(gc, "_cached_faculty_whole_tokens", None)
+                    if not known_tokens:
+                        _hon = {"dr", "prof", "professor", "mr", "mrs", "ms"}
+                        known_tokens = set()
+                        for f in gc.in_memory_data.get("faculty", []):
+                            for t in f.get("name", "").lower().split():
+                                t = t.strip(".,")
+                                if t not in _hon and len(t) >= 3:
+                                    known_tokens.add(t)
+                        gc._cached_faculty_whole_tokens = known_tokens
+                    import difflib
+                    if any(w in known_tokens or bool(difflib.get_close_matches(w, known_tokens, n=1, cutoff=0.75)) for w in remaining):
+                        return None
+                except Exception:
+                    if len(remaining) >= 2:
+                        return None
+
         proj_cfg = (load_matching_config().get("conversational") or {}).get("followup_projection") or {}
         exclude_markers = proj_cfg.get("exclude_markers", [])
         include_markers = proj_cfg.get("include_markers", [])
@@ -2643,13 +2723,6 @@ class GovernedCampusAgent:
 
         # Strip leading config greeting & common question lead-in phrases
         lead_cleaned = self._strip_leading_greeting(user_query.strip())
-        lead_cleaned = re.sub(
-            r"(?i)^\s*(?:can\s+(?:you|u)\s+)?(?:please\s+)?(?:give\s+me\s+|show\s+me\s+|find\s+|get\s+|search\s+(?:for\s+)?|look\s*up\s+|tell\s+(?:me|us)\s+about\s+|"
-            r"details?\s+(?:about|of|for)\s+|profile(?:s)?\s+(?:about|of|for)\s+|info(?:rmation)?\s+(?:about|of|for)\s+|"
-            r"contact\s+(?:details?\s+)?(?:of|for)\s+|cabin(?:s)?\s+(?:of|for)\s+|where\s+(?:are|is)\s+|who\s+(?:are|is)\s+)+",
-            "",
-            lead_cleaned,
-        )
         lead_cleaned = re.sub(r"[?!]+$", "", lead_cleaned).strip()
 
         raw_parts = re.split(r"\s*(?:,|\s+&\s+|\s+and\s+)\s*", lead_cleaned, flags=re.IGNORECASE)
@@ -2675,9 +2748,27 @@ class GovernedCampusAgent:
         cached_depts = getattr(gc, "_graph_departments", None) or []
         dept_names_low = {str(d).lower() for d in cached_depts if d}
 
+        import difflib
         name_like_hits = 0
         for part in raw_parts:
-            seg = re.sub(rf"(?i)\b(?:{stop_alt})\b.*$", "", part).strip()
+            # Strip question lead-ins from segment (e.g. 'also tell me who is', 'can you find', etc.)
+            seg = re.sub(
+                r"(?i)^\s*(?:and\s+|also\s+|alos\s+|or\s+|can\s+(?:you|u)\s+)?(?:please\s+)?"
+                r"(?:give\s+me\s+|show\s+me\s+|find\s+|get\s+|search\s+(?:for\s+)?|look\s*up\s+|"
+                r"tell\s+(?:me|us)\s+(?:about|abot)?\s*|"
+                r"details?\s+(?:about|of|for)\s+|profile(?:s)?\s+(?:about|of|for)\s+|info(?:rmation)?\s+(?:about|of|for)\s+|"
+                r"contact\s+(?:details?\s+)?(?:of|for)\s+|cabin(?:s)?\s+(?:of|for)\s+|"
+                r"where\s+(?:are|is)\s+|who\s+(?:are|is)\s+)+",
+                "",
+                part.strip()
+            )
+            # Strip trailing attribute inquiries like 'and their specialization', 'specialization', 'cabin', 'email'
+            seg = re.sub(
+                r"(?i)\s*(?:and\s+)?(?:his|her|their|its)?\s*(?:specialization|speciality|research|cabin|office|email|phone|contact|experience|details|profile|info)\b.*$",
+                "",
+                seg.strip()
+            )
+            seg = re.sub(rf"(?i)\b(?:{stop_alt})\b.*$", "", seg).strip()
             seg = re.sub(r"^[^\w]+|[^\w]+$", "", seg).strip()
             if not seg or seg.lower() in dept_names_low:
                 continue
@@ -2685,13 +2776,16 @@ class GovernedCampusAgent:
             if not toks or len(toks) > 4:
                 continue
             has_hon = any(w.lower().rstrip(".") in hon_set for w in seg.split())
-            matches_graph = any(t in known_tokens for t in toks if len(t) >= 3)
+            matches_graph = any(
+                t in known_tokens or bool(difflib.get_close_matches(t, known_tokens, n=1, cutoff=0.75))
+                for t in toks if len(t) >= 3
+            )
             if has_hon or matches_graph:
                 name_like_hits += 1
-            cleaned_parts.append(seg)
+                cleaned_parts.append(seg)
 
-        # Require at least 2 segments AND at least one segment grounded as a faculty name/honorific
-        if len(cleaned_parts) >= 2 and name_like_hits >= 1:
+        # Require at least 2 valid segments grounded as a faculty name/honorific
+        if len(cleaned_parts) >= 2:
             return cleaned_parts[:max_names]
         return []
 
