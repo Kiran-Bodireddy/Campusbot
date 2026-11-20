@@ -1667,8 +1667,11 @@ class GovernedCampusAgent:
         q_strip = user_query.strip()
         q_lower = q_strip.lower()
 
-        # Detect explicit topic switch (greetings, course/room codes, or other tool intents)
+        # Detect explicit topic switch (greetings, course/room codes, multi-faculty queries, or other tool intents)
         if q_lower in {"hi", "hello", "hey", "help", "start", "menu", "reset", "cancel"}:
+            ConversationMemory.clear_pending_faculty(session_id, user_id=user_id)
+            return None
+        if len(self._extract_multiple_faculty_names(user_query)) >= 2:
             ConversationMemory.clear_pending_faculty(session_id, user_id=user_id)
             return None
         if re.search(r"\b(?:21[A-Z]{2,4}\d{3}[A-Z]?|[A-Z]{2,4}-\d{3})\b", q_strip, re.IGNORECASE):
