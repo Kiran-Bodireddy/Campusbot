@@ -666,19 +666,22 @@ class GovernedCampusAgent:
         # 0. Campus Overview & Aggregation Statistics (e.g. 'number of courses offered at srmist', 'how many programs', 'total faculty')
         is_credit_query = bool(re.search(r"\b(?:credit|credits|ltpc|l-t-p-c)\b", raw_lower))
         is_floor_query = bool(re.search(r"\b(?:floor|floors|level|levels)\b", raw_lower))
+        is_person_or_cabin = bool(re.search(r"\b(?:dr\.?|prof\.?|professor|dean|hod)\b|(?:room|cabin|office)\s+(?:number\s+)?(?:of|for)\b", raw_lower))
         is_stat_intent = (
             not is_credit_query
             and not is_floor_query
+            and not is_person_or_cabin
             and (
                 any(w in raw_lower or w in q_lower for w in [
-                    "number of", "how many", "total number", "count of", "total count", "statistics",
+                    "how many", "total number", "count of", "total count", "statistics",
                     "overview of", "summary of", "about srm", "about srmist", "tell me about srm",
                     "tell me about srmist", "what is srmist", "what does srmist offer", "programs offered",
                     "courses offered", "couses offered", "degrees offered", "courses at srm", "couses at srm",
                     "programs at srm", "degrees at srm"
                 ])
+                or bool(re.search(r"\bnumber\s+of\s+(?:all\s+)?(?:rooms?|classrooms?|labs?|courses?|programs?|faculty|departments?|students?)\b", raw_lower))
                 or (
-                    any(w in raw_lower or w in q_lower for w in ["how many", "number of", "total", "count of"])
+                    any(w in raw_lower or w in q_lower for w in ["how many", "number of", "count of", "total"])
                     and any(w in raw_lower or w in q_lower for w in ["course", "couse", "program", "faculty", "prof", "room", "student", "degree", "subject", "branch", "department"])
                 )
             )
@@ -3090,24 +3093,29 @@ class GovernedCampusAgent:
             if llm_u:
                 understood_intent = llm_u["intent"]
                 if understood_intent in ("out_of_scope", "clarify"):
-                    self._last_stage_timings["routing_ms"] = round((time.perf_counter() - t_route0) * 1000.0, 1)
-                    st_map = {"out_of_scope": "OUT_OF_SCOPE", "clarify": "CLARIFICATION_NEEDED"}
-                    reply = llm_u.get("reply") or self._format_no_relevant_match()
-                    if session_id:
-                        ConversationMemory.add_turn(session_id, original_query, "llm_intent_layer", reply[:200], {}, user_id=user_id)
-                    return {
-                        "user_query": user_query,
-                        "tool_selected": "llm_intent_layer",
-                        "parameters": {"intent": understood_intent},
-                        "status": st_map[understood_intent],
-                        "intent": understood_intent,
-                        "tool_result": {"type": understood_intent},
-                        "answer": reply,
-                        "grounded": True,
-                        "intent_source": "LLM Intent First (Experimental)",
-                        "source": "SRMIST Campus Knowledge Assistant",
-                        "synthesizer": "Qwen 2.5 Intent Understanding",
-                    }
+                    fallback_call = self._fast_path_match(user_query) or self._select_tool_heuristically(user_query)
+                    if fallback_call:
+                        tool_call = fallback_call
+                        intent_source = "Router Fallback (Heuristic Override)"
+                    else:
+                        self._last_stage_timings["routing_ms"] = round((time.perf_counter() - t_route0) * 1000.0, 1)
+                        st_map = {"out_of_scope": "OUT_OF_SCOPE", "clarify": "CLARIFICATION_NEEDED"}
+                        reply = llm_u.get("reply") or self._format_no_relevant_match()
+                        if session_id:
+                            ConversationMemory.add_turn(session_id, original_query, "llm_intent_layer", reply[:200], {}, user_id=user_id)
+                        return {
+                            "user_query": user_query,
+                            "tool_selected": "llm_intent_layer",
+                            "parameters": {"intent": understood_intent},
+                            "status": st_map[understood_intent],
+                            "intent": understood_intent,
+                            "tool_result": {"type": understood_intent},
+                            "answer": reply,
+                            "grounded": True,
+                            "intent_source": "LLM Intent First (Experimental)",
+                            "source": "SRMIST Campus Knowledge Assistant",
+                            "synthesizer": "Qwen 2.5 Intent Understanding",
+                        }
                 if llm_u.get("tool"):
                     from campus_knowledge_server.tools.governed_executor import TOOL_SCHEMA_MAP
                     tname, targs = llm_u["tool"], llm_u["args"]
@@ -4009,31 +4017,36 @@ Answer:"""
             if llm_u:
                 u_intent = llm_u["intent"]
                 if u_intent in ("out_of_scope", "clarify"):
-                    self._last_stage_timings["routing_ms"] = round((time.perf_counter() - t_route0) * 1000.0, 1)
-                    st_map = {"out_of_scope": "OUT_OF_SCOPE", "clarify": "CLARIFICATION_NEEDED"}
-                    reply = llm_u.get("reply") or self._format_no_relevant_match()
-                    yield {
-                        "event": "meta",
-                        "user_query": user_query,
-                        "original_query": original_query if original_query != user_query else None,
-                        "tool_selected": "llm_intent_layer",
-                        "parameters": {"intent": u_intent},
-                        "status": st_map[u_intent],
-                        "intent": u_intent,
-                        "suggestions": [],
-                        "tool_result": {"type": u_intent},
-                        "grounded": True,
-                        "engine_mode": engine_mode,
-                        "intent_source": "LLM Intent First (Experimental)",
-                        "source": "SRMIST Campus Knowledge Assistant",
-                        "synthesizer": "Qwen 2.5 Intent Understanding",
-                    }
-                    for word in reply.split(" "):
-                        yield {"event": "delta", "token": word + " "}
-                    if session_id:
-                        ConversationMemory.add_turn(session_id, original_query, "llm_intent_layer", reply[:200], {}, user_id=user_id)
-                    yield {"event": "done", "answer": reply, "status": st_map[u_intent], "intent": u_intent}
-                    return
+                    fallback_call = self._fast_path_match(user_query) or self._select_tool_heuristically(user_query)
+                    if fallback_call:
+                        tool_call = fallback_call
+                        intent_source = "Router Fallback (Heuristic Override)"
+                    else:
+                        self._last_stage_timings["routing_ms"] = round((time.perf_counter() - t_route0) * 1000.0, 1)
+                        st_map = {"out_of_scope": "OUT_OF_SCOPE", "clarify": "CLARIFICATION_NEEDED"}
+                        reply = llm_u.get("reply") or self._format_no_relevant_match()
+                        yield {
+                            "event": "meta",
+                            "user_query": user_query,
+                            "original_query": original_query if original_query != user_query else None,
+                            "tool_selected": "llm_intent_layer",
+                            "parameters": {"intent": u_intent},
+                            "status": st_map[u_intent],
+                            "intent": u_intent,
+                            "suggestions": [],
+                            "tool_result": {"type": u_intent},
+                            "grounded": True,
+                            "engine_mode": engine_mode,
+                            "intent_source": "LLM Intent First (Experimental)",
+                            "source": "SRMIST Campus Knowledge Assistant",
+                            "synthesizer": "Qwen 2.5 Intent Understanding",
+                        }
+                        for word in reply.split(" "):
+                            yield {"event": "delta", "token": word + " "}
+                        if session_id:
+                            ConversationMemory.add_turn(session_id, original_query, "llm_intent_layer", reply[:200], {}, user_id=user_id)
+                        yield {"event": "done", "answer": reply, "status": st_map[u_intent], "intent": u_intent}
+                        return
                 if llm_u.get("tool"):
                     from campus_knowledge_server.tools.governed_executor import TOOL_SCHEMA_MAP
                     tname, targs = llm_u["tool"], llm_u["args"]

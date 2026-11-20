@@ -626,23 +626,27 @@ class CampusKnowledgeTools:
             matched_ids = [item[1] for item in ranked_top[:100]]
             meta_by_id = {item[1]: (item[2], item[3]) for item in ranked_top[:100]}
             if used_neo4j:
-                hydrated_rows = client.query_read(
-                    """
-                    MATCH (f:FacultyMember)
-                    WHERE f.id IN $ids
-                    RETURN f.id as id, f.name as name, f.designation as designation,
-                           f.department as department,
-                           coalesce(f.normalized_department, f.department) as normalized_department,
-                           f.cabin as cabin, f.email as email,
-                           coalesce(f.phone, '') as phone,
-                           coalesce(f.phone_shared_count, 0) as phone_shared_count,
-                           f.specialization as specialization, f.experience as experience,
-                           f.college as college
-                    LIMIT 100
-                    """,
-                    {"ids": matched_ids}
-                )
-                row_by_id = {r["id"]: r for r in hydrated_rows if r.get("id")}
+                try:
+                    hydrated_rows = client.query_read(
+                        """
+                        MATCH (f:FacultyMember)
+                        WHERE f.id IN $ids
+                        RETURN f.id as id, f.name as name, f.designation as designation,
+                               f.department as department,
+                               coalesce(f.normalized_department, f.department) as normalized_department,
+                               f.cabin as cabin, f.email as email,
+                               coalesce(f.phone, '') as phone,
+                               coalesce(f.phone_shared_count, 0) as phone_shared_count,
+                               f.specialization as specialization, f.experience as experience,
+                               f.college as college
+                        LIMIT 100
+                        """,
+                        {"ids": matched_ids}
+                    )
+                    row_by_id = {r["id"]: r for r in hydrated_rows if r.get("id")}
+                except Exception as e:
+                    logger.warning(f"Neo4j faculty hydration query error ({e}), falling back to in-memory.")
+                    row_by_id = {f["id"]: f for f in faculty_index if f.get("id") in meta_by_id}
             else:
                 row_by_id = {f["id"]: f for f in faculty_index if f.get("id") in meta_by_id}
 
