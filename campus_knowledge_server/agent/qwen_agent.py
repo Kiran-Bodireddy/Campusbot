@@ -737,11 +737,13 @@ class GovernedCampusAgent:
         is_person_or_cabin = bool(re.search(r"\b(?:dr\.?|prof\.?|professor|dean|hod)\b|(?:room|cabin|office)\s+(?:number\s+)?(?:of|for)\b", raw_lower))
         # "phone number of dr X", "cabin number of", "room number of" ask about one record, not counts
         is_record_number = bool(re.search(r"\b(?:phone|mobile|contact|cabin|room|roll|office|staff\s*room)\s+number\b|\bdr\.?\s|\bprof\.?\s", raw_lower))
+        is_person_or_cabin = bool(re.search(r"\b(?:dr\.?|prof\.?|professor|dean|hod)\b|(?:room|cabin|office)\s+(?:number\s+)?(?:of|for)\b", raw_lower))
         is_stat_intent = (
             not is_credit_query
             and not is_floor_query
             and not is_person_or_cabin
             and not is_record_number
+            and not is_person_or_cabin
             and (
                 any(w in raw_lower or w in q_lower for w in [
                     "how many", "total number", "count of", "total count", "statistics",
@@ -2904,84 +2906,6 @@ class GovernedCampusAgent:
             lines.append(f"- {c}")
         return "\n".join(lines)
 
-    def _understand_intent_with_llm(
-        self,
-        user_query: str,
-        session_id: str = "",
-        user_id: str = ""
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Optional Experimental LLM-First Intent Understanding layer:
-        Lets local Qwen classify the input WITH recent conversation context.
-        """
-        if not self.ollama_active:
-            return None
-        llm_cfg = load_matching_config().get("llm") or {}
-        keep_alive = str(llm_cfg.get("keep_alive") or "30m")
-        intent_timeout = float(llm_cfg.get("intent_timeout_s") or 25.0)
-        ctx = ConversationMemory.build_context_prompt(session_id, user_id=user_id) if session_id else ""
-        last_ent = ConversationMemory.get_last_entities(session_id, user_id=user_id) if session_id else {}
-        ent_line = f"Active entity from previous turn: {json.dumps(last_ent)}\n" if last_ent else ""
-        ctx_line = f"{ctx}\n" if ctx else ""
-
-        prompt = (
-            "You are the intent-understanding layer for the read-only SRMIST Campus Knowledge Assistant.\n"
-            "Classify the user message into STRICT JSON with NO extra text.\n"
-            "Choose exactly one intent:\n"
-            '- "campus_tool": question about courses, prerequisites, faculty, rooms, buildings, curriculum, admissions, departments, or stats.\n'
-            '- "out_of_scope": non-campus question or request outside read-only campus data.\n'
-            '- "clarify": vague or incomplete input where the user needs to clarify.\n\n'
-            "Allowed tools (ONLY when intent == campus_tool):\n"
-            "lookup_course(query), get_prerequisite_tree(course_code, max_depth), verify_prerequisites(completed_courses, target_course), "
-            "find_faculty_for_course(course_code), lookup_faculty_profile(faculty_name), find_room_schedule(room_id, day_of_week), "
-            "find_available_rooms(building_code, min_capacity, day, slot), search_courses_semantic(query, top_k), "
-            "check_admission_eligibility(program_query, candidate_percentage, is_reserved_category, candidate_stream), "
-            "get_campus_statistics(category='all'|'departments'|'courses'|'faculty'|'rooms'|'programs'), get_semester_curriculum(program_query, semester), lookup_building(query).\n\n"
-            f"{ctx_line}{ent_line}"
-            f"Human message: {user_query}\n\n"
-            'JSON format: {"intent": "...", "reply": "short helpful reply if not campus_tool", "tool": "tool_name_or_null", "args": {}}\n'
-            "JSON:"
-        )
-        try:
-            resp = requests.post(
-                f"{self.ollama_url}/api/generate",
-                json={
-                    "model": getattr(self, "intent_model_name", self.model_name),
-                    "prompt": prompt,
-                    "format": "json",
-                    "stream": False,
-                    "keep_alive": keep_alive,
-                    "options": {"temperature": 0.0, "num_predict": 256, "num_ctx": 4096},
-                },
-                timeout=intent_timeout,
-            )
-            if resp.status_code != 200:
-                return None
-            raw = resp.json().get("response", "").strip()
-            parsed = json.loads(raw)
-            if not isinstance(parsed, dict):
-                return None
-            intent = str(parsed.get("intent") or "").strip().lower()
-            if intent not in ("campus_tool", "out_of_scope", "clarify"):
-                return None
-            out: Dict[str, Any] = {
-                "intent": intent,
-                "reply": str(parsed.get("reply") or "").strip(),
-                "tool": None,
-                "args": {},
-            }
-            if intent == "campus_tool":
-                tname = parsed.get("tool")
-                targs = parsed.get("args") or {}
-                if isinstance(tname, str) and tname in self.tool_map and isinstance(targs, dict):
-                    from campus_knowledge_server.tools.governed_executor import sanitize_tool_arguments
-                    out["tool"] = tname
-                    out["args"] = sanitize_tool_arguments(tname, targs)
-            return out
-        except Exception as e:
-            import logging
-            logging.getLogger("qwen_agent").warning(f"[Qwen Intent] Intent understanding exception: {e}")
-            return None
 
     def _build_item25_fields(
         self,
@@ -3259,49 +3183,8 @@ class GovernedCampusAgent:
         tool_call = None
         intent_source = None
         understood_intent = "campus_tool"
-        llm_intent_mode = (routing_mode or "hybrid").strip().lower() == "llm_intent"
 
-        # Default: Router-first (heuristic router -> Qwen tool selection when router returns nothing -> clarification)
-        # Optional Experimental: LLM Intent first (only when routing_mode == 'llm_intent')
-        if llm_intent_mode and self.ollama_active:
-            llm_u = self._understand_intent_with_llm(user_query, session_id=session_id, user_id=user_id)
-            if llm_u:
-                understood_intent = llm_u["intent"]
-                if understood_intent in ("out_of_scope", "clarify"):
-                    fallback_call = self._fast_path_match(user_query) or self._select_tool_heuristically(user_query)
-                    if fallback_call:
-                        tool_call = fallback_call
-                        intent_source = "Router Fallback (Heuristic Override)"
-                    else:
-                        self._last_stage_timings["routing_ms"] = round((time.perf_counter() - t_route0) * 1000.0, 1)
-                        st_map = {"out_of_scope": "OUT_OF_SCOPE", "clarify": "CLARIFICATION_NEEDED"}
-                        reply = llm_u.get("reply") or self._format_no_relevant_match()
-                        if session_id:
-                            ConversationMemory.add_turn(session_id, original_query, "llm_intent_layer", reply[:200], {}, user_id=user_id)
-                        return {
-                            "user_query": user_query,
-                            "tool_selected": "llm_intent_layer",
-                            "parameters": {"intent": understood_intent},
-                            "status": st_map[understood_intent],
-                            "intent": understood_intent,
-                            "tool_result": {"type": understood_intent},
-                            "answer": reply,
-                            "grounded": True,
-                            "intent_source": "LLM Intent First (Experimental)",
-                            "source": "SRMIST Campus Knowledge Assistant",
-                            "synthesizer": "Qwen 2.5 Intent Understanding",
-                        }
-                if llm_u.get("tool"):
-                    from campus_knowledge_server.tools.governed_executor import TOOL_SCHEMA_MAP
-                    tname, targs = llm_u["tool"], llm_u["args"]
-                    try:
-                        TOOL_SCHEMA_MAP[tname](**targs)
-                        tool_call = (tname, targs)
-                        intent_source = "LLM Intent First (Experimental)"
-                    except Exception:
-                        tool_call = self._fast_path_match(user_query) or self._select_tool_heuristically(user_query)
-                        intent_source = "LLM Intent (Experimental) + Schema Repair" if tool_call else None
-
+        # Router-first: Fast-path -> Heuristic -> Qwen tool selection -> clarification
         if not tool_call:
             # 1. Fast-path regex ONLY for exact course codes / faculty IDs / room codes (~1ms)
             tool_call = self._fast_path_match(user_query)
@@ -3310,7 +3193,7 @@ class GovernedCampusAgent:
 
         # 2. Main Router: Qwen 2.5 Model-First Intent Classifier with multi-turn conversation context
         should_use_llm_router = self.ollama_active and (
-            routing_mode in ("llm_intent", "llm_first") or (use_llm_synthesis and routing_mode == "hybrid")
+            use_llm_synthesis and routing_mode == "hybrid"
         )
         if not tool_call and should_use_llm_router:
             history_ctx = ConversationMemory.get_history(session_id, user_id=user_id) if session_id else None
@@ -4128,12 +4011,11 @@ Answer:"""
                 yield {"event": "done", "answer": narrowed_res["answer"], "status": narrowed_res["status"], "intent": narrowed_res.get("intent")}
                 return
 
-        # Routing (Default = Router-First; Optional = LLM Intent First (Experimental))
-        llm_intent_mode = (routing_mode or "hybrid").strip().lower() == "llm_intent"
+        # Routing: Router-First
         yield {
             "event": "stage",
             "stage": "choosing_tool",
-            "label": "Understanding intent (Qwen, Experimental)" if llm_intent_mode else "Choosing tool"
+            "label": "Choosing tool"
         }
 
         # 0.6. Multi-Name Faculty Lookup (split on 'and', '&', ',' -> execute_tool per name)
@@ -4201,52 +4083,6 @@ Answer:"""
         tool_call = None
         intent_source = None
 
-        if llm_intent_mode and self.ollama_active:
-            llm_u = self._understand_intent_with_llm(user_query, session_id=session_id, user_id=user_id)
-            if llm_u:
-                u_intent = llm_u["intent"]
-                if u_intent in ("out_of_scope", "clarify"):
-                    fallback_call = self._fast_path_match(user_query) or self._select_tool_heuristically(user_query)
-                    if fallback_call:
-                        tool_call = fallback_call
-                        intent_source = "Router Fallback (Heuristic Override)"
-                    else:
-                        self._last_stage_timings["routing_ms"] = round((time.perf_counter() - t_route0) * 1000.0, 1)
-                        st_map = {"out_of_scope": "OUT_OF_SCOPE", "clarify": "CLARIFICATION_NEEDED"}
-                        reply = llm_u.get("reply") or self._format_no_relevant_match()
-                        yield {
-                            "event": "meta",
-                            "user_query": user_query,
-                            "original_query": original_query if original_query != user_query else None,
-                            "tool_selected": "llm_intent_layer",
-                            "parameters": {"intent": u_intent},
-                            "status": st_map[u_intent],
-                            "intent": u_intent,
-                            "suggestions": [],
-                            "tool_result": {"type": u_intent},
-                            "grounded": True,
-                            "engine_mode": engine_mode,
-                            "intent_source": "LLM Intent First (Experimental)",
-                            "source": "SRMIST Campus Knowledge Assistant",
-                            "synthesizer": "Qwen 2.5 Intent Understanding",
-                        }
-                        for word in reply.split(" "):
-                            yield {"event": "delta", "token": word + " "}
-                        if session_id:
-                            ConversationMemory.add_turn(session_id, original_query, "llm_intent_layer", reply[:200], {}, user_id=user_id)
-                        yield {"event": "done", "answer": reply, "status": st_map[u_intent], "intent": u_intent}
-                        return
-                if llm_u.get("tool"):
-                    from campus_knowledge_server.tools.governed_executor import TOOL_SCHEMA_MAP
-                    tname, targs = llm_u["tool"], llm_u["args"]
-                    try:
-                        TOOL_SCHEMA_MAP[tname](**targs)
-                        tool_call = (tname, targs)
-                        intent_source = "LLM Intent First (Experimental)"
-                    except Exception:
-                        tool_call = self._fast_path_match(user_query) or self._select_tool_heuristically(user_query)
-                        intent_source = "LLM Intent (Experimental) + Schema Repair" if tool_call else None
-
         if not tool_call:
             tool_call = self._fast_path_match(user_query)
             intent_source = "Fast-Path Matcher (~1ms)" if tool_call else None
@@ -4256,7 +4092,7 @@ Answer:"""
             if tool_call:
                 intent_source = "High-Speed Normalized Router (~8ms)"
 
-        if not tool_call and self.ollama_active and use_llm_synthesis and not llm_intent_mode:
+        if not tool_call and self.ollama_active and use_llm_synthesis:
             history_ctx = ConversationMemory.get_history(session_id, user_id=user_id) if session_id else None
             tool_call = self._select_tool_with_llm(user_query, history=history_ctx)
             if tool_call:
