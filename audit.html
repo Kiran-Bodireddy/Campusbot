@@ -281,7 +281,7 @@
 <body>
   <header class="topbar">
     <div class="topbar-left">
-      <a class="btn" href="/">&larr; Back to Assistant</a>
+      <a class="btn" href="/">Back to Assistant</a>
       <h1>Admin Audit Ledger</h1>
     </div>
     <button class="btn" id="themeBtn" type="button" title="Toggle Dark/Light Mode" style="width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;"><span id="auditThemeIcon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span></button>
@@ -289,11 +289,8 @@
 
   <main class="container">
     <section class="card">
-      <h2>Admin Authentication (Memory Only)</h2>
-      <p class="muted">
-        Paste an admin JWT generated offline via <code>python scripts/make_demo_tokens.py</code>.
-        The token is kept strictly in JavaScript memory and is never written to localStorage, sessionStorage, or cookies.
-      </p>
+      <h2 style="margin:0 0 12px 0;">Admin Authentication</h2>
+      
       <div class="token-row">
         <input
           type="password"
@@ -315,7 +312,7 @@
 
     <section class="card">
       <div class="table-head-row">
-        <h2 style="margin:0;">Audit Events (/admin/audit-logs)</h2>
+        <div style="display:flex;align-items:center;gap:8px;"><h2 style="margin:0;">Audit Events</h2><span class="mono" style="font-size:11px;color:var(--text-muted);background:var(--surface-2);padding:2px 6px;border-radius:4px;border:1px solid var(--border);">/admin/audit-logs</span></div>
         <span class="muted" id="countMeta" style="margin:0;">No logs loaded yet.</span>
       </div>
       <div class="table-wrap">
@@ -515,7 +512,11 @@
         applyTheme(cur === "dark" ? "light" : "dark");
       });
 
-      applyTheme("light");
+            let initialTheme = "light";
+      try {
+        initialTheme = localStorage.getItem("srmist_assistant_theme_v2") || "light";
+      } catch (_) {}
+      applyTheme(initialTheme);
     })();
   </script>
 </body>
