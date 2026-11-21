@@ -3,71 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SRMIST Campus Knowledge Assistant</title>
+  <title>CampusBot · SRMIST Campus Knowledge Assistant</title>
+  <meta name="description" content="CampusBot · SRMIST Campus Knowledge Assistant" />
   <style>
-    :root {
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
       --font-mono: "Cascadia Code", "Consolas", "SFMono-Regular", Menlo, Monaco, monospace;
 
-      --bg: #f5f7fb;
+      --bg: #f8fafc;
       --surface: #ffffff;
-      --surface-2: #f0f3f9;
-      --surface-3: #e6ecf5;
-      --border: #d8e0ec;
-      --text: #162033;
-      --text-muted: #55647d;
-      --accent: #1d4ed8;
-      --accent-hover: #1e40af;
-      --accent-soft: #e8f0fe;
-      --user-bubble: #1d4ed8;
+      --surface-2: #f1f5f9;
+      --surface-3: #e2e8f0;
+      --border: #e2e8f0;
+      --border-subtle: #edf2f7;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-soft: rgba(37, 99, 235, 0.08);
+      --user-bubble: #2563eb;
       --user-text: #ffffff;
+      --bot-bubble: #ffffff;
+      --bot-bubble-border: #e2e8f0;
 
-      --green-bg: #e7f8ef;
-      --green-border: #86d9ab;
-      --green-text: #0f6b3e;
+      --green-bg: #ecfdf5;
+      --green-border: #a7f3d0;
+      --green-text: #065f46;
 
-      --amber-bg: #fff5e0;
-      --amber-border: #f0c05a;
-      --amber-text: #8a5200;
+      --amber-bg: #fffbeb;
+      --amber-border: #fde68a;
+      --amber-text: #92400e;
 
-      --red-bg: #fef0f0;
-      --red-border: #f2a2a2;
+      --red-bg: #fef2f2;
+      --red-border: #fecaca;
       --red-text: #991b1b;
 
-      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-      --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.08);
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 10px 30px -5px rgba(15, 23, 42, 0.12);
       --radius: 12px;
-      --sidebar-w: 272px;
+      --sidebar-w: 260px;
     }
 
     html[data-theme="dark"] {
-      --bg: #0c1220;
-      --surface: #131c2e;
-      --surface-2: #1a253b;
-      --surface-3: #22304c;
-      --border: #2a3a57;
-      --text: #edf2fb;
-      --text-muted: #98a9c4;
-      --accent: #4f86ff;
-      --accent-hover: #3b72eb;
-      --accent-soft: rgba(79, 134, 255, 0.16);
+      --bg: #090d16;
+      --surface: #101726;
+      --surface-2: #162032;
+      --surface-3: #1f2d45;
+      --border: #1e293b;
+      --border-subtle: #172033;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
+      --accent-soft: rgba(59, 130, 246, 0.14);
       --user-bubble: #2563eb;
       --user-text: #ffffff;
+      --bot-bubble: #101726;
+      --bot-bubble-border: #1e293b;
 
-      --green-bg: rgba(22, 163, 74, 0.16);
-      --green-border: rgba(74, 222, 128, 0.45);
-      --green-text: #7ef0a6;
+      --green-bg: rgba(16, 185, 129, 0.14);
+      --green-border: rgba(52, 211, 153, 0.35);
+      --green-text: #6ee7b7;
 
-      --amber-bg: rgba(245, 158, 11, 0.16);
-      --amber-border: rgba(251, 191, 36, 0.5);
-      --amber-text: #fcd36a;
+      --amber-bg: rgba(245, 158, 11, 0.14);
+      --amber-border: rgba(251, 191, 36, 0.35);
+      --amber-text: #fde68a;
 
-      --red-bg: rgba(220, 38, 38, 0.16);
-      --red-border: rgba(248, 113, 113, 0.5);
+      --red-bg: rgba(239, 68, 68, 0.14);
+      --red-border: rgba(248, 113, 113, 0.35);
       --red-text: #fca5a5;
 
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 4px 16px -2px rgba(0, 0, 0, 0.45);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
     }
 
     * { box-sizing: border-box; }
@@ -282,6 +291,28 @@
       flex-wrap: wrap;
     }
 
+    
+    .topbar-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-right: 4px;
+    }
+    .theme-toggle-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
     .topbar-left {
       display: flex;
       align-items: center;
@@ -383,118 +414,171 @@
       gap: 16px;
     }
 
-    /* Welcome & dynamic starter chips */
-    .welcome {
-      background: var(--surface);
-      border: 1px solid var(--border);
+        /* Welcome Hero & Starter Chips */
+    .welcome-hero {
+      text-align: center;
+      padding: 36px 16px 20px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .bot-badge-icon {
+      width: 48px;
+      height: 48px;
       border-radius: 16px;
-      padding: 22px 20px;
-      box-shadow: var(--shadow-sm);
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+      margin-bottom: 14px;
     }
-
-    .welcome h1 {
+    .welcome-hero h1 {
       margin: 0 0 6px;
-      font-size: 20px;
-      line-height: 1.25;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: var(--text);
     }
-
-    .welcome p {
-      margin: 0 0 16px;
-      font-size: 14px;
+    .welcome-hero .hero-sub {
+      margin: 0 auto 24px;
+      font-size: 14.5px;
       color: var(--text-muted);
       line-height: 1.5;
+      max-width: 500px;
     }
-
     .starter-label {
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.8px;
       color: var(--text-muted);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      text-align: left;
     }
-
     .starter-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 10px;
     }
-
     .starter-chip {
       text-align: left;
-      background: var(--surface-2);
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 12px;
+      border-radius: 12px;
+      padding: 12px 14px;
       cursor: pointer;
       color: var(--text);
       font-family: var(--font-sans);
-      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      transition: all 0.18s ease;
+      box-shadow: var(--shadow-sm);
     }
-
     .starter-chip:hover {
       border-color: var(--accent);
-      background: var(--accent-soft);
-      transform: translateY(-1px);
+      background: var(--surface-2);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
     }
-
     .starter-chip-tool {
       display: inline-block;
-      font-family: var(--font-mono);
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--accent);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 1px 6px;
-      border-radius: 5px;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
     }
-
     .starter-chip-q {
       display: block;
       font-size: 13px;
-      font-weight: 600;
-      line-height: 1.35;
+      font-weight: 500;
+      line-height: 1.4;
+      color: var(--text);
     }
 
-    /* Message rows */
+/* Chat rows & avatars */
     .msg-row {
       display: flex;
-      flex-direction: column;
-      gap: 6px;
+      gap: 12px;
+      width: 100%;
+      animation: slideUp 0.18s ease-out;
     }
-
     .msg-row.user {
-      align-items: flex-end;
+      justify-content: flex-end;
     }
-
     .msg-row.assistant {
+      justify-content: flex-start;
       align-items: flex-start;
     }
-
+    .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2563eb, #6366f1);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+    .msg-content {
+      max-width: 84%;
+      display: flex;
+      flex-direction: column;
+    }
+    .msg-row.assistant .msg-content {
+      max-width: 90%;
+      flex: 1;
+    }
     .msg-bubble {
-      max-width: 100%;
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 13px 16px;
       font-size: 14px;
-      line-height: 1.55;
+      line-height: 1.6;
       word-break: break-word;
     }
-
     .msg-row.user .msg-bubble {
-      background: var(--user-bubble);
-      color: var(--user-text);
-      max-width: 82%;
+      background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+      color: #ffffff !important;
       border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25) !important;
+      border: none !important;
     }
-
     .msg-row.assistant .msg-bubble {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      width: 100%;
-      box-shadow: var(--shadow-sm);
+      background: var(--surface) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text) !important;
       border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow-sm) !important;
+    }
+    .msg-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      padding-left: 2px;
+    }
+    .action-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 11.5px;
+      font-family: var(--font-sans);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 7px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }
+    .action-btn:hover {
+      background: var(--surface-2);
+      border-color: var(--border);
+      color: var(--text);
     }
 
     /* Progress Steps (stream-driven) */
@@ -895,61 +979,85 @@
     .ev-pass { color: var(--green-text); font-weight: 700; }
     .ev-sub { color: var(--amber-text); font-weight: 700; }
 
-    /* Composer */
+        /* Composer */
     .composer-wrap {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      padding: 10px 14px 12px;
+      background: var(--bg);
+      padding: 12px 16px 14px;
+      border-top: none;
     }
-
     .composer-inner {
-      max-width: 880px;
+      max-width: 800px;
       margin: 0 auto;
       display: flex;
-      gap: 8px;
       align-items: flex-end;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 6px 8px 6px 16px;
+      box-shadow: var(--shadow-md);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-
+    .composer-inner:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-md);
+    }
     .composer-input {
       flex: 1;
-      min-height: 44px;
-      max-height: 140px;
+      min-height: 32px;
+      max-height: 120px;
       resize: none;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--surface-2);
+      border: none;
+      background: transparent;
       color: var(--text);
       font-family: var(--font-sans);
       font-size: 14px;
-      padding: 10px 12px;
-      line-height: 1.4;
+      padding: 6px 0;
+      line-height: 1.45;
       outline: none;
     }
-
-    .composer-input:focus {
-      border-color: var(--accent);
-      background: var(--surface);
-    }
-
     .send-btn {
-      height: 44px;
-      padding: 0 18px;
-      border-radius: 10px;
+      width: 36px !important;
+      height: 36px !important;
+      padding: 0 !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: var(--accent) !important;
+      color: #fff !important;
+      border: none !important;
+      cursor: pointer;
       flex-shrink: 0;
+      transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s !important;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35) !important;
     }
-
+    .send-btn:hover {
+      transform: scale(1.05) !important;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.45) !important;
+    }
+    .send-btn:active {
+      transform: scale(0.95) !important;
+    }
+    .send-btn:disabled {
+      opacity: 0.4 !important;
+      cursor: not-allowed !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
     .composer-hint {
-      max-width: 880px;
-      margin: 6px auto 0;
+      max-width: 800px;
+      margin: 8px auto 0;
       font-size: 11.5px;
       color: var(--text-muted);
+      text-align: center;
       display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
     }
 
-    /* Mobile drawer backdrop */
+/* Mobile drawer backdrop */
     .backdrop {
       display: none;
       position: fixed;
@@ -1124,10 +1232,10 @@
     <aside class="sidebar" id="sidebar" aria-label="Chat sessions">
       <div class="sidebar-header">
         <div class="brand">
-          <div class="brand-mark">SRM</div>
+          <div class="brand-mark">CB</div>
           <div class="brand-text">
-            <div class="brand-title">Campus Assistant</div>
-            <div class="brand-sub">Governed Knowledge Graph</div>
+            <div class="brand-title">CampusBot</div>
+            <div class="brand-sub">SRMIST Intelligence</div>
           </div>
         </div>
         <button class="btn btn-icon menu-btn" id="closeSidebarBtn" type="button" aria-label="Close menu">&times;</button>
@@ -1151,6 +1259,7 @@
       <header class="topbar">
         <div class="topbar-left">
           <button class="btn btn-icon menu-btn" id="openSidebarBtn" type="button" aria-label="Open sessions">&#9776;</button>
+          <span class="topbar-title">CampusBot</span>
           <span class="badge badge-amber" id="engineBadge" title="Refreshed from /health every 30 seconds">
             <span class="dot"></span>
             <span id="engineBadgeText">Checking engine...</span>
@@ -1159,6 +1268,9 @@
         </div>
 
         <div class="topbar-right">
+          <button class="btn theme-toggle-btn" id="themeToggleBtn" type="button" title="Switch Theme (Light / Dark)" aria-label="Toggle theme">
+            <span id="themeIcon">🌙</span>
+          </button>
           <button class="btn" id="proseToggleBtn" type="button" style="font-size:12px;padding:5px 9px;" title="Toggle Qwen 2.5 conversational prose writing">Prose: Off</button>
         </div>
       </header>
@@ -1173,14 +1285,19 @@
             id="queryInput"
             class="composer-input"
             rows="1"
-            placeholder="Ask about courses, prerequisites, faculty, rooms, curriculum, or admissions..."
+            placeholder="Ask CampusBot about courses, faculty, cabins, timetables..."
             aria-label="Campus question"
           ></textarea>
-          <button class="btn btn-primary send-btn" id="sendBtn" type="submit">Send</button>
+          <button class="send-btn" id="sendBtn" type="submit" aria-label="Send message" title="Send message">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="19" x2="12" y2="5"></line>
+              <polyline points="5 12 12 5 19 12"></polyline>
+            </svg>
+          </button>
         </form>
         <div class="composer-hint">
-          <span>Anonymous access runs under least-privilege Student policy (25-row cap, private fields masked).</span>
-          <span id="modeHint">Mode: Instant (~65 ms structured)</span>
+          <span>CampusBot is grounded on the official SRMIST Knowledge Graph</span>
+          <span id="modeHint"></span>
         </div>
       </footer>
     </main>
@@ -1217,6 +1334,20 @@
       const newChatBtn = document.getElementById("newChatBtn");
       const sessionListEl = document.getElementById("sessionList");
       const themeBtn = document.getElementById("themeBtn");
+      const themeToggleBtn = document.getElementById("themeToggleBtn");
+      const themeIcon = document.getElementById("themeIcon");
+
+      const TOOL_LABELS = {
+        lookup_course: { icon: "📚", name: "Courses & Syllabus" },
+        get_prerequisite_tree: { icon: "🧭", name: "Prerequisites" },
+        find_faculty_for_course: { icon: "👨‍🏫", name: "Faculty Finder" },
+        lookup_faculty_profile: { icon: "🏛️", name: "Faculty & Cabins" },
+        find_available_rooms: { icon: "🚪", name: "Room Availability" },
+        get_semester_curriculum: { icon: "🎓", name: "Curriculum" },
+        find_room_schedule: { icon: "📅", name: "Class Timetable" },
+        get_campus_statistics: { icon: "📊", name: "Campus Analytics" },
+        lookup_building: { icon: "🏢", name: "Campus Buildings" }
+      };
       const engineBadgeEl = document.getElementById("engineBadge");
       const engineBadgeTextEl = document.getElementById("engineBadgeText");
       const proseToggleBtn = document.getElementById("proseToggleBtn");
@@ -1289,7 +1420,9 @@
       function applyTheme(theme) {
         const t = theme === "dark" ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", t);
-        themeBtn.textContent = t === "dark" ? "Theme: Dark" : "Theme: Light";
+        if (themeBtn) themeBtn.textContent = t === "dark" ? "Theme: Dark" : "Theme: Light";
+        if (themeIcon) themeIcon.textContent = t === "dark" ? "☀️" : "🌙";
+        if (themeToggleBtn) themeToggleBtn.title = t === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme";
         try { localStorage.setItem(STORAGE_THEME_KEY, t); } catch (_) {}
       }
 
@@ -1880,18 +2013,25 @@
 
       function renderWelcome() {
         const box = document.createElement("div");
-        box.className = "welcome";
+        box.className = "welcome-hero";
 
-        const h1 = document.createElement("h1");
-        h1.textContent = "SRMIST Campus Knowledge Assistant";
-        const p = document.createElement("p");
-        p.textContent = "Ask grounded questions across courses, Regulations-2021 syllabi, prerequisites, faculty profiles, classroom availability, and admissions. Every answer includes an expandable evidence drawer.";
-        box.appendChild(h1);
-        box.appendChild(p);
+        box.innerHTML = `
+          <div class="bot-badge-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
+              <rect x="4" y="8" width="16" height="12" rx="3"/>
+              <circle cx="9" cy="13" r="1.25" fill="currentColor"/>
+              <circle cx="15" cy="13" r="1.25" fill="currentColor"/>
+              <path d="M9 17h6"/>
+            </svg>
+          </div>
+          <h1>CampusBot</h1>
+          <p class="hero-sub">Instant answers for courses, faculty, cabins, timetables, and curriculum.</p>
+        `;
 
         const lbl = document.createElement("div");
         lbl.className = "starter-label";
-        lbl.textContent = "Starter Prompts (built live from tool registry)";
+        lbl.textContent = "Suggested queries";
         box.appendChild(lbl);
 
         const grid = document.createElement("div");
@@ -1900,16 +2040,17 @@
           const loading = document.createElement("div");
           loading.style.fontSize = "13px";
           loading.style.color = "var(--text-muted)";
-          loading.textContent = "Loading tools from registry...";
+          loading.textContent = "Connecting to campus registry...";
           grid.appendChild(loading);
         } else {
           dynamicStarters.forEach(function (st) {
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "starter-chip";
+            const meta = TOOL_LABELS[st.tool] || { icon: "💬", name: "Campus Query" };
             const tSpan = document.createElement("span");
             tSpan.className = "starter-chip-tool";
-            tSpan.textContent = st.tool;
+            tSpan.textContent = meta.icon + " " + meta.name;
             const qSpan = document.createElement("span");
             qSpan.className = "starter-chip-q";
             qSpan.textContent = st.query;
@@ -1929,6 +2070,17 @@
         const row = document.createElement("div");
         row.className = "msg-row " + (msg.role === "user" ? "user" : "assistant");
 
+        if (msg.role === "assistant") {
+          const avatar = document.createElement("div");
+          avatar.className = "msg-avatar";
+          avatar.setAttribute("aria-label", "CampusBot");
+          avatar.textContent = "CB";
+          row.appendChild(avatar);
+        }
+
+        const msgContent = document.createElement("div");
+        msgContent.className = "msg-content";
+
         const bubble = document.createElement("div");
         bubble.className = "msg-bubble";
 
@@ -1942,8 +2094,38 @@
             if (drawer) bubble.insertBefore(chipsEl, drawer);
             else bubble.appendChild(chipsEl);
           }
+
+          const actionsBar = document.createElement("div");
+          actionsBar.className = "msg-actions";
+          const copyBtn = document.createElement("button");
+          copyBtn.className = "action-btn";
+          copyBtn.type = "button";
+          copyBtn.title = "Copy message";
+          copyBtn.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Copy</span>
+          `;
+          copyBtn.addEventListener("click", function () {
+            const textToCopy = msg.answer || bubble.innerText;
+            navigator.clipboard.writeText(textToCopy).then(function () {
+              copyBtn.querySelector("span").textContent = "Copied!";
+              setTimeout(function () {
+                copyBtn.querySelector("span").textContent = "Copy";
+              }, 2000);
+            });
+          });
+          actionsBar.appendChild(copyBtn);
+          msgContent.appendChild(bubble);
+          msgContent.appendChild(actionsBar);
+          row.appendChild(msgContent);
+          return row;
         }
-        row.appendChild(bubble);
+
+        msgContent.appendChild(bubble);
+        row.appendChild(msgContent);
         return row;
       }
 
@@ -1982,13 +2164,22 @@
         // Create live assistant placeholder with stream-driven progress steps
         const liveRow = document.createElement("div");
         liveRow.className = "msg-row assistant";
+        const liveAvatar = document.createElement("div");
+        liveAvatar.className = "msg-avatar";
+        liveAvatar.textContent = "CB";
+        liveRow.appendChild(liveAvatar);
+
+        const liveContent = document.createElement("div");
+        liveContent.className = "msg-content";
+
         const liveBubble = document.createElement("div");
         liveBubble.className = "msg-bubble";
         const stepsContainer = document.createElement("div");
         const streamBody = document.createElement("div");
         liveBubble.appendChild(stepsContainer);
         liveBubble.appendChild(streamBody);
-        liveRow.appendChild(liveBubble);
+        liveContent.appendChild(liveBubble);
+        liveRow.appendChild(liveContent);
         chatInnerEl.appendChild(liveRow);
         chatScrollEl.scrollTop = chatScrollEl.scrollHeight;
 
@@ -2202,10 +2393,12 @@
       backdropEl.addEventListener("click", closeSidebar);
       newChatBtn.addEventListener("click", createSession);
 
-      themeBtn.addEventListener("click", function () {
+      function toggleTheme() {
         const cur = document.documentElement.getAttribute("data-theme");
         applyTheme(cur === "dark" ? "light" : "dark");
-      });
+      }
+      themeBtn.addEventListener("click", toggleTheme);
+      if (themeToggleBtn) themeToggleBtn.addEventListener("click", toggleTheme);
 
       proseToggleBtn.addEventListener("click", function () {
         useQwenProse = !useQwenProse;
