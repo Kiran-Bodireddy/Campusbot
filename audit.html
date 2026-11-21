@@ -5,55 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SRMIST Campus Assistant — Admin Audit Ledger</title>
   <style>
-    :root {
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
       --font-mono: "Cascadia Code", "Consolas", "SFMono-Regular", Menlo, Monaco, monospace;
 
-      --bg: #f5f7fb;
+      --bg: #f8fafc;
       --surface: #ffffff;
-      --surface-2: #f0f3f9;
-      --surface-3: #e6ecf5;
-      --border: #d8e0ec;
-      --text: #162033;
-      --text-muted: #55647d;
-      --accent: #1d4ed8;
-      --accent-hover: #1e40af;
+      --surface-2: #f1f5f9;
+      --surface-3: #e2e8f0;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
 
-      --green-bg: #e7f8ef;
-      --green-border: #86d9ab;
-      --green-text: #0f6b3e;
+      --green-bg: #ecfdf5;
+      --green-border: #a7f3d0;
+      --green-text: #065f46;
 
-      --amber-bg: #fff5e0;
-      --amber-border: #f0c05a;
-      --amber-text: #8a5200;
+      --amber-bg: #fffbeb;
+      --amber-border: #fde68a;
+      --amber-text: #92400e;
 
-      --red-bg: #fef0f0;
-      --red-border: #f2a2a2;
+      --red-bg: #fef2f2;
+      --red-border: #fecaca;
       --red-text: #991b1b;
     }
 
     html[data-theme="dark"] {
-      --bg: #0c1220;
-      --surface: #131c2e;
-      --surface-2: #1a253b;
-      --surface-3: #22304c;
-      --border: #2a3a57;
-      --text: #edf2fb;
-      --text-muted: #98a9c4;
-      --accent: #4f86ff;
-      --accent-hover: #3b72eb;
+      --bg: #000000;
+      --surface: #0a0a0c;
+      --surface-2: #121216;
+      --surface-3: #1a1a20;
+      --border: #24242c;
+      --text: #ffffff;
+      --text-muted: #a1a1aa;
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
 
-      --green-bg: rgba(22, 163, 74, 0.16);
-      --green-border: rgba(74, 222, 128, 0.45);
-      --green-text: #7ef0a6;
+      --green-bg: rgba(16, 185, 129, 0.12);
+      --green-border: rgba(16, 185, 129, 0.4);
+      --green-text: #34d399;
 
-      --amber-bg: rgba(245, 158, 11, 0.16);
-      --amber-border: rgba(251, 191, 36, 0.5);
-      --amber-text: #fcd36a;
+      --amber-bg: rgba(245, 158, 11, 0.12);
+      --amber-border: rgba(245, 158, 11, 0.4);
+      --amber-text: #fbbf24;
 
-      --red-bg: rgba(220, 38, 38, 0.16);
-      --red-border: rgba(248, 113, 113, 0.5);
-      --red-text: #fca5a5;
+      --red-bg: rgba(239, 68, 68, 0.12);
+      --red-border: rgba(239, 68, 68, 0.4);
+      --red-text: #f87171;
     }
 
     * { box-sizing: border-box; }
@@ -284,7 +284,7 @@
       <a class="btn" href="/">&larr; Back to Assistant</a>
       <h1>Admin Audit Ledger</h1>
     </div>
-    <button class="btn" id="themeBtn" type="button">Theme: Light</button>
+    <button class="btn" id="themeBtn" type="button" title="Toggle Dark/Light Mode" style="width:34px;height:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;"><span id="auditThemeIcon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span></button>
   </header>
 
   <main class="container">
@@ -374,10 +374,14 @@
           .replace(/'/g, "&#39;");
       }
 
+      const SVG_SUN = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+      const SVG_MOON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+
       function applyTheme(t) {
         const theme = t === "dark" ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", theme);
-        themeBtn.textContent = theme === "dark" ? "Theme: Dark" : "Theme: Light";
+        const iconEl = document.getElementById("auditThemeIcon");
+        if (iconEl) iconEl.innerHTML = theme === "dark" ? SVG_SUN : SVG_MOON;
       }
 
       function showBanner(el, kind, msg) {

@@ -45,38 +45,38 @@
       --sidebar-w: 260px;
     }
 
-    html[data-theme="dark"] {
-      --bg: #090d16;
-      --surface: #101726;
-      --surface-2: #162032;
-      --surface-3: #1f2d45;
-      --border: #1e293b;
-      --border-subtle: #172033;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
+        html[data-theme="dark"] {
+      --bg: #000000;
+      --surface: #0a0a0c;
+      --surface-2: #121216;
+      --surface-3: #1a1a20;
+      --border: #24242c;
+      --border-subtle: #16161c;
+      --text: #ffffff;
+      --text-muted: #a1a1aa;
       --accent: #3b82f6;
       --accent-hover: #60a5fa;
-      --accent-soft: rgba(59, 130, 246, 0.14);
+      --accent-soft: rgba(59, 130, 246, 0.16);
       --user-bubble: #2563eb;
       --user-text: #ffffff;
-      --bot-bubble: #101726;
-      --bot-bubble-border: #1e293b;
+      --bot-bubble: #0a0a0c;
+      --bot-bubble-border: #24242c;
 
-      --green-bg: rgba(16, 185, 129, 0.14);
-      --green-border: rgba(52, 211, 153, 0.35);
-      --green-text: #6ee7b7;
+      --green-bg: rgba(16, 185, 129, 0.12);
+      --green-border: rgba(16, 185, 129, 0.4);
+      --green-text: #34d399;
 
-      --amber-bg: rgba(245, 158, 11, 0.14);
-      --amber-border: rgba(251, 191, 36, 0.35);
-      --amber-text: #fde68a;
+      --amber-bg: rgba(245, 158, 11, 0.12);
+      --amber-border: rgba(245, 158, 11, 0.4);
+      --amber-text: #fbbf24;
 
-      --red-bg: rgba(239, 68, 68, 0.14);
-      --red-border: rgba(248, 113, 113, 0.35);
-      --red-text: #fca5a5;
+      --red-bg: rgba(239, 68, 68, 0.12);
+      --red-border: rgba(239, 68, 68, 0.4);
+      --red-text: #f87171;
 
-      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
-      --shadow-md: 0 4px 16px -2px rgba(0, 0, 0, 0.45);
-      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.7);
+      --shadow-md: 0 4px 16px -2px rgba(0, 0, 0, 0.85);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.95);
     }
 
     * { box-sizing: border-box; }
@@ -340,15 +340,7 @@
     }
 
     
-    .topbar-title {
-      font-weight: 700;
-      font-size: 15px;
-      color: var(--text);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-right: 4px;
-    }
+    
     .theme-toggle-btn {
       width: 32px;
       height: 32px;
@@ -423,21 +415,8 @@
       color: var(--text-muted) !important;
     }
 
-    .composer-hint {
-      max-width: 800px;
-      margin: 8px auto 0;
-      font-size: 11.5px;
-      color: var(--text-muted) !important;
-      opacity: 0.8;
-      text-align: center;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-    }
-    .composer-hint span {
-      color: var(--text-muted) !important;
-    }
+    
+    
 
     .tpl-card {
       border: 1px solid var(--border);
@@ -1154,17 +1133,7 @@
       transform: none !important;
       box-shadow: none !important;
     }
-    .composer-hint {
-      max-width: 800px;
-      margin: 8px auto 0;
-      font-size: 11.5px;
-      color: var(--text-muted);
-      text-align: center;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-    }
+    
 
 /* Mobile drawer backdrop */
     .backdrop {
@@ -1407,10 +1376,7 @@
       <div class="session-list" id="sessionList"></div>
 
       <div class="sidebar-footer">
-        <div class="sidebar-footer-row">
-          <button class="btn" id="themeBtn" type="button">Theme: Light</button>
-          <a class="btn" href="/audit.html">Admin Audit</a>
-        </div>
+        <a class="btn" href="/audit.html" style="width:100%;justify-content:center;padding:9px 12px;font-size:12.5px;">Admin Audit Ledger</a>
       </div>
     </aside>
 
@@ -1418,7 +1384,6 @@
       <header class="topbar">
         <div class="topbar-left">
           <button class="btn btn-icon menu-btn" id="openSidebarBtn" type="button" aria-label="Open sessions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-          <span class="topbar-title">CampusBot</span>
           <span class="badge badge-amber" id="engineBadge" title="Refreshed from /health every 30 seconds">
             <span class="dot"></span>
             <span id="engineBadgeText">Checking engine...</span>
@@ -1430,7 +1395,7 @@
           <button class="btn theme-toggle-btn" id="themeToggleBtn" type="button" title="Switch Theme (Light / Dark)" aria-label="Toggle theme">
             <span id="themeIcon" style="display:inline-flex;align-items:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
           </button>
-          <button class="btn" id="proseToggleBtn" type="button" style="font-size:12px;padding:5px 9px;" title="Toggle Qwen 2.5 conversational prose writing">Prose: Off</button>
+          <button class="btn" id="proseToggleBtn" type="button" style="font-size:12px;padding:5px 9px;" title="Toggle AI natural language explanations">AI Explanation: Off</button>
         </div>
       </header>
 
@@ -1454,10 +1419,7 @@
             </svg>
           </button>
         </form>
-        <div class="composer-hint">
-          <span>CampusBot is grounded on the official SRMIST Knowledge Graph</span>
-          <span id="modeHint"></span>
-        </div>
+        
       </footer>
     </main>
   </div>
@@ -1584,17 +1546,16 @@
       function applyTheme(theme) {
         const t = theme === "dark" ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", t);
-        if (themeBtn) themeBtn.textContent = t === "dark" ? "Theme: Dark" : "Theme: Light";
         if (themeIcon) themeIcon.innerHTML = t === "dark" ? SVG_SUN : SVG_MOON;
         if (themeToggleBtn) themeToggleBtn.title = t === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme";
         try { localStorage.setItem(STORAGE_THEME_KEY, t); } catch (_) {}
       }
 
       function applyModeUI() {
-        proseToggleBtn.textContent = useQwenProse ? "Prose: On" : "Prose: Off";
+        proseToggleBtn.textContent = useQwenProse ? "AI Explanation: On" : "AI Explanation: Off";
         proseToggleBtn.style.borderColor = useQwenProse ? "var(--accent)" : "";
         proseToggleBtn.style.color = useQwenProse ? "var(--accent)" : "";
-        modeHintEl.textContent = useQwenProse ? "Answers written by Qwen 2.5 from the retrieved facts" : "";
+        if (modeHintEl) modeHintEl.textContent = "";
         try {
           localStorage.setItem(STORAGE_PROSE_KEY, useQwenProse ? "1" : "0");
         } catch (_) {}
@@ -2555,7 +2516,7 @@
         const cur = document.documentElement.getAttribute("data-theme");
         applyTheme(cur === "dark" ? "light" : "dark");
       }
-      themeBtn.addEventListener("click", toggleTheme);
+      
       if (themeToggleBtn) themeToggleBtn.addEventListener("click", toggleTheme);
 
       proseToggleBtn.addEventListener("click", function () {
