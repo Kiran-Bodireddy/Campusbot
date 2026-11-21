@@ -447,7 +447,7 @@
       line-height: 1.5;
       max-width: 500px;
     }
-    .starter-label {
+        .starter-label {
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
@@ -459,19 +459,22 @@
     .starter-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 10px;
+      gap: 12px;
     }
     .starter-chip {
       text-align: left;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 12px 14px;
+      padding: 14px 16px;
       cursor: pointer;
       color: var(--text);
       font-family: var(--font-sans);
-      transition: all 0.18s ease;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
     .starter-chip:hover {
       border-color: var(--accent);
@@ -480,17 +483,22 @@
       box-shadow: var(--shadow-md);
     }
     .starter-chip-tool {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       font-size: 11px;
       font-weight: 600;
       color: var(--accent);
-      margin-bottom: 6px;
+      letter-spacing: 0.2px;
+    }
+    .starter-chip-tool svg {
+      flex-shrink: 0;
     }
     .starter-chip-q {
       display: block;
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 500;
-      line-height: 1.4;
+      line-height: 1.45;
       color: var(--text);
     }
 
@@ -920,40 +928,49 @@
       margin-top: 2px;
     }
 
-    /* Evidence drawer (collapsed by default) */
+        /* Evidence drawer - minimal & sleek */
     details.evidence-drawer {
-      margin-top: 12px;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      background: var(--surface-2);
-      font-size: 12px;
+      margin-top: 10px !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 8px !important;
+      background: var(--surface-2) !important;
+      font-size: 12px !important;
+      overflow: hidden;
+      border-left: 2px solid var(--accent) !important;
     }
 
     details.evidence-drawer summary {
       cursor: pointer;
-      padding: 7px 11px;
-      font-weight: 600;
+      padding: 6px 12px;
+      font-weight: 500;
       color: var(--text-muted);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
       list-style: none;
+      font-size: 12px;
+      user-select: none;
     }
 
     details.evidence-drawer summary::-webkit-details-marker { display: none; }
-    details.evidence-drawer summary::after { content: "Show details ▸"; font-size: 11px; }
-    details.evidence-drawer[open] summary::after { content: "Hide details ▾"; }
+    details.evidence-drawer summary::after {
+      content: "Details ▸";
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    details.evidence-drawer[open] summary::after {
+      content: "Hide ▾";
+    }
 
     .evidence-grid {
       border-top: 1px solid var(--border);
-      padding: 10px 11px;
+      padding: 10px 14px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
-      gap: 8px 12px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px 14px;
       background: var(--surface);
-      border-bottom-left-radius: 8px;
-      border-bottom-right-radius: 8px;
     }
 
     .ev-cell-label {
@@ -1238,7 +1255,7 @@
             <div class="brand-sub">SRMIST Intelligence</div>
           </div>
         </div>
-        <button class="btn btn-icon menu-btn" id="closeSidebarBtn" type="button" aria-label="Close menu">&times;</button>
+        <button class="btn btn-icon menu-btn" id="closeSidebarBtn" type="button" aria-label="Close menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
 
       <div class="new-chat-wrap">
@@ -1258,7 +1275,7 @@
     <main class="main">
       <header class="topbar">
         <div class="topbar-left">
-          <button class="btn btn-icon menu-btn" id="openSidebarBtn" type="button" aria-label="Open sessions">&#9776;</button>
+          <button class="btn btn-icon menu-btn" id="openSidebarBtn" type="button" aria-label="Open sessions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
           <span class="topbar-title">CampusBot</span>
           <span class="badge badge-amber" id="engineBadge" title="Refreshed from /health every 30 seconds">
             <span class="dot"></span>
@@ -1269,7 +1286,7 @@
 
         <div class="topbar-right">
           <button class="btn theme-toggle-btn" id="themeToggleBtn" type="button" title="Switch Theme (Light / Dark)" aria-label="Toggle theme">
-            <span id="themeIcon">🌙</span>
+            <span id="themeIcon" style="display:inline-flex;align-items:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
           </button>
           <button class="btn" id="proseToggleBtn" type="button" style="font-size:12px;padding:5px 9px;" title="Toggle Qwen 2.5 conversational prose writing">Prose: Off</button>
         </div>
@@ -1338,15 +1355,15 @@
       const themeIcon = document.getElementById("themeIcon");
 
       const TOOL_LABELS = {
-        lookup_course: { icon: "📚", name: "Courses & Syllabus" },
-        get_prerequisite_tree: { icon: "🧭", name: "Prerequisites" },
-        find_faculty_for_course: { icon: "👨‍🏫", name: "Faculty Finder" },
-        lookup_faculty_profile: { icon: "🏛️", name: "Faculty & Cabins" },
-        find_available_rooms: { icon: "🚪", name: "Room Availability" },
-        get_semester_curriculum: { icon: "🎓", name: "Curriculum" },
-        find_room_schedule: { icon: "📅", name: "Class Timetable" },
-        get_campus_statistics: { icon: "📊", name: "Campus Analytics" },
-        lookup_building: { icon: "🏢", name: "Campus Buildings" }
+        lookup_course: { icon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`, name: "Courses & Syllabus" },
+        get_prerequisite_tree: { icon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`, name: "Prerequisites" },
+        find_faculty_for_course: { icon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`, name: "Faculty Finder" },
+        lookup_faculty_profile: { icon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`, name: "Faculty & Cabins" },
+        find_available_rooms: { icon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>`, name: "Room Availability" },
+        get_semester_curriculum: { icon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`, name: "Curriculum" },
+        find_room_schedule: { icon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`, name: "Class Timetable" },
+        get_campus_statistics: { icon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`, name: "Campus Analytics" },
+        lookup_building: { icon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="2"/></svg>`, name: "Campus Buildings" }
       };
       const engineBadgeEl = document.getElementById("engineBadge");
       const engineBadgeTextEl = document.getElementById("engineBadgeText");
@@ -1417,11 +1434,14 @@
       }
 
       // Theme persistence
+      const SVG_SUN = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+      const SVG_MOON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+
       function applyTheme(theme) {
         const t = theme === "dark" ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", t);
         if (themeBtn) themeBtn.textContent = t === "dark" ? "Theme: Dark" : "Theme: Light";
-        if (themeIcon) themeIcon.textContent = t === "dark" ? "☀️" : "🌙";
+        if (themeIcon) themeIcon.innerHTML = t === "dark" ? SVG_SUN : SVG_MOON;
         if (themeToggleBtn) themeToggleBtn.title = t === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme";
         try { localStorage.setItem(STORAGE_THEME_KEY, t); } catch (_) {}
       }
@@ -2017,7 +2037,7 @@
 
         box.innerHTML = `
           <div class="bot-badge-icon">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
               <rect x="4" y="8" width="16" height="12" rx="3"/>
               <circle cx="9" cy="13" r="1.25" fill="currentColor"/>
@@ -2026,7 +2046,7 @@
             </svg>
           </div>
           <h1>CampusBot</h1>
-          <p class="hero-sub">Instant answers for courses, faculty, cabins, timetables, and curriculum.</p>
+          <p class="hero-sub">SRMIST Campus Knowledge Assistant · Grounded by Neo4j</p>
         `;
 
         const lbl = document.createElement("div");
@@ -2047,10 +2067,10 @@
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "starter-chip";
-            const meta = TOOL_LABELS[st.tool] || { icon: "💬", name: "Campus Query" };
+            const meta = TOOL_LABELS[st.tool] || { icon: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`, name: "Query" };
             const tSpan = document.createElement("span");
             tSpan.className = "starter-chip-tool";
-            tSpan.textContent = meta.icon + " " + meta.name;
+            tSpan.innerHTML = meta.icon + "<span>" + escapeHtml(meta.name) + "</span>";
             const qSpan = document.createElement("span");
             qSpan.className = "starter-chip-q";
             qSpan.textContent = st.query;
